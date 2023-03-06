@@ -105,6 +105,10 @@ def p_produccion(p):
     p[0] = (p[1], p[3])
     producciones[p[1]] = p[3]
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
+
+    if p[1] not in tokens_no_terminales:
+        tokens_no_terminales.append(p[1])
+
     for produccion in p[3]:
         if produccion is not None:
             for token in produccion:
