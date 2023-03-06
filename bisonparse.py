@@ -34,6 +34,7 @@ def p_declaracion_tipo(p):
                          | TYPE
                          | TOKEN
                          | NTERM '''
+    p[0] = p[1]
 
 def p_tipo_dato(p):
     '''
@@ -41,11 +42,18 @@ def p_tipo_dato(p):
     '''
 
 def p_declaracion(p):
-    ''' declaracion  : start
-                     | declaracion_tipo tipo_dato listaTokens
-                     | declaracion_tipo listaTokens '''
-    # ya se hace en sus respectivas funciones
+    ''' declaracion  : start'''
+def p_declaracion_tokens_tipo(p):
+    ''' declaracion  : declaracion_tipo tipo_dato listaTokens'''
+    if p[1] != "%type":
+        for token in p[3]:
+            tokens_terminales.append(token)
 
+def p_declaracion_tokens(p):
+    ''' declaracion  : declaracion_tipo listaTokens '''
+    if p[1] != "%type":
+        for token in p[2]:
+            tokens_terminales.append(token)
 
 def p_declaraciones_declaracion(p):
     ''' declaraciones : declaracion declaraciones
@@ -53,7 +61,8 @@ def p_declaraciones_declaracion(p):
 
 
 def p_listaTokens(p):
-    ''' listaTokens : listaTokens TOKENID '''
+    ''' listaTokens : listaTokens TOKENID
+                    | listaTokens LITERAL '''
     p[1].append(p[2])
     p[0] = p[1]
 
@@ -95,25 +104,15 @@ def p_produccion(p):
     ''' produccion    : TOKENID ':' listaExpresiones ';' '''
     p[0] = (p[1], p[3])
     producciones[p[1]] = p[3]
-    es_terminal = True
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
     for produccion in p[3]:
         if produccion is not None:
             for token in produccion:
-                if not pattern.fullmatch(token):
-                    es_terminal = False
-                    break
-        if not es_terminal:
-            break
+                if (pattern.fullmatch(token)) and (token not in tokens_terminales):           # es un terminal
+                    tokens_terminales.append(token)
+                elif (not pattern.fullmatch(token)) and not ((token in tokens_no_terminales) or (token in tokens_terminales)):  # es un no terminal
+                    tokens_no_terminales.append(token)
 
-    if es_terminal and p[1] not in tokens_terminales and p[1] not in tokens_no_terminales:
-        # añadimos a terminales
-        tokens_terminales.append(p[1])
-    elif not es_terminal:
-        if p[1] in tokens_terminales: # si esta en terminales lo borramos
-            tokens_terminales.remove(p[1])
-        # añadimos a no terminales
-        tokens_no_terminales.append(p[1])
 
 
 
