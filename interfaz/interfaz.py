@@ -9,6 +9,8 @@ import bisonlex
 import bisonparse
 from ply import *
 
+import operacionesTransformacion as ot
+import conjuntos
 class NewApplication:
     def __init__(self):
         super().__init__(sys.argv)
@@ -152,8 +154,20 @@ class MainWindow(QMainWindow):
         self.menubar.addMenu(herramientasMenu)
 
         # Opciones de menú al menú herramientas
+        conjuntoPrimeroAction = QAction("Calcular conjunto PRIMERO", self)
+        conjuntoPrimeroAction.triggered.connect(self.calcular_conjunto_primero)
+
+        conjuntoSiguierneAction = QAction("Calcular conjunto PRIMERO", self)
+        conjuntoSiguierneAction.triggered.connect(self.calcular_conjunto_siguiente)
+
+        conjuntoPrimeroFraseAction = QAction("Calcular conjunto PRIMERO de forma frase", self)
+        conjuntoPrimeroFraseAction.triggered.connect(self.calcular_conjunto_primero_frase)
+
 
         # Agregar las opciones de menú al menú herramientas
+        herramientasMenu.addAction(conjuntoPrimeroAction)
+        herramientasMenu.addAction(conjuntoSiguierneAction)
+        herramientasMenu.addAction(conjuntoPrimeroFraseAction)
 
     def pestania_transformaciones(self):
         transformacionesMenu = QMenu("Transformaciones", self)
@@ -161,11 +175,22 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú transformaciones
         factorizacionIzquierdaAction = QAction("Factorización a izquierda", self)
+        factorizacionIzquierdaAction.triggered.connect(self.transformacion_factorizacion_izquierda)
+
         eliminacionNoDerivablesAction = QAction("Eliminación de no terminales no derivables", self)
+        eliminacionNoDerivablesAction.triggered.connect(self.transformacion_no_derivables)
+
         eliminacionRecursividadIzqAction = QAction("Eliminación de recursividad a izquierda", self)
+        eliminacionRecursividadIzqAction.triggered.connect(self.transformacion_recursividad_izquierda)
+
         eliminacionNoAlcanzablesAction = QAction("Eliminación de símbolos no alcanzables", self)
+        eliminacionNoAlcanzablesAction.triggered.connect(self.transformacion_no_alcanzables)
+
         eliminacionProduccionesEpsAction = QAction("Eliminación de producciones epsilon", self)
+        eliminacionProduccionesEpsAction.triggered.connect(self.transformacion_producciones_epsilon)
+
         eliminacionCiclosAction = QAction("Eliminación de ciclos", self)
+        eliminacionCiclosAction.triggered.connect(self.transformacion_eliminacion_ciclos)
 
         # Agregar las opciones de menú al menú transformaciones
         transformacionesMenu.addAction(factorizacionIzquierdaAction)
@@ -180,7 +205,7 @@ class MainWindow(QMainWindow):
         self.menubar.addMenu(parseMenu)
 
         # Opciones de menú al menú parse
-        parsearGramaticaLL1Action = QAction("Parsear gramática LL(1)", self)
+        parsearGramaticaLL1Action = QAction("Analizar gramática LL(1)", self)
         parsearTableLL1Action = QAction("Parsear tabla LL(1)", self)
 
         # Agregar las opciones de menú al menú parse
@@ -192,7 +217,7 @@ class MainWindow(QMainWindow):
         self.menubar.addMenu(simularMenu)
 
         # Opciones de menú al menú simulacion
-        parsearLL1Action = QAction("Parsear entrada LL(1)", self)
+        parsearLL1Action = QAction("Analizar entrada LL(1)", self)
         parsearEntradaAction = QAction("Parsear entrada", self)
 
         # Agregar las opciones de menú al menú simulacion
@@ -235,6 +260,11 @@ class MainWindow(QMainWindow):
 
         self.actualizar_linea_columna()
 
+        self.token_inicial = ""
+        self.tokens_terminales = set()
+        self.tokens_no_terminales = set()
+        self.producciones = dict()
+
     def actualizar_linea_columna(self):
         cursor = self.textEdit.textCursor()
         linea = cursor.blockNumber() + 1
@@ -252,15 +282,19 @@ class MainWindow(QMainWindow):
 
         # Mostrar el diálogo para que el usuario seleccione un archivo
         if dialogo.exec_() == QFileDialog.Accepted:
+            self.menu_gramaticas()
             # Obtenemos la ruta del archivo
             ruta_archivo = dialogo.selectedFiles()[0]
             fichero = open(ruta_archivo).read()
+            gramatica = yacc.parse(fichero)
+            self.token_inicial = gramatica[0]
+            self.tokens_terminales = gramatica[1]
+            self.tokens_no_terminales = gramatica[2]
+            self.producciones = gramatica[3]
+
             self.textEdit.setPlainText(fichero)  # Escribimos el fichero
             self.textEdit.setReadOnly(True)      # Activamos modo lectura
             self.modo_label.setText(f"Modo: lectura")
-            algo = yacc.parse(fichero)
-            print(algo)
-            # ejecutar bison ply con el ficherito :)
 
     def guardar(self):
         print()
@@ -272,8 +306,7 @@ class MainWindow(QMainWindow):
         fichero.write(texto)
         fichero.close()
 
-
-    def aceptar_gramatica(self):
+    def menu_gramaticas(self):
         self.menubar.clear()
         self.pestania_gramatica()
         self.pestania_buscar()
@@ -285,8 +318,15 @@ class MainWindow(QMainWindow):
         self.pestania_simular()
         self.pestania_ayuda()
 
-        gramatica = self.textEdit.toPlainText()
-        yacc.parse(gramatica)
+    def aceptar_gramatica(self):
+        self.menu_gramaticas()
+
+        texto = self.textEdit.toPlainText()
+        gramatica = yacc.parse(texto)
+        self.token_inicial = gramatica[0]
+        self.tokens_terminales = gramatica[1]
+        self.tokens_no_terminales = gramatica[2]
+        self.producciones = gramatica[3]
 
         self.textEdit.setReadOnly(True)     # Activamos modo lectura
         self.modo_label.setText(f"Modo: lectura")
@@ -316,6 +356,54 @@ class MainWindow(QMainWindow):
         # Mostramos una ventana de mensaje con un pequeño texto
         QMessageBox.information(self, "Cambio idioma", "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
+    def calcular_conjunto_primero(self):
+        primero = conjuntos.conjunto_primero(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        print()
+
+    def calcular_conjunto_siguiente(self):
+        siguiente = conjuntos.conjunto_siguiente(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        print()
+
+    def calcular_conjunto_primero_frase(self):
+        print()
+
+    def transformacion_factorizacion_izquierda(self):
+        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.factorizacion_a_izquierda(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def transformacion_no_derivables(self):
+        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_no_terminales(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def transformacion_recursividad_izquierda(self):
+        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def transformacion_no_alcanzables(self):
+        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_no_accesibles(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def transformacion_producciones_epsilon(self):
+        (self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones) = ot.eliminacion_producciones_epsilon(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+    def transformacion_eliminacion_ciclos(self):
+        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_ciclos(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def mostrar_gramatica(self):
+        texto = f"%start {self.token_inicial}\n%%\n\n"
+        for token, producciones_token in self.producciones.items():
+            texto += token + ": "
+            espacios = " " * (len(token) + 2)
+            for indice, produccion in enumerate(producciones_token):
+                if produccion is not None:
+                    for token_produccion in produccion:
+                        texto += token_produccion + "  "
+                if indice != len(self.producciones[token]) - 1:
+                    texto += "\n" + espacios + "| "
+            texto += "\n;\n\n"
+        texto += "%%"
+        self.textEdit.setPlainText(texto)
 
 
 if __name__ == "__main__":

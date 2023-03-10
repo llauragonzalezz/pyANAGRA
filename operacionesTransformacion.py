@@ -130,7 +130,7 @@ def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_termin
         # Añadimos a nuevo todos los tokens no terminales tales que todas sus produciones esten compuestas
         # por terminales o elementos en viejo
         for tokenViejo in viejo:
-            if tokenViejo in token in tokens_no_terminales:
+            if tokenViejo in tokens_no_terminales:
                 for producciones in producciones[tokenViejo]:
                     for token in producciones:
                         if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
