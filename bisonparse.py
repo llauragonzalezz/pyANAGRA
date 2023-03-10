@@ -11,8 +11,8 @@ start = 'bison'
 
 # Parametros de una gramatica
 token_inicial = ""
-tokens_terminales = []
-tokens_no_terminales = []
+tokens_terminales = set()
+tokens_no_terminales = set()
 producciones = dict()
 
 def p_prec(p):
@@ -47,13 +47,13 @@ def p_declaracion_tokens_tipo(p):
     ''' declaracion  : declaracion_tipo tipo_dato listaTokens'''
     if p[1] != "%type":
         for token in p[3]:
-            tokens_terminales.append(token)
+            tokens_terminales.add(token)
 
 def p_declaracion_tokens(p):
     ''' declaracion  : declaracion_tipo listaTokens '''
     if p[1] != "%type":
         for token in p[2]:
-            tokens_terminales.append(token)
+            tokens_terminales.add(token)
 
 def p_declaraciones_declaracion(p):
     ''' declaraciones : declaracion declaraciones
@@ -106,16 +106,15 @@ def p_produccion(p):
     producciones[p[1]] = p[3]
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
 
-    if p[1] not in tokens_no_terminales:
-        tokens_no_terminales.append(p[1])
+    tokens_no_terminales.add(p[1])
 
     for produccion in p[3]:
         if produccion is not None:
             for token in produccion:
-                if (pattern.fullmatch(token)) and (token not in tokens_terminales):           # es un terminal
-                    tokens_terminales.append(token)
-                elif (not pattern.fullmatch(token)) and not ((token in tokens_no_terminales) or (token in tokens_terminales)):  # es un no terminal
-                    tokens_no_terminales.append(token)
+                if pattern.fullmatch(token):           # es un terminal
+                    tokens_terminales.add(token)
+                elif (not pattern.fullmatch(token)) and token not in tokens_terminales:  # es un no terminal
+                    tokens_no_terminales.add(token)
 
 
 
@@ -138,10 +137,11 @@ def p_reglas(p):
 def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
-    print("token_inicial", token_inicial)
-    print("tokens_terminales", tokens_terminales)
-    print("tokens_no_terminales", tokens_no_terminales)
-    print("producciones", producciones)
+    #print("token_inicial", token_inicial)
+    #print("tokens_terminales", tokens_terminales)
+    #print("tokens_no_terminales", tokens_no_terminales)
+    #print("producciones", producciones)
+    p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
 
 def p_error(p):
     print(f'Syntax error at {p.value!r}')
