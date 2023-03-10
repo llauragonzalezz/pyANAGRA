@@ -196,15 +196,18 @@ def eliminar_recursividad_izquierda(token_inicial, tokens_terminales, tokens_no_
 def eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
 
     for token in tokens_no_terminales:
+        print(token)
         if None in producciones[token]:
             # quitamos la produccion epsilon
             producciones[token].remove(None)
 
             # por cada produccion que contuviese el token la añadimos una en donde no este
-            for token_1 in tokens_no_terminales.difference(set(token)):
+            for token_1 in tokens_no_terminales:
+                print("token a evaluar", token_1)
                 for produccion in producciones[token_1]:
-                    if token in produccion:
-                        producciones[token_1].append(produccion.remove(token))
+                    if produccion is not None:
+                        if token in produccion:
+                            producciones[token_1].append([token_prod for token_prod in produccion if token_prod != token])
 
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 

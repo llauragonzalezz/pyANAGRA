@@ -24,7 +24,7 @@ def p_prec(p):
 
 def p_start(p):
     ''' start : START TOKENID '''
-    bisonparse.primera_regla = p[2]
+    bisonparse.token_inicial = p[2]
 
 def p_declaracion_tipo(p):
     ''' declaracion_tipo : LEFT
@@ -132,7 +132,10 @@ def p_listaProducciones_produccion(p):
 def p_reglas(p):
     ''' reglas : EUNG listaProducciones EUNG '''
     if bisonparse.token_inicial == "":
+        print("no tenia token inicial :(")
         bisonparse.token_inicial = p[2][0][0]
+        print("ahora si :)", token_inicial)
+
 
 def p_bison(p):
     ''' bison : declaraciones  reglas
