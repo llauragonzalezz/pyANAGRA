@@ -1,9 +1,9 @@
 import os
 import sys
 
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
-    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel
+    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp
 
 import bisonlex
 import bisonparse
@@ -67,13 +67,21 @@ class MainWindow(QMainWindow):
         # Opciones de menú al menú editar
         cortarAction = QAction("Cortar", self)
         cortarAction.setShortcut(QKeySequence.Cut)
+        cortarAction.triggered.connect(self.cortar)
+
         copiarAction = QAction("Copiar", self)
         copiarAction.setShortcut(QKeySequence.Copy)
+        copiarAction.triggered.connect(self.copiar)
+
         pegarAction = QAction("Pegar", self)
         pegarAction.setShortcut(QKeySequence.Paste)
+        pegarAction.triggered.connect(self.pegar)
+
         borrarAction = QAction("Borrar", self)
+
         seleccionarTodoAction = QAction("Seleccionar todo", self)
         seleccionarTodoAction.setShortcut(QKeySequence.SelectAll)
+        seleccionarTodoAction.triggered.connect(self.seleccionar_todo)
 
         aceptarGramaticaAction = QAction("Aceptar gramática", self)
         aceptarGramaticaAction.triggered.connect(self.aceptar_gramatica)
@@ -333,6 +341,30 @@ class MainWindow(QMainWindow):
 
     def rechazar_gramatica(self):
         print()
+
+    def cortar(self):
+        portapapeles = qApp.clipboard()
+        texto = self.textEdit.textCursor().selectedText()  # Obtenemos el texto seleccionado
+        portapapeles.setText(texto)                        # Lo guardamos en el portapapeles
+        self.textEdit.textCursor().removeSelectedText()    # Borramos el texto seleccionado
+
+    def copiar(self):
+        portapapeles = qApp.clipboard()
+        texto = self.textEdit.textCursor().selectedText()  # Obtenemos el texto seleccionado
+        portapapeles.setText(texto)                        # Lo guardamos en el portapapeles
+
+    def pegar(self):
+        portapapeles = qApp.clipboard()
+        texto = portapapeles.text(QClipboard.Clipboard)     # Obtenemos el texto del portapapeles
+        self.textEdit.textCursor().insertText(texto)        # Lo pegamos
+
+    def borrar(self):
+        self.textEdit.textCursor().removeSelectedText()    # Borramos el texto seleccionado
+
+    def seleccionar_todo(self):
+        cursor = self.textEdit.textCursor()
+        cursor.select(QTextCursor.Document)
+        self.textEdit.setTextCursor(cursor)
 
     def buscar(self):
         print()

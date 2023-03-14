@@ -103,7 +103,11 @@ def p_listaExpresiones_expresion(p):
 def p_produccion(p):
     ''' produccion    : TOKENID ':' listaExpresiones ';' '''
     p[0] = (p[1], p[3])
-    producciones[p[1]] = p[3]
+    if p[1] in producciones:
+        producciones[p[1]].extend(p[3])
+    else:
+        producciones[p[1]] = p[3]
+
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
 
     tokens_no_terminales.add(p[1])
@@ -132,9 +136,7 @@ def p_listaProducciones_produccion(p):
 def p_reglas(p):
     ''' reglas : EUNG listaProducciones EUNG '''
     if bisonparse.token_inicial == "":
-        print("no tenia token inicial :(")
         bisonparse.token_inicial = p[2][0][0]
-        print("ahora si :)", token_inicial)
 
 
 def p_bison(p):

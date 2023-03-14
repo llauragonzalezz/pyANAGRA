@@ -1,3 +1,5 @@
+import itertools
+
 
 def eliminacion_no_terminales_optimizada(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set()
@@ -119,10 +121,11 @@ def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_termin
     viejo = [token_inicial]
     nuevo = [token_inicial]
 
-    for producciones  in producciones[token_inicial]:
-        for token in producciones:
-            if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
-                nuevo.append(token)
+    for producciones in producciones[token_inicial]:
+        if producciones is not None:
+            for token in producciones:
+                if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
+                    nuevo.append(token)
 
     while viejo != nuevo:
         viejo = nuevo
@@ -132,9 +135,10 @@ def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_termin
         for tokenViejo in viejo:
             if tokenViejo in tokens_no_terminales:
                 for producciones in producciones[tokenViejo]:
-                    for token in producciones:
-                        if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
-                            nuevo.append(token)
+                    if producciones is not None:
+                        for token in producciones:
+                            if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
+                                nuevo.append(token)
 
     tokens_no_terminales = [value for value in nuevo if value in tokens_no_terminales]
     tokens_terminales = [value for value in nuevo if value in tokens_terminales]
@@ -162,12 +166,19 @@ def factorizacion_a_izquierda(token_inicial, tokens_terminales, tokens_no_termin
 
     for token in tokens_no_terminales:
         # si el token tiene mas de una posible produccion y no tiene producciones epsilon
+        print(token)
+        print("len(producciones[token]) > 1", len(producciones[token]) > 1)
+        print("None not in producciones[token]", None not in producciones[token])
         if len(producciones[token]) > 1 and None not in producciones[token]:
+            print(producciones[token])
             indiceCoincidencia = 0
             diferentes = False
             for indice in range(len(producciones[token][0])):
+                print("indice", indice)
                 for produccion in producciones[token]:
-                    if len(produccion) < indice or produccion[indice] != producciones[token][0][indice]:
+                    print("produccion", produccion)
+                    print("len produccion", len(produccion))
+                    if len(produccion) - 1 < indice or produccion[indice] != producciones[token][0][indice]:
                         diferentes = True
                         break
                 indiceCoincidencia += 1
@@ -177,7 +188,7 @@ def factorizacion_a_izquierda(token_inicial, tokens_terminales, tokens_no_termin
                 nombre = "fact_" + token
                 producciones[nombre] = [produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]]
                 tokens_no_terminales.add(nombre)
-                producciones[token] = producciones[token][0][:indiceCoincidencia]
+                producciones[token] = producciones[token][0][:indiceCoincidencia] + nombre
                 break
 
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
@@ -203,11 +214,19 @@ def eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no
 
             # por cada produccion que contuviese el token la añadimos una en donde no este
             for token_1 in tokens_no_terminales:
-                print("token a evaluar", token_1)
                 for produccion in producciones[token_1]:
-                    if produccion is not None:
-                        if token in produccion:
-                            producciones[token_1].append([token_prod for token_prod in produccion if token_prod != token])
+                    if produccion is not None and token in produccion:
+                        indices = [i for i, x in enumerate(produccion) if x == token]
+                        print("indices", indices)
+                        combinaciones = []
+                        for i in range(1, len(indices)+1):
+                            combinaciones.extend(list(x) for x in itertools.combinations(indices, i))
+                        print("posibles combinaciones: ", combinaciones)
+                        for lista in combinaciones:
+                            nueva_produccion = [x for i, x in enumerate(produccion) if i not in lista]
+                            if nueva_produccion not in producciones[token_1]:
+                                producciones[token_1].append(nueva_produccion)
+                        print(producciones[token_1])
 
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
