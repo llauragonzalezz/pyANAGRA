@@ -3,7 +3,8 @@ import itertools
 
 def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set()
-    nuevo = set(token for produccion in producciones[token_inicial] if produccion is not None for token in produccion) | set(token_inicial)
+    nuevo = set(token for produccion in producciones[token_inicial] if produccion is not None for token in produccion) \
+            | set(token_inicial)
 
     while viejo != nuevo:
         nuevos_token = nuevo.difference(viejo)
@@ -19,6 +20,34 @@ def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_te
 
     return tokens_terminales, tokens_no_terminales, producciones
 
+
+def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+    viejo = set(token_inicial)
+    nuevo = set()
+
+    for token in tokens_no_terminales:
+        for produccion in producciones[token]:
+            if produccion is None or set(produccion) <= tokens_terminales:
+                nuevo |= set(token)
+
+    while viejo != nuevo:
+        viejo = nuevo
+        for token in tokens_no_terminales:
+            for produccion in producciones[token]:
+                if produccion is None or set(produccion) <= tokens_terminales | viejo:
+                    nuevo |= set(token)
+
+    nuevas_producciones = dict()
+    for token in nuevo:
+        lista_producciones = []
+        for produccion in producciones[token]:
+            print(produccion)
+            if produccion is None or set(produccion) <= nuevo | tokens_terminales:
+                lista_producciones.append(produccion)
+
+        nuevas_producciones[token] = lista_producciones
+
+    return nuevo, nuevas_producciones
 
 def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = [token_inicial]

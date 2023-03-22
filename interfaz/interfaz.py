@@ -404,7 +404,7 @@ class MainWindow(QMainWindow):
         self.mostrar_gramatica()
 
     def transformacion_no_derivables(self):
-        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_no_terminales(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_no_terminales, self.producciones = ot.eliminacion_simolos_no_termibales(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_recursividad_izquierda(self):
