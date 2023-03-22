@@ -20,7 +20,10 @@ def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_te
 
     return tokens_terminales, tokens_no_terminales, producciones
 
-
+def gramatica_no_vacia(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+    nuevos_tokens_no_terminales, nuevas_producciones = eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    print("soy una gramatica vacia?", token_inicial in nuevas_producciones)
+    return token_inicial in nuevas_producciones
 def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set(token_inicial)
     nuevo = set()
@@ -53,9 +56,10 @@ def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_termin
     viejo = [token_inicial]
     nuevo = [token_inicial]
 
-    for producciones in producciones[token_inicial]:
-        if producciones is not None:
-            for token in producciones:
+
+    for produccion in producciones[token_inicial]:
+        if produccion is not None:
+            for token in produccion:
                 if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
                     nuevo.append(token)
 
