@@ -413,11 +413,11 @@ class MainWindow(QMainWindow):
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
-        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_producciones_epsilon(self):
-        self.producciones = ot.eliminacion_producciones_epsilon(self.tokens_no_terminales, self.producciones)
+        self.producciones = ot.eliminacion_producciones_epsilon(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_eliminacion_ciclos(self):

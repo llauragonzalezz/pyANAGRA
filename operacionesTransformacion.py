@@ -21,9 +21,10 @@ def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_te
     return tokens_terminales, tokens_no_terminales, producciones
 
 def gramatica_no_vacia(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    nuevos_tokens_no_terminales, nuevas_producciones = eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    print("soy una gramatica no vacia?", token_inicial in nuevas_producciones)
+    _, nuevas_producciones = eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    print(token_inicial in nuevas_producciones)
     return token_inicial in nuevas_producciones
+
 def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set(token_inicial)
     nuevo = set()
@@ -51,52 +52,6 @@ def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_n
         nuevas_producciones[token] = lista_producciones
 
     return nuevo, nuevas_producciones
-
-def eliminacion_no_accesibles(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    viejo = [token_inicial]
-    nuevo = [token_inicial]
-
-
-    for produccion in producciones[token_inicial]:
-        if produccion is not None:
-            for token in produccion:
-                if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
-                    nuevo.append(token)
-
-    while viejo != nuevo:
-        viejo = nuevo
-        nuevo = viejo
-        # Añadimos a nuevo todos los tokens no terminales tales que todas sus produciones esten compuestas
-        # por terminales o elementos en viejo
-        for tokenViejo in viejo:
-            if tokenViejo in tokens_no_terminales:
-                for producciones in producciones[tokenViejo]:
-                    if producciones is not None:
-                        for token in producciones:
-                            if (token in tokens_no_terminales or token in tokens_terminales) and token not in nuevo:
-                                nuevo.append(token)
-
-    tokens_no_terminales = [value for value in nuevo if value in tokens_no_terminales]
-    tokens_terminales = [value for value in nuevo if value in tokens_terminales]
-
-    # producciones se acutualiza a aquellas que esten compuestas por tokenes pertenecientes a nuevo o a terminales
-    tokens_terminales = nuevo
-    nuevas_reglas = dict()
-    for nuevo_no_terminal in nuevo:
-        nuevas_producciones = []
-        for produccion in producciones[nuevo_no_terminal]:
-            todo_terminales_o_nuevo = True
-            if produccion is not None:
-                for token in produccion:
-                    if (token not in tokens_terminales) or (token not in nuevo):
-                        todo_terminales_o_nuevo = False
-                        break
-            if todo_terminales_o_nuevo:
-                nuevas_producciones.append(produccion)
-        nuevas_reglas[nuevo_no_terminal] = nuevas_producciones
-
-    producciones = nuevas_reglas
-    return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
 def factorizacion_a_izquierda(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
 
@@ -164,93 +119,55 @@ def is_nullable(token, tokens_no_terminales, producciones):
 
 def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones):
     nullable_tokens = {token for token in tokens_no_terminales if is_nullable(token, tokens_no_terminales, producciones)}
-    print("tokens nullable", nullable_tokens)
-    print(tokens_no_terminales)
+
     for token in tokens_no_terminales:
-        print("token", token)
-        if None in producciones[token]:
-            # quitamos la produccion epsilon
-            producciones[token].remove(None)
+        if token in nullable_tokens:
+            producciones[token].remove(None) # quitamos la produccion epsilon
 
         for produccion in producciones[token]:
             nullable_tokens_produccion = set(produccion) & nullable_tokens
-            #print("nullable_tokens_produccion", nullable_tokens_produccion)
             indices_token_nullable = {produccion.index(null_token) for null_token in nullable_tokens_produccion}
-            #print("indices_token_nullable", indices_token_nullable)
-            # todo si len(nullable_tokens_produccion) == len(produccion) a
             combinaciones = []
             for i in range(1, len(indices_token_nullable) + 1):     # creamos todas las combinaciones posibles
                 combinaciones.extend(list(x) for x in itertools.combinations(indices_token_nullable, i))
-            print("combinaciones", combinaciones)
 
             for lista in combinaciones:
                 nueva_produccion = [x for i, x in enumerate(produccion) if i not in lista]
-                print("nueva_produccion", nueva_produccion)
-                if ((nueva_produccion != [] and token != token_inicial) or (nueva_produccion == [] and token == token_inicial)) \
+                if (nueva_produccion != [] or (nueva_produccion == [] and token == token_inicial)) \
                         and nueva_produccion not in producciones[token]:
                     producciones[token].append(nueva_produccion)
 
-    print("fin")
     return producciones
 
 def tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, producciones):
-    print("TOKEN", token)
-    print()
-    print()
     viejo = set()
     nuevo = set()
-    print(producciones[token])
     for produccion in producciones[token]:
-        print(produccion)
         if len(produccion) == 1 and produccion[0] in tokens_no_terminales:
-            print("elimino:", produccion, "y lo añado a nuevo")
             producciones[token].remove(produccion)
             nuevo.add(produccion[0])
 
-    if nuevo == viejo:
-        print("fin")
-        return producciones
-
-    print("nuevo:", nuevo)
     while viejo != nuevo:
-        print("nueva iteracion")
-        print("viejo:", viejo)
-        print("nuevo:", nuevo)
-
         nuevos_token = nuevo.difference(viejo)
         viejo = nuevo.copy()
 
         for token1 in nuevos_token:
-            print("par: (", token1, ",", token1, ")")
             aniadido = False
             for produccion in producciones[token1]:
-                print("produccion", produccion)
-                if len(produccion) == 1 and produccion[0] in tokens_no_terminales:
-                    print("nuevo antes de aniadir", nuevo)
+                if produccion is not None and len(produccion) == 1 and produccion[0] in tokens_no_terminales: # produccion unitaria encontrada
                     nuevo.add(produccion[0])
-                    print("nuevo despues de aniadir", nuevo)
-                    print("viejo:", viejo)
-                    print("par: (", token1, ",", produccion[0], ")")
                 elif not aniadido:
                     aniadido = True
-                    print("producciones[token1]", producciones[token1])
                     for produccion_aniadir in producciones[token1]:
-                        print("posible prodccion a añadir", produccion_aniadir)
-                        print("producciones[token] antes", producciones[token])
                         if (len(produccion_aniadir) > 1 or (len(produccion_aniadir) == 1 and produccion_aniadir[0] in tokens_terminales)) and produccion_aniadir not in producciones[token]:
                             producciones[token].append(produccion_aniadir)
-                            print("producciones[token] despues", producciones[token])
-            print("viejo:", viejo)
-            print("nuevo:", nuevo)
-    print("fin")
+
     return producciones
 
 
 def eliminacion_producciones_unitarias(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    tokens_unitarios = dict()
-    lista_unit_pairs = set()
+
     for token in tokens_no_terminales:
-        print("øøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøøø", token)
         producciones = tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, producciones)
 
     return producciones
