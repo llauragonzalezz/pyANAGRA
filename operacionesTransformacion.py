@@ -53,50 +53,49 @@ def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_n
 
     return nuevo, nuevas_producciones
 
-def factorizacion_a_izquierda(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
 
-    for token in tokens_no_terminales:
-        # si el token tiene mas de una posible produccion y no tiene producciones epsilon
-        print(token)
-        print("len(producciones[token]) > 1", len(producciones[token]) > 1)
-        print("None not in producciones[token]", None not in producciones[token])
-        if len(producciones[token]) > 1 and None not in producciones[token]:
-            print(producciones[token])
-            indiceCoincidencia = 0
-            diferentes = False
-            for indice in range(len(producciones[token][0])):
-                print("indice", indice)
-                for produccion in producciones[token]:
-                    if len(produccion) - 1 < indice or produccion[indice] != producciones[token][0][indice]:
-                        print("STOP")
-                        diferentes = True
-                        break
-                if diferentes:
-                    break
-                indiceCoincidencia += 1
-            print("indice de coincidencia = ", indiceCoincidencia)
-            # transformamos la gramatica factorizando los elementos comunes
-            if diferentes and indiceCoincidencia > 0:
-                print("entro")
-                nombre = "fact_" + token
-                print([produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]])
-                producciones[nombre] = [produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]]
-                tokens_no_terminales.add(nombre)
-                producciones[token] = producciones[token][0][:indiceCoincidencia].append(nombre)
-                break
-        print(producciones)
-    return token_inicial, tokens_terminales, tokens_no_terminales, producciones
+def eliminar_recursividad_izquierda(tokens_no_terminales, producciones):
+    tokens_nt = list(tokens_no_terminales)
+    print(tokens_nt)
+    print(tokens_nt[0:-1])
+    for i, token_i in enumerate(tokens_nt):
+        print("token i:", token_i, ", i:", i)
+        if i > 0:
+            for j, token_j in enumerate(tokens_nt[:i-1]):
+                print("token j:", token_j, ", j:", j)
+                for produccion in producciones[token_i]:
+                    if produccion is not None and produccion[0] == token_j:
+                        print("hemos encontrado prodcuccion Ai -> Ajþ")
+                        producciones[token_i].remove(produccion)
+                        #return tokens_no_terminales, producciones
+                        for produccion_remplazar in producciones[token_j]:
+                            print("añadimos la produccion", produccion_remplazar + produccion[1:])
+                            producciones[token_i].append(produccion_remplazar + produccion[1:])
+        tokens_no_terminales, producciones = eliminar_recursividad_izquierda_directa(token_i, tokens_no_terminales, producciones)
+    return tokens_no_terminales, producciones
 
-
-def eliminar_recursividad_izquierda(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    for i in range(len(tokens_no_terminales)):
-        for j in range(i-1):
-            for produccion in producciones[tokens_no_terminales[i]]:
-                if produccion[0] is not None and produccion[0] == tokens_no_terminales[j]:
-                    producciones[tokens_no_terminales[i]].append(lista + produccion for lista in producciones[tokens_no_terminales[j]])
-
-    return token_inicial, tokens_terminales, tokens_no_terminales, producciones
-
+def eliminar_recursividad_izquierda_directa(token, tokens_no_terminales, producciones):
+    reglas_recursivas = list()
+    reglas_no_recursivas = list()
+    for produccion in producciones[token]:
+        if produccion is not None and produccion[0] == token:
+            print("hemos encontrado recurividad directa!!!, produccion: ", produccion, "token:", token )
+            reglas_recursivas.append(produccion[1:])
+        else:
+            reglas_no_recursivas.append(produccion)
+    if reglas_recursivas != []:
+        producciones[token].clear()
+        nombre = token + "_rec"
+        print("añadimos la produccion: ", nombre)
+        tokens_no_terminales.add(nombre)
+        producciones[nombre] = [[]]
+        for regla in reglas_recursivas:
+            print("añadimos a ", nombre, " la produccion: ", regla + [nombre])
+            producciones[nombre].append(regla + [nombre])
+        for regla in reglas_no_recursivas:
+            print("añadimos a ", token, " la produccion: ", regla + [nombre])
+            producciones[token].append(regla + [nombre])
+    return tokens_no_terminales, producciones
 
 def is_nullable(token, tokens_no_terminales, producciones):
     if None in producciones[token]:
@@ -165,7 +164,7 @@ def tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, 
     return producciones
 
 
-def eliminacion_producciones_unitarias(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+def eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, producciones):
 
     for token in tokens_no_terminales:
         producciones = tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, producciones)
@@ -204,10 +203,9 @@ def eliminacion_producciones_epsilon_vieja(token_inicial, tokens_terminales, tok
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
 
-def eliminar_recursividad_izquierda_nuevo(tokens_no_terminales, producciones):
+def factorizacion_izquierda(tokens_no_terminales, producciones):
     tokens_no_terminales_antiguos = tokens_no_terminales.copy()
     for token in tokens_no_terminales_antiguos:
-        print("token:", token)
         producciones_antiguas = producciones[token].copy()
         veces = 1
         for produccion in producciones_antiguas:
@@ -226,31 +224,21 @@ def encontrar_prefijos(cadena_referencia, cadenas, nombre_prod, tokens_no_termin
     diferente = False
     for indice, caracter in enumerate(cadena_referencia):
         for cadena in cadenas:
-            print("cadena de referencia:" , cadena_referencia, ", cadena:", cadena)
             if not cadenas_diferentes(cadena_referencia, cadena) and (len(cadena) < indice + 1 or caracter != cadena[indice]):
-                print("soy diferente en el indice:", indice, "; cadena de referencia:", cadena_referencia, ", yo:", cadena)
                 diferente = True
             elif not cadenas_diferentes(cadena_referencia, cadena) and caracter == cadena[indice] and cadena not in cadenas_comunes:
-                print("añado a cadenas comunes", cadena)
                 cadenas_comunes.append(cadena)
 
         if cadenas_comunes == []:
-            print("no hay mas coincidencia, me voy!")
             return tokens_no_terminales, producciones, veces
 
         if diferente:
-            print("indice de coincidencia", indice)
             nombre = nombre_prod + sufijo
             sufijo = "'"
-            print("añado la nueva producion:", [prod[indice:] for prod in cadenas_comunes])
             producciones[nombre] = [prod[indice:] for prod in cadenas_comunes]
-            print("añado el token a no terminales:", nombre)
             tokens_no_terminales.add(nombre)
-            print("produccion comun:", cadena_referencia[:indice] + [nombre])
             cadenas.append(cadena_referencia[:indice] + [nombre])
-            print("borro las producciones comunes al token:")
             for cadena_comun in cadenas_comunes: # elimino las producciones comunes
-                print("xao", cadena_comun)
                 cadenas.remove(cadena_comun)
             producciones[nombre_prod] = cadenas
             tokens_no_terminales, producciones, _ = encontrar_prefijos(producciones[nombre][0], producciones[nombre], nombre, tokens_no_terminales, producciones, 0, sufijo)

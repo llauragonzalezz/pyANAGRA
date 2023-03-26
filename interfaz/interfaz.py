@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
         print()
 
     def transformacion_factorizacion_izquierda(self):
-        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.factorizacion_a_izquierda(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_no_terminales, self.producciones = ot.factorizacion_izquierda(self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_no_derivables(self):
@@ -409,7 +409,7 @@ class MainWindow(QMainWindow):
         ot.gramatica_no_vacia(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
 
     def transformacion_recursividad_izquierda(self):
-        self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda_nuevo(self.tokens_no_terminales, self.producciones)
+        self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda(self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
@@ -421,7 +421,7 @@ class MainWindow(QMainWindow):
         self.mostrar_gramatica()
 
     def transformacion_eliminacion_ciclos(self):
-        self.producciones = ot.eliminacion_producciones_unitarias(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.producciones = ot.eliminacion_producciones_unitarias(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def mostrar_gramatica(self):
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
                 if produccion is not None:
                     for token_produccion in produccion:
                         texto += token_produccion + "  "
-                if indice != len(self.producciones[token]) - 1:
+                if indice != len(self.producciones  [token]) - 1:
                     texto += "\n" + espacios + "| "
             texto += "\n;\n\n"
         texto += "%%"
