@@ -79,7 +79,7 @@ def factorizacion_a_izquierda(token_inicial, tokens_terminales, tokens_no_termin
             if diferentes and indiceCoincidencia > 0:
                 print("entro")
                 nombre = "fact_" + token
-                print( [produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]])
+                print([produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]])
                 producciones[nombre] = [produccion[indiceCoincidencia+1:] for produccion in producciones[token] if produccion[indiceCoincidencia+1:]]
                 tokens_no_terminales.add(nombre)
                 producciones[token] = producciones[token][0][:indiceCoincidencia].append(nombre)
@@ -203,7 +203,57 @@ def eliminacion_producciones_epsilon_vieja(token_inicial, tokens_terminales, tok
 
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
-def eliminacion_ciclos(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    print()
-    return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
+def eliminar_recursividad_izquierda_nuevo(tokens_no_terminales, producciones):
+    tokens_no_terminales_antiguos = tokens_no_terminales.copy()
+    for token in tokens_no_terminales_antiguos:
+        print("token:", token)
+        producciones_antiguas = producciones[token].copy()
+        veces = 1
+        for produccion in producciones_antiguas:
+            if produccion in producciones[token] and produccion is not None and len(producciones[token]) > 1: # sino esta es que se ha reducido en alguna iteracion anterior
+                tokens_no_terminales, producciones, veces = encontrar_prefijos(produccion, producciones[token], token, tokens_no_terminales, producciones, veces, "_" + str(veces))
+
+    return tokens_no_terminales, producciones
+
+
+def cadenas_diferentes(cadena_referencia, cadena):
+    return cadena is None or cadena == [] or cadena_referencia[0] != cadena[0]
+
+
+def encontrar_prefijos(cadena_referencia, cadenas, nombre_prod, tokens_no_terminales, producciones, veces, sufijo):
+    cadenas_comunes = list()
+    diferente = False
+    for indice, caracter in enumerate(cadena_referencia):
+        for cadena in cadenas:
+            print("cadena de referencia:" , cadena_referencia, ", cadena:", cadena)
+            if not cadenas_diferentes(cadena_referencia, cadena) and (len(cadena) < indice + 1 or caracter != cadena[indice]):
+                print("soy diferente en el indice:", indice, "; cadena de referencia:", cadena_referencia, ", yo:", cadena)
+                diferente = True
+            elif not cadenas_diferentes(cadena_referencia, cadena) and caracter == cadena[indice] and cadena not in cadenas_comunes:
+                print("añado a cadenas comunes", cadena)
+                cadenas_comunes.append(cadena)
+
+        if cadenas_comunes == []:
+            print("no hay mas coincidencia, me voy!")
+            return tokens_no_terminales, producciones, veces
+
+        if diferente:
+            print("indice de coincidencia", indice)
+            nombre = nombre_prod + sufijo
+            sufijo = "'"
+            print("añado la nueva producion:", [prod[indice:] for prod in cadenas_comunes])
+            producciones[nombre] = [prod[indice:] for prod in cadenas_comunes]
+            print("añado el token a no terminales:", nombre)
+            tokens_no_terminales.add(nombre)
+            print("produccion comun:", cadena_referencia[:indice] + [nombre])
+            cadenas.append(cadena_referencia[:indice] + [nombre])
+            print("borro las producciones comunes al token:")
+            for cadena_comun in cadenas_comunes: # elimino las producciones comunes
+                print("xao", cadena_comun)
+                cadenas.remove(cadena_comun)
+            producciones[nombre_prod] = cadenas
+            tokens_no_terminales, producciones, _ = encontrar_prefijos(producciones[nombre][0], producciones[nombre], nombre, tokens_no_terminales, producciones, 0, sufijo)
+            return tokens_no_terminales, producciones, veces + 1
+
+    return tokens_no_terminales, producciones, veces

@@ -409,7 +409,7 @@ class MainWindow(QMainWindow):
         ot.gramatica_no_vacia(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
 
     def transformacion_recursividad_izquierda(self):
-        self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda_nuevo(self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
