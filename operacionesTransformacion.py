@@ -1,5 +1,21 @@
 import itertools
+#buscar libreria para arboles bianrios
 
+# a las 11:30
+
+# mirar menus
+# conjutno primero y siguiete, tabla
+# simular la entrada
+
+
+# precudicion, elementos,
+# postcondicion
+
+# ventana o pestaña(que se pueda desacoplar)
+
+# fichero temporal oculto
+
+# poner un parametro de invocacion, para que si se pone la entrada sea stdin
 
 def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set()
@@ -56,20 +72,13 @@ def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_n
 
 def eliminar_recursividad_izquierda(tokens_no_terminales, producciones):
     tokens_nt = list(tokens_no_terminales)
-    print(tokens_nt)
-    print(tokens_nt[0:-1])
     for i, token_i in enumerate(tokens_nt):
-        print("token i:", token_i, ", i:", i)
         if i > 0:
             for j, token_j in enumerate(tokens_nt[:i-1]):
-                print("token j:", token_j, ", j:", j)
                 for produccion in producciones[token_i]:
                     if produccion is not None and produccion[0] == token_j:
-                        print("hemos encontrado prodcuccion Ai -> Ajþ")
                         producciones[token_i].remove(produccion)
-                        #return tokens_no_terminales, producciones
                         for produccion_remplazar in producciones[token_j]:
-                            print("añadimos la produccion", produccion_remplazar + produccion[1:])
                             producciones[token_i].append(produccion_remplazar + produccion[1:])
         tokens_no_terminales, producciones = eliminar_recursividad_izquierda_directa(token_i, tokens_no_terminales, producciones)
     return tokens_no_terminales, producciones
@@ -79,21 +88,17 @@ def eliminar_recursividad_izquierda_directa(token, tokens_no_terminales, producc
     reglas_no_recursivas = list()
     for produccion in producciones[token]:
         if produccion is not None and produccion[0] == token:
-            print("hemos encontrado recurividad directa!!!, produccion: ", produccion, "token:", token )
             reglas_recursivas.append(produccion[1:])
         else:
             reglas_no_recursivas.append(produccion)
     if reglas_recursivas != []:
         producciones[token].clear()
         nombre = token + "_rec"
-        print("añadimos la produccion: ", nombre)
         tokens_no_terminales.add(nombre)
         producciones[nombre] = [[]]
         for regla in reglas_recursivas:
-            print("añadimos a ", nombre, " la produccion: ", regla + [nombre])
             producciones[nombre].append(regla + [nombre])
         for regla in reglas_no_recursivas:
-            print("añadimos a ", token, " la produccion: ", regla + [nombre])
             producciones[token].append(regla + [nombre])
     return tokens_no_terminales, producciones
 
@@ -162,7 +167,7 @@ def tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, 
                             producciones[token].append(produccion_aniadir)
 
     return producciones
-
+#graybag -> wikipedia
 
 def eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, producciones):
 
@@ -171,8 +176,40 @@ def eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, 
 
     return producciones
 
-def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+def reorganizacion_producciones(produccion, tokens_no_terminales, producciones, indice_chomsky):
+    if len(produccion) > 2:
+        tokens_no_terminales.add("Chom_" + indice_chomsky)
+        producciones["Chom_" + indice_chomsky] = produccion[0] + ["Chom_" + (indice_chomsky+1)]
+        indice_chomsky += 1
+        tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky+1)
+    return tokens_no_terminales, producciones, indice_chomsky
 
+
+def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones):
+    for token in tokens_terminales:
+        nombre = "token_" + token
+        producciones[nombre] = [token]
+
+    indice_chomsky = 1
+    for token in tokens_no_terminales:
+        for produccion in producciones[token]:
+            for index, token in enumerate(produccion):
+                if token in tokens_no_terminales:
+                    produccion.remplace(token, "token_"+token)
+            if len(produccion) > 2:
+                indice_chomsky_aux = indice_chomsky
+                tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky)
+                produccion = produccion[0] + ["Chom_" + indice_chomsky_aux]
+
+    return tokens_no_terminales, producciones
+
+
+
+def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+    tokens_no_terminales, producciones = eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    tokens_no_terminales, producciones = eliminacion_producciones_unitarias(tokens_no_terminales, producciones)
+    tokens_no_terminales, producciones = eliminar_recursividad_izquierda(tokens_no_terminales, producciones)
+    tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
 
@@ -245,3 +282,9 @@ def encontrar_prefijos(cadena_referencia, cadenas, nombre_prod, tokens_no_termin
             return tokens_no_terminales, producciones, veces + 1
 
     return tokens_no_terminales, producciones, veces
+
+
+
+def forma_normal_greibach(tokens_no_terminales, producciones):
+
+    return tokens_no_terminales, producciones

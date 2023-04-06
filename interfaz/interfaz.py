@@ -10,7 +10,7 @@ import bisonparse
 from ply import *
 
 import operacionesTransformacion as ot
-import conjuntos
+import conjuntos as conj
 class NewApplication:
     def __init__(self):
         super().__init__(sys.argv)
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
         conjuntoPrimeroAction = QAction("Calcular conjunto PRIMERO", self)
         conjuntoPrimeroAction.triggered.connect(self.calcular_conjunto_primero)
 
-        conjuntoSiguierneAction = QAction("Calcular conjunto PRIMERO", self)
+        conjuntoSiguierneAction = QAction("Calcular conjunto SIGUIENTE", self)
         conjuntoSiguierneAction.triggered.connect(self.calcular_conjunto_siguiente)
 
         conjuntoPrimeroFraseAction = QAction("Calcular conjunto PRIMERO de forma frase", self)
@@ -389,11 +389,11 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Cambio idioma", "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
     def calcular_conjunto_primero(self):
-        primero = conjuntos.conjunto_primero(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        conj.conjunto_primero(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         print()
 
     def calcular_conjunto_siguiente(self):
-        siguiente = conjuntos.conjunto_siguiente(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        siguiente = conj.conjunto_siguiente(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         print()
 
     def calcular_conjunto_primero_frase(self):
@@ -413,7 +413,9 @@ class MainWindow(QMainWindow):
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
-        self.tokens_terminales, self.tokens_no_terminales, self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_terminales, self.tokens_no_terminales, \
+                           self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, \
+                           self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_producciones_epsilon(self):
