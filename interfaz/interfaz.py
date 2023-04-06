@@ -393,7 +393,7 @@ class MainWindow(QMainWindow):
         print()
 
     def calcular_conjunto_siguiente(self):
-        siguiente = conj.conjunto_siguiente(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        siguiente = conj.conjunto_siguiente(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         print()
 
     def calcular_conjunto_primero_frase(self):
