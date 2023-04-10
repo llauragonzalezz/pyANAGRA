@@ -147,66 +147,73 @@ class MainWindow(QMainWindow):
         textMenu.addAction(guardarPreferenciasAction)
 
     def pestania_ayuda(self):
-        ayudaMenu = QMenu("Ayuda", self)
-        self.menubar.addMenu(ayudaMenu)
+        ayuda_menu = QMenu("Ayuda", self)
+        self.menubar.addMenu(ayuda_menu)
 
         # Opciones de menú al menú ayuda
-        sobreAction = QAction("Sobre...", self)
-        sobreAction.triggered.connect(self.mostrar_informacion)
+        sobre_action = QAction("Sobre...", self)
+        sobre_action.triggered.connect(self.mostrar_informacion)
 
         # Agregar las opciones de menú al menú ayuda
-        ayudaMenu.addAction(sobreAction)
+        ayuda_menu.addAction(sobre_action)
 
     def pestania_herramientas(self):
-        herramientasMenu = QMenu("Herramientas", self)
-        self.menubar.addMenu(herramientasMenu)
+        herramientas_menu = QMenu("Herramientas", self)
+        self.menubar.addMenu(herramientas_menu)
 
         # Opciones de menú al menú herramientas
-        conjuntoPrimeroAction = QAction("Calcular conjunto PRIMERO", self)
-        conjuntoPrimeroAction.triggered.connect(self.calcular_conjunto_primero)
+        conjunto_primero_action = QAction("Calcular conjunto PRIMERO", self)
+        conjunto_primero_action.triggered.connect(self.calcular_conjunto_primero)
 
-        conjuntoSiguierneAction = QAction("Calcular conjunto SIGUIENTE", self)
-        conjuntoSiguierneAction.triggered.connect(self.calcular_conjunto_siguiente)
+        conjunto_siguiente_action = QAction("Calcular conjunto SIGUIENTE", self)
+        conjunto_siguiente_action.triggered.connect(self.calcular_conjunto_siguiente)
 
-        conjuntoPrimeroFraseAction = QAction("Calcular conjunto PRIMERO de forma frase", self)
-        conjuntoPrimeroFraseAction.triggered.connect(self.calcular_conjunto_primero_frase)
-
+        conjunto_primero_frase_action = QAction("Calcular conjunto PRIMERO de forma frase", self)
+        conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
-        herramientasMenu.addAction(conjuntoPrimeroAction)
-        herramientasMenu.addAction(conjuntoSiguierneAction)
-        herramientasMenu.addAction(conjuntoPrimeroFraseAction)
+        herramientas_menu.addAction(conjunto_primero_action)
+        herramientas_menu.addAction(conjunto_siguiente_action)
+        herramientas_menu.addAction(conjunto_primero_frase_action)
 
     def pestania_transformaciones(self):
-        transformacionesMenu = QMenu("Transformaciones", self)
-        self.menubar.addMenu(transformacionesMenu)
+        transformaciones_menu = QMenu("Transformaciones", self)
+        self.menubar.addMenu(transformaciones_menu)
 
         # Opciones de menú al menú transformaciones
-        factorizacionIzquierdaAction = QAction("Factorización a izquierda", self)
-        factorizacionIzquierdaAction.triggered.connect(self.transformacion_factorizacion_izquierda)
+        factorizacion_izquierda_action = QAction("Factorización a izquierda", self)
+        factorizacion_izquierda_action.triggered.connect(self.transformacion_factorizacion_izquierda)
 
-        eliminacionNoDerivablesAction = QAction("Eliminación de no terminales no derivables", self)
-        eliminacionNoDerivablesAction.triggered.connect(self.transformacion_no_derivables)
+        eliminacion_no_derivables_action = QAction("Eliminación de no terminales no derivables", self)
+        eliminacion_no_derivables_action.triggered.connect(self.transformacion_no_derivables)
 
-        eliminacionRecursividadIzqAction = QAction("Eliminación de recursividad a izquierda", self)
-        eliminacionRecursividadIzqAction.triggered.connect(self.transformacion_recursividad_izquierda)
+        eliminacion_recursividad_izq_action = QAction("Eliminación de recursividad a izquierda", self)
+        eliminacion_recursividad_izq_action.triggered.connect(self.transformacion_recursividad_izquierda)
 
-        eliminacionNoAlcanzablesAction = QAction("Eliminación de símbolos no alcanzables", self)
-        eliminacionNoAlcanzablesAction.triggered.connect(self.transformacion_no_alcanzables)
+        eliminacion_no_alcanzables_action = QAction("Eliminación de símbolos no alcanzables", self)
+        eliminacion_no_alcanzables_action.triggered.connect(self.transformacion_no_alcanzables)
 
-        eliminacionProduccionesEpsAction = QAction("Eliminación de producciones epsilon", self)
-        eliminacionProduccionesEpsAction.triggered.connect(self.transformacion_producciones_epsilon)
+        eliminacion_producciones_eps_action = QAction("Eliminación de producciones epsilon", self)
+        eliminacion_producciones_eps_action.triggered.connect(self.transformacion_producciones_epsilon)
 
-        eliminacionCiclosAction = QAction("Eliminación de ciclos", self)
-        eliminacionCiclosAction.triggered.connect(self.transformacion_eliminacion_ciclos)
+        eliminacion_ciclos_action = QAction("Eliminación de ciclos", self)
+        eliminacion_ciclos_action.triggered.connect(self.transformacion_eliminacion_ciclos)
+
+        forma_normal_chomsky = QAction("Forma nomral de Chomsky", self)
+        forma_normal_chomsky.triggered.connect(self.forma_normal_chomsky)
+
+        forma_normal_greibach = QAction("Forma nomral de Greibach", self)
+        forma_normal_greibach.triggered.connect(self.forma_normal_greibach)
 
         # Agregar las opciones de menú al menú transformaciones
-        transformacionesMenu.addAction(factorizacionIzquierdaAction)
-        transformacionesMenu.addAction(eliminacionNoDerivablesAction)
-        transformacionesMenu.addAction(eliminacionRecursividadIzqAction)
-        transformacionesMenu.addAction(eliminacionNoAlcanzablesAction)
-        transformacionesMenu.addAction(eliminacionProduccionesEpsAction)
-        transformacionesMenu.addAction(eliminacionCiclosAction)
+        transformaciones_menu.addAction(factorizacion_izquierda_action)
+        transformaciones_menu.addAction(eliminacion_no_derivables_action)
+        transformaciones_menu.addAction(eliminacion_recursividad_izq_action)
+        transformaciones_menu.addAction(eliminacion_no_alcanzables_action)
+        transformaciones_menu.addAction(eliminacion_producciones_eps_action)
+        transformaciones_menu.addAction(eliminacion_ciclos_action)
+        transformaciones_menu.addAction(forma_normal_chomsky)
+        transformaciones_menu.addAction(forma_normal_greibach)
 
     def pestania_parse(self):
         parseMenu = QMenu("Parse", self)
@@ -252,7 +259,7 @@ class MainWindow(QMainWindow):
         self.textEdit.cursorPositionChanged.connect(self.actualizar_linea_columna)
         self.setCentralWidget(self.textEdit)
 
-        # Barra modo
+        # Barra modo, linea y columna del cursor
         self.statusBar = QStatusBar()
         self.setStatusBar(self.statusBar)
 
@@ -264,7 +271,22 @@ class MainWindow(QMainWindow):
         self.statusBar.addPermanentWidget(self.linea_label)
         self.statusBar.addPermanentWidget(self.columna_label)
 
-        self.modo_label.setText(f"Modo: escritura")
+        if len(sys.argv) > 1 and sys.argv[1] == "-f":
+            self.menu_gramaticas()
+            fichero = open(sys.argv[2]).read()
+            gramatica = yacc.parse(fichero)
+            self.token_inicial = gramatica[0]
+            self.tokens_terminales = gramatica[1]
+            self.tokens_no_terminales = gramatica[2]
+            self.producciones = gramatica[3]
+
+            self.textEdit.setPlainText(fichero)  # Escribimos el fichero
+            self.textEdit.setReadOnly(True)      # Activamos modo lectura
+            self.modo_label.setText(f"Modo: lectura")
+            os.remove("ficheroANAGRA_temporal.txt")
+
+        else:
+            self.modo_label.setText(f"Modo: escritura")
 
         self.actualizar_linea_columna()
 
@@ -282,7 +304,15 @@ class MainWindow(QMainWindow):
 
     def abrir_nueva_aplicacion(self):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
         python_path = sys.executable
-        os.system(python_path + " " + os.path.abspath(__file__))
+        os.system(python_path + " " + os.path.abspath(__file__) + " &")
+
+    def abrir_nueva_aplicacion_texto(self, texto):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
+        fichero = open("ficheroANAGRA_temporal.txt", "w")
+        fichero.write(texto)
+        fichero.close()
+        python_path = sys.executable
+        os.system(python_path + " " + os.path.abspath(__file__) + " -f ficheroANAGRA_temporal.txt &")
+        print("hola")
 
     def abrir_fichero(self):
         dialogo = QFileDialog(self, "Abrir archivo")
@@ -303,6 +333,7 @@ class MainWindow(QMainWindow):
             self.textEdit.setPlainText(fichero)  # Escribimos el fichero
             self.textEdit.setReadOnly(True)      # Activamos modo lectura
             self.modo_label.setText(f"Modo: lectura")
+
 
     def guardar(self):
         print()
@@ -397,6 +428,7 @@ class MainWindow(QMainWindow):
         print()
 
     def calcular_conjunto_primero_frase(self):
+        conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         print()
 
     def transformacion_factorizacion_izquierda(self):
@@ -409,7 +441,7 @@ class MainWindow(QMainWindow):
         ot.gramatica_no_vacia(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
 
     def transformacion_recursividad_izquierda(self):
-        self.tokens_no_terminales, self.producciones = ot.eliminar_recursividad_izquierda(self.tokens_no_terminales, self.producciones)
+        self.tokens_no_terminales, self.producciones, _ = ot.eliminar_recursividad_izquierda(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
@@ -424,6 +456,14 @@ class MainWindow(QMainWindow):
 
     def transformacion_eliminacion_ciclos(self):
         self.producciones = ot.eliminacion_producciones_unitarias(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def forma_normal_chomsky(self):
+        self.producciones = ot.forma_normal_chomsky(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.mostrar_gramatica()
+
+    def forma_normal_greibach(self):
+        self.tokens_no_terminales, self.producciones = ot.forma_normal_greibach(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def mostrar_gramatica(self):

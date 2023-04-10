@@ -70,8 +70,14 @@ def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_n
     return nuevo, nuevas_producciones
 
 
-def eliminar_recursividad_izquierda(tokens_no_terminales, producciones):
+def eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones):
     tokens_nt = list(tokens_no_terminales)
+
+    # cambiamos la posicion del primer elemnto para que este el token inicial
+    if tokens_nt.index(token_inicial) != 0:
+        pos_token_inicial = tokens_nt.index(token_inicial)
+        tokens_nt[pos_token_inicial], tokens_nt[0] = tokens_nt[0], tokens_nt[pos_token_inicial]
+
     for i, token_i in enumerate(tokens_nt):
         if i > 0:
             for j, token_j in enumerate(tokens_nt[:i-1]):
@@ -81,7 +87,8 @@ def eliminar_recursividad_izquierda(tokens_no_terminales, producciones):
                         for produccion_remplazar in producciones[token_j]:
                             producciones[token_i].append(produccion_remplazar + produccion[1:])
         tokens_no_terminales, producciones = eliminar_recursividad_izquierda_directa(token_i, tokens_no_terminales, producciones)
-    return tokens_no_terminales, producciones
+
+    return tokens_no_terminales, producciones, tokens_nt
 
 def eliminar_recursividad_izquierda_directa(token, tokens_no_terminales, producciones):
     reglas_recursivas = list()
@@ -95,11 +102,13 @@ def eliminar_recursividad_izquierda_directa(token, tokens_no_terminales, producc
         producciones[token].clear()
         nombre = token + "_rec"
         tokens_no_terminales.add(nombre)
-        producciones[nombre] = [[]]
+        producciones[nombre] = [None]
         for regla in reglas_recursivas:
             producciones[nombre].append(regla + [nombre])
+            print(producciones[nombre])
         for regla in reglas_no_recursivas:
             producciones[token].append(regla + [nombre])
+            print(producciones[nombre])
     return tokens_no_terminales, producciones
 
 def is_nullable(token, tokens_no_terminales, producciones):
@@ -208,7 +217,7 @@ def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producci
 def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     tokens_no_terminales, producciones = eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
     tokens_no_terminales, producciones = eliminacion_producciones_unitarias(tokens_no_terminales, producciones)
-    tokens_no_terminales, producciones = eliminar_recursividad_izquierda(tokens_no_terminales, producciones)
+    tokens_no_terminales, producciones = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
     tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
@@ -277,6 +286,7 @@ def encontrar_prefijos(cadena_referencia, cadenas, nombre_prod, tokens_no_termin
             cadenas.append(cadena_referencia[:indice] + [nombre])
             for cadena_comun in cadenas_comunes: # elimino las producciones comunes
                 cadenas.remove(cadena_comun)
+
             producciones[nombre_prod] = cadenas
             tokens_no_terminales, producciones, _ = encontrar_prefijos(producciones[nombre][0], producciones[nombre], nombre, tokens_no_terminales, producciones, 0, sufijo)
             return tokens_no_terminales, producciones, veces + 1
@@ -284,7 +294,55 @@ def encontrar_prefijos(cadena_referencia, cadenas, nombre_prod, tokens_no_termin
     return tokens_no_terminales, producciones, veces
 
 
+def forma_normal_greibach(token_inicial, tokens_no_terminales, producciones):
+    print("paso 0:")
+    print("tokens_no_terminales:", tokens_no_terminales)
+    print("producciones:", producciones)
+    tokens_no_terminales, producciones_nuevas, tokens_nt = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
 
-def forma_normal_greibach(tokens_no_terminales, producciones):
+    print("paso 1:")
+    print("tokens_no_terminales:", tokens_no_terminales)
+    print("producciones:", producciones_nuevas)
+    for token in reversed(tokens_nt):
+        print("token:", token)
+        print("producciones[token]:", producciones[token])
+        producciones_a_eliminar = []
+        for produccion in producciones[token]:
+            print("produccion:", produccion)
+            if produccion is not None and produccion[0] in tokens_no_terminales:
+                print("empiezo por token no terminal:", produccion)
+                producciones_a_eliminar.append(produccion)
+                print("producciones[token] despues de eliminar produccion:", producciones_nuevas[token])
+                for produccion_remplazar in producciones[produccion[0]]:
+                    producciones_nuevas[token].append(produccion_remplazar + produccion[1:])
+                    #print("\t cambio por:", [produccion_remplazar + produccion[1:]])
+                print("producciones[token] despues de añadir producciones:", producciones_nuevas[token])
 
-    return tokens_no_terminales, producciones
+        for produccion in producciones_a_eliminar:
+            producciones[token].remove(produccion)
+
+    tokens_nuevos = tokens_no_terminales.difference(set(tokens_nt))
+    print(tokens_nuevos)
+
+    print("paso 2:")
+    print("tokens_no_terminales:", tokens_no_terminales)
+    print("producciones:", producciones)
+
+    for token in tokens_nuevos:
+        print("token:", token)
+        producciones_a_eliminar = []
+        for produccion in producciones[token]:
+            print("produccion:", produccion)
+            if produccion is not None and produccion[0] in tokens_no_terminales:
+                print("empiezo por token no terminal:", produccion)
+                producciones_a_eliminar.append(produccion)
+                for produccion_remplazar in producciones[produccion[0]]:
+                    producciones_nuevas[token].append(produccion_remplazar + produccion[1:])
+                    print("\t cambio por:", [produccion_remplazar + produccion[1:]])
+        for produccion in producciones_a_eliminar:
+            producciones[token].remove(produccion)
+    print("paso 3:")
+    print("tokens_no_terminales:", tokens_no_terminales)
+    print("producciones:", producciones)
+
+    return tokens_no_terminales, producciones_nuevas
