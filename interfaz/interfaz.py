@@ -454,7 +454,7 @@ class MainWindow(QMainWindow):
         self.producciones = ot.eliminacion_producciones_epsilon(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
-    def transformacion_eliminacion_ciclos(self):
+    def transformacion_eliminacion_ciclos  (self):
         self.producciones = ot.eliminacion_producciones_unitarias(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
@@ -475,7 +475,7 @@ class MainWindow(QMainWindow):
                 if produccion is not None:
                     for token_produccion in produccion:
                         texto += token_produccion + "  "
-                if indice != len(self.producciones  [token]) - 1:
+                if indice != len(self.producciones[token]) - 1:
                     texto += "\n" + espacios + "| "
             texto += "\n;\n\n"
         texto += "%%"

@@ -1,0 +1,36 @@
+%token NUM
+%left '-' '+'
+%type  <val>  exp
+
+%%
+input:  /* comentario chulo */
+        | input line
+;
+
+line:     '\n'
+        | exp '\n'
+;
+
+exp:      NUM
+        | exp1 exp '+'
+        | exp1 exp '-'
+        | exp1 exp '*'
+        | exp1 exp '/'
+        | exp1 exp '^'
+        | exp1 "lol"
+;
+
+exp1:      "lol"
+;
+
+exp2:      '^'
+;
+
+exp3:      '^'
+;
+
+exp3:    input line
+;
+
+
+%%

@@ -1,0 +1,11 @@
+%%
+S: A B Ca | A Ca | 'a' | A A | A A A;
+
+A: A B Ca | A Ca | 'a';
+
+B: A B Ca | A Ca | A Cb;
+
+Ca: 'a';
+
+Cb: 'b';
+%%

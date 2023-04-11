@@ -1,0 +1,21 @@
+ 
+%%
+S: A B C D | A B C | A B | A |
+   M N O P | M N O | M N | M ;
+
+A: 'a';
+
+B: 'b';
+
+C: 'c';
+
+D: 'd';
+
+M: 'm';
+
+N: 'n';
+
+O: 'o';
+
+P: 'p';
+%%
