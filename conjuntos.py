@@ -1,4 +1,4 @@
-def conjunto_primero_token(token, tokens_terminales, tokens_no_terminales, producciones):
+def conjunto_primero_token(token, tokens_recursivos, tokens_terminales, tokens_no_terminales, producciones):
     primero = set()
 
     if token in tokens_terminales:
@@ -10,30 +10,21 @@ def conjunto_primero_token(token, tokens_terminales, tokens_no_terminales, produ
 
     for produccion in producciones[token]:
         conjuntos_primero = []
-        conjunto_interseccion = tokens_terminales | tokens_no_terminales
-        conjunto_interseccion |= {None}
+        conjunto_interseccion = tokens_terminales | tokens_no_terminales | {None}
         if produccion is not None:
             for token_prod in produccion:
-                if token_prod != token:
-                    primero_token = conjunto_primero_token(token_prod, tokens_terminales, tokens_no_terminales, producciones)
+                if token_prod not in tokens_recursivos:
+                    primero_token = conjunto_primero_token(token_prod, tokens_recursivos | set(token_prod), tokens_terminales, tokens_no_terminales, producciones)
                     conjuntos_primero.append(primero_token)
                     conjunto_interseccion &= primero_token
 
             if None in conjunto_interseccion:
                 primero.add(None)
-            if len(conjuntos_primero) == 1:
-                primero |= conjuntos_primero[0]
-            else:
 
-                for i, conjunto_1 in enumerate(conjuntos_primero):
-                    for elemento in conjunto_1:
-                        conjunto_interseccion = tokens_terminales | tokens_no_terminales | {None}
-                        for j in range(0, i):
-                            conjunto_interseccion &= conjuntos_primero[j]
-                        if elemento is not None and i == 0:
-                            primero.add(elemento)
-                        elif elemento is not None and None in conjunto_interseccion:
-                            primero.add(elemento)
+            for conjunto in conjuntos_primero:
+                primero |= conjunto.difference({None})
+                if None not in conjunto:
+                    break
 
     return primero
 
@@ -41,8 +32,8 @@ def conjunto_primero_token(token, tokens_terminales, tokens_no_terminales, produ
 def conjunto_primero(tokens_terminales, tokens_no_terminales, producciones):
     conjunto_primero = dict()
     for token in tokens_terminales | tokens_no_terminales:
-        conjunto_primero[token] = conjunto_primero_token(token, tokens_terminales, tokens_no_terminales, producciones)
-
+        conjunto_primero[token] = conjunto_primero_token(token, set(token), tokens_terminales, tokens_no_terminales, producciones)
+        #print("PRI(", token, "): ", conjunto_primero_token(token, set(token), tokens_terminales, tokens_no_terminales, producciones))
     return conjunto_primero
 
 def conjunto_siguiente(token_inicial, tokens_terminales, tokens_no_terminales, producciones):

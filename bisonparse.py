@@ -6,6 +6,7 @@ import re
 from ply import *
 
 tokens = bisonlex.tokens
+# mirar si se meten producciones repetidas
 
 start = 'bison'
 
@@ -89,10 +90,15 @@ def p_expresion(p):
                   | LITERAL
                   | prec '''
     p[0] = [p[1]]
+
+def p_expresion_epsilon(p):
+    ''' expresion :  empty '''
+
+
 def p_listaExpresiones(p):
-    ''' listaExpresiones : expresion
-                         | empty '''
+    ''' listaExpresiones : expresion '''
     p[0] = [p[1]]
+
 
 def p_listaExpresiones_expresion(p):
     ''' listaExpresiones : listaExpresiones '|' expresion '''
@@ -121,8 +127,6 @@ def p_produccion(p):
                     tokens_no_terminales.add(token)
 
 
-
-
 def p_listaProducciones(p):
     ''' listaProducciones : listaProducciones produccion '''
     p[1].append(p[2])
@@ -142,10 +146,6 @@ def p_reglas(p):
 def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
-    #print("token_inicial", token_inicial)
-    #print("tokens_terminales", tokens_terminales)
-    #print("tokens_no_terminales", tokens_no_terminales)
-    #print("producciones", producciones)
     p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
 
 def p_error(p):

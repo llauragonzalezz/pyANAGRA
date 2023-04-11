@@ -1,5 +1,8 @@
 import os
 import sys
+## 18 a las 11:30
+# terminar cosas pendientes, intentar la simulación (acabar en dolar para acabar el fichero(eof) convención), traducirlo al ingles
+
 
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
@@ -24,105 +27,105 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú gramatica
 
-        nuevoAction = QAction("Nuevo", self)
-        nuevoAction.setShortcut(QKeySequence.New)
-        nuevoAction.triggered.connect(self.abrir_nueva_aplicacion)
+        nuevo_action = QAction("Nuevo", self)
+        nuevo_action.setShortcut(QKeySequence.New)
+        nuevo_action.triggered.connect(self.abrir_nueva_aplicacion)
 
-        abrirAction = QAction("Abrir", self)
-        abrirAction.setShortcut(QKeySequence.Open)
-        abrirAction.triggered.connect(self.abrir_fichero)
+        abrir_action = QAction("Abrir", self)
+        abrir_action.setShortcut(QKeySequence.Open)
+        abrir_action.triggered.connect(self.abrir_fichero)
 
-        editarAction = QAction("Editar", self)
-        # editarAction.setShortcut(QKeySequence.) TODO NO EXISTE EDITAR
-        editarAction.setEnabled(False)  # Deshabilitar la acción
+        editar_action = QAction("Editar", self)
+        # editar_action.setShortcut(QKeySequence.) TODO NO EXISTE EDITAR
+        editar_action.setEnabled(False)  # Deshabilitar la acción
 
-        cerrarAction = QAction("Cerrar", self)
-        cerrarAction.setShortcut(QKeySequence.Close)
+        cerrar_action = QAction("Cerrar", self)
+        cerrar_action.setShortcut(QKeySequence.Close)
 
-        guardarAction = QAction("Guardar", self)
-        guardarAction.setShortcut(QKeySequence.Save)
-        guardarAction.setEnabled(False)  # Deshabilitar la acción
+        guardar_action = QAction("Guardar", self)
+        guardar_action.setShortcut(QKeySequence.Save)
+        guardar_action.setEnabled(False)  # Deshabilitar la acción
 
-        guardarComoAction = QAction("Guardar como...", self)
-        guardarComoAction.setShortcut(QKeySequence.SaveAs)
-        guardarComoAction.triggered.connect(self.guardar_como)
+        guardar_como_action = QAction("Guardar como...", self)
+        guardar_como_action.setShortcut(QKeySequence.SaveAs)
+        guardar_como_action.triggered.connect(self.guardar_como)
 
 
         salirAction = QAction("Salir", self)
         salirAction.setShortcut(QKeySequence.Quit)
 
         # Agregar las opciones de menú al menú grmática
-        gramaticaMenu.addAction(nuevoAction)
-        gramaticaMenu.addAction(abrirAction)
-        gramaticaMenu.addAction(editarAction)
-        gramaticaMenu.addAction(cerrarAction)
-        gramaticaMenu.addAction(guardarAction)
-        gramaticaMenu.addAction(guardarComoAction)
+        gramaticaMenu.addAction(nuevo_action)
+        gramaticaMenu.addAction(abrir_action)
+        gramaticaMenu.addAction(editar_action)
+        gramaticaMenu.addAction(cerrar_action)
+        gramaticaMenu.addAction(guardar_action)
+        gramaticaMenu.addAction(guardar_como_action)
         gramaticaMenu.addSeparator()  # Línea de separación
         gramaticaMenu.addAction(salirAction)
     def pestania_editar(self):
-        editarMenu = QMenu("Editar", self)
-        self.menubar.addMenu(editarMenu)
+        editar_menu = QMenu("Editar", self)
+        self.menubar.addMenu(editar_menu)
 
         # Opciones de menú al menú editar
-        cortarAction = QAction("Cortar", self)
-        cortarAction.setShortcut(QKeySequence.Cut)
-        cortarAction.triggered.connect(self.cortar)
+        cortar_action = QAction("Cortar", self)
+        cortar_action.setShortcut(QKeySequence.Cut)
+        cortar_action.triggered.connect(self.cortar)
 
-        copiarAction = QAction("Copiar", self)
-        copiarAction.setShortcut(QKeySequence.Copy)
-        copiarAction.triggered.connect(self.copiar)
+        copiar_action = QAction("Copiar", self)
+        copiar_action.setShortcut(QKeySequence.Copy)
+        copiar_action.triggered.connect(self.copiar)
 
-        pegarAction = QAction("Pegar", self)
-        pegarAction.setShortcut(QKeySequence.Paste)
-        pegarAction.triggered.connect(self.pegar)
+        pegar_action = QAction("Pegar", self)
+        pegar_action.setShortcut(QKeySequence.Paste)
+        pegar_action.triggered.connect(self.pegar)
 
-        borrarAction = QAction("Borrar", self)
+        borrar_action = QAction("Borrar", self)
 
-        seleccionarTodoAction = QAction("Seleccionar todo", self)
-        seleccionarTodoAction.setShortcut(QKeySequence.SelectAll)
-        seleccionarTodoAction.triggered.connect(self.seleccionar_todo)
+        seleccionar_todo_action = QAction("Seleccionar todo", self)
+        seleccionar_todo_action.setShortcut(QKeySequence.SelectAll)
+        seleccionar_todo_action.triggered.connect(self.seleccionar_todo)
 
-        aceptarGramaticaAction = QAction("Aceptar gramática", self)
-        aceptarGramaticaAction.triggered.connect(self.aceptar_gramatica)
+        aceptar_gramatica_action = QAction("Aceptar gramática", self)
+        aceptar_gramatica_action.triggered.connect(self.aceptar_gramatica)
 
         rechazarGramaticaAction = QAction("Rechazar gramática", self)
         rechazarGramaticaAction.setEnabled(False)  # Deshabilitar la acción
 
         # Agregar las opciones de menú al menú editar
-        editarMenu.addAction(cortarAction)
-        editarMenu.addAction(copiarAction)
-        editarMenu.addAction(pegarAction)
-        editarMenu.addAction(borrarAction)
-        editarMenu.addAction(seleccionarTodoAction)
-        editarMenu.addSeparator()  # Línea de separación
-        editarMenu.addAction(aceptarGramaticaAction)
-        editarMenu.addAction(rechazarGramaticaAction)
+        editar_menu.addAction(cortar_action)
+        editar_menu.addAction(copiar_action)
+        editar_menu.addAction(pegar_action)
+        editar_menu.addAction(borrar_action)
+        editar_menu.addAction(seleccionar_todo_action)
+        editar_menu.addSeparator()  # Línea de separación
+        editar_menu.addAction(aceptar_gramatica_action)
+        editar_menu.addAction(rechazarGramaticaAction)
 
     def pestania_buscar(self):
-        buscarMenu = QMenu("Buscar", self)
-        self.menubar.addMenu(buscarMenu)
+        buscar_menu = QMenu("Buscar", self)
+        self.menubar.addMenu(buscar_menu)
 
         # Opciones de menú al menú buscar
-        buscarAction = QAction("Buscar", self)
-        buscarAction.setShortcut(QKeySequence.Find)
-        reemplazarAction = QAction("Reemplazar", self)
-        reemplazarAction.setShortcut(QKeySequence.Replace)
-        buscarDeNuevoAction = QAction("Buscar de nuevo", self)
-        buscarDeNuevoAction.setEnabled(False)  # Deshabilitar la acción
-        # buscarDeNuevoAction.setShortcut(QKeySequence.FindNext)  TODO NO SE CUAL ES, SHIFT+B NO ES NADA
+        buscar_action = QAction("Buscar", self)
+        buscar_action.setShortcut(QKeySequence.Find)
+        reemplazar_action = QAction("Reemplazar", self)
+        reemplazar_action.setShortcut(QKeySequence.Replace)
+        buscar_de_nuevo_action = QAction("Buscar de nuevo", self)
+        buscar_de_nuevo_action.setEnabled(False)  # Deshabilitar la acción
+        # buscar_de_nuevo_action.setShortcut(QKeySequence.FindNext)  TODO NO SE CUAL ES, SHIFT+B NO ES NADA
         irALineaAction = QAction("Ir a linea...", self)
 
         # Agregar las opciones de menú al menú buscar
-        buscarMenu.addAction(buscarAction)
-        buscarMenu.addAction(reemplazarAction)
-        buscarMenu.addAction(buscarDeNuevoAction)
-        buscarMenu.addSeparator()  # Línea de separación
-        buscarMenu.addAction(irALineaAction)
+        buscar_menu.addAction(buscar_action)
+        buscar_menu.addAction(reemplazar_action)
+        buscar_menu.addAction(buscar_de_nuevo_action)
+        buscar_menu.addSeparator()  # Línea de separación
+        buscar_menu.addAction(irALineaAction)
 
     def pestania_texto(self):
-        textMenu = QMenu("Texto", self)
-        self.menubar.addMenu(textMenu)
+        text_menu = QMenu("Texto", self)
+        self.menubar.addMenu(text_menu)
 
         # Opciones de menú al menú text
         idiomaSubmenu = QMenu("Idioma", self)
@@ -143,8 +146,8 @@ class MainWindow(QMainWindow):
         guardarPreferenciasAction = QAction("Guardar preferencias", self)
 
         # Agregar las opciones de menú al menú text
-        textMenu.addMenu(idiomaSubmenu)
-        textMenu.addAction(guardarPreferenciasAction)
+        text_menu.addMenu(idiomaSubmenu)
+        text_menu.addAction(guardarPreferenciasAction)
 
     def pestania_ayuda(self):
         ayuda_menu = QMenu("Ayuda", self)
