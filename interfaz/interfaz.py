@@ -1,12 +1,13 @@
 import os
 import sys
+import json
 ## 18 a las 11:30
 # terminar cosas pendientes, intentar la simulación (acabar en dolar para acabar el fichero(eof) convención), traducirlo al ingles
 
 
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
-    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp
+    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QTableWidgetItem, QTableWidget
 
 import bisonlex
 import bisonparse
@@ -17,7 +18,6 @@ import conjuntos as conj
 class NewApplication:
     def __init__(self):
         super().__init__(sys.argv)
-
 
 class MainWindow(QMainWindow):
 
@@ -171,12 +171,16 @@ class MainWindow(QMainWindow):
         conjunto_siguiente_action = QAction("Calcular conjunto SIGUIENTE", self)
         conjunto_siguiente_action.triggered.connect(self.calcular_conjunto_siguiente)
 
-        conjunto_primero_frase_action = QAction("Calcular conjunto PRIMERO de forma frase", self)
+        tabla_action = QAction("Calcular tabla", self)
+        tabla_action.triggered.connect(self.calcular_tabla_analisis)
+
+        conjunto_primero_frase_action = QAction("Analisis", self)
         conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
         herramientas_menu.addAction(conjunto_primero_action)
         herramientas_menu.addAction(conjunto_siguiente_action)
+        herramientas_menu.addAction(tabla_action)
         herramientas_menu.addAction(conjunto_primero_frase_action)
 
     def pestania_transformaciones(self):
@@ -287,6 +291,17 @@ class MainWindow(QMainWindow):
             self.textEdit.setReadOnly(True)      # Activamos modo lectura
             self.modo_label.setText(f"Modo: lectura")
             os.remove("ficheroANAGRA_temporal.txt")
+        elif len(sys.argv) > 1 and sys.argv[1] == "-i":
+            self.menu_gramaticas()
+            gramatica = yacc.parse(sys.argv[2])
+            self.token_inicial = gramatica[0]
+            self.tokens_terminales = gramatica[1]
+            self.tokens_no_terminales = gramatica[2]
+            self.producciones = gramatica[3]
+
+            self.textEdit.setPlainText(sys.argv[2])  # Escribimos el fichero
+            self.textEdit.setReadOnly(True)  # Activamos modo lectura
+            self.modo_label.setText(f"Modo: lectura")
 
         else:
             self.modo_label.setText(f"Modo: escritura")
@@ -297,6 +312,7 @@ class MainWindow(QMainWindow):
         self.tokens_terminales = set()
         self.tokens_no_terminales = set()
         self.producciones = dict()
+        self.tabla = dict()
 
     def actualizar_linea_columna(self):
         cursor = self.textEdit.textCursor()
@@ -315,6 +331,11 @@ class MainWindow(QMainWindow):
         fichero.close()
         python_path = sys.executable
         os.system(python_path + " " + os.path.abspath(__file__) + " -f ficheroANAGRA_temporal.txt &")
+        print("hola")
+
+    def abrir_nueva_aplicacion_input(self, texto):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
+        python_path = sys.executable
+        os.system(python_path + " " + os.path.abspath(__file__) + " -f ficheroANAGRA_temporal.txt " + texto + "&")
         print("hola")
 
     def abrir_fichero(self):
@@ -423,16 +444,69 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, "Cambio idioma", "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
     def calcular_conjunto_primero(self):
-        conj.conjunto_primero(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        print()
+        primero = conj.conjunto_primero(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        # FIXME es mejor esto o ponerlo en primero
+        for key in primero:
+            primero[key] = list(primero[key])
+            primero[key] = list(primero[key])
 
-    def calcular_conjunto_siguiente(self):
+        # Escribiendo el diccionario en un archivo JSON
+        with open("mi_diccionario.json", "w") as archivo_json:
+            json.dump(primero, archivo_json)
+
+        dir_actual = os.path.dirname(__file__)
+        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
+        python_path = sys.executable
+        os.system(python_path + " " + ruta_archivo + " -p " + "mi_diccionario.json" + " &")
+
+
+    def calcular_conjunto_siguiente(self): # TODO POONER LA FECHA PARA QUE NO HAYA POSIBLES CONFLICTOS
         siguiente = conj.conjunto_siguiente(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        print()
+
+        for key in siguiente:
+            siguiente[key] = list(siguiente[key])
+
+        # Escribiendo el diccionario en un archivo JSON
+        with open("mi_diccionario.json", "w") as archivo_json:
+            json.dump(siguiente, archivo_json)
+
+        dir_actual = os.path.dirname(__file__)
+        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
+        python_path = sys.executable
+        os.system(python_path + " " + ruta_archivo + " -s " + "mi_diccionario.json" + " &")
+
+    def calcular_tabla_analisis(self):
+        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        print("tabla antes:", self.tabla)
+        tabla = {','.join(k): v for k, v in self.tabla.items()}
+        print("tabla despues:", tabla)
+
+        # Escribiendo el diccionario en un archivo JSON
+        with open("mi_diccionario.json", "w") as archivo_json:
+            json.dump(tabla, archivo_json)
+
+        dir_actual = os.path.dirname(__file__)
+        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
+        python_path = sys.executable
+        os.system(python_path + " " + ruta_archivo + " -t " + "mi_diccionario.json" + " &")
+
 
     def calcular_conjunto_primero_frase(self):
-        conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        print()
+        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales,
+                                             self.producciones)
+        print("tabla antes:", self.tabla)
+        tabla = {index: elemento for index, elemento in enumerate(self.tabla)}
+        print("tabla despues:", tabla)
+
+        # Escribiendo el diccionario en un archivo JSON
+        with open("mi_diccionario.json", "w") as archivo_json:
+            json.dump(tabla, archivo_json)
+
+        dir_actual = os.path.dirname(__file__)
+        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
+        python_path = sys.executable
+        os.system(python_path + " " + ruta_archivo + " -sim " + "mi_diccionario.json" + " &")
+
 
     def transformacion_factorizacion_izquierda(self):
         self.tokens_no_terminales, self.producciones = ot.factorizacion_izquierda(self.tokens_no_terminales, self.producciones)
@@ -457,7 +531,7 @@ class MainWindow(QMainWindow):
         self.producciones = ot.eliminacion_producciones_epsilon(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
-    def transformacion_eliminacion_ciclos  (self):
+    def transformacion_eliminacion_ciclos(self):
         self.producciones = ot.eliminacion_producciones_unitarias(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
@@ -468,6 +542,7 @@ class MainWindow(QMainWindow):
     def forma_normal_greibach(self):
         self.tokens_no_terminales, self.producciones = ot.forma_normal_greibach(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
+        self.abrir_nueva_aplicacion_texto()
 
     def mostrar_gramatica(self):
         texto = f"%start {self.token_inicial}\n%%\n\n"
@@ -484,9 +559,26 @@ class MainWindow(QMainWindow):
         texto += "%%"
         self.textEdit.setPlainText(texto)
 
+    def escribir_gramatica(self, token_inicial, producciones):
+        texto = f"%start {token_inicial}\n%%\n\n"
+        for token, producciones_token in producciones.items():
+            texto += token + ": "
+            espacios = " " * (len(token) + 2)
+            for indice, produccion in enumerate(producciones_token):
+                if produccion is not None:
+                    for token_produccion in produccion:
+                        texto += token_produccion + "  "
+                if indice != len(producciones[token]) - 1:
+                    texto += "\n" + espacios + "| "
+            texto += "\n;\n\n"
+        texto += "%%"
+        return texto
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     ventana = MainWindow()
     ventana.show()
-    sys.exit(app.exec_())
+    app.exec_()
+    sys.exit()

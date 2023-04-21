@@ -22,10 +22,14 @@ def p_prec(p):
     # ignoramos prec
     p[0] = p[2]
 
-
 def p_start(p):
     ''' start : START TOKENID '''
     bisonparse.token_inicial = p[2]
+
+def p_token(p):
+    ''' token : TOKEN TOKENID listaTokens'''
+    print(p[2])
+    tokens_terminales.add(p[2]) #FIXME
 
 def p_declaracion_tipo(p):
     ''' declaracion_tipo : LEFT
@@ -33,17 +37,16 @@ def p_declaracion_tipo(p):
                          | NONASSOC
                          | PRECEDENCE
                          | TYPE
-                         | TOKEN
                          | NTERM '''
     p[0] = p[1]
 
 def p_tipo_dato(p):
-    '''
-    tipo_dato : '<' TOKENID '>'
-    '''
+    ''' tipo_dato : '<' TOKENID '>' '''
 
 def p_declaracion(p):
-    ''' declaracion  : start'''
+    ''' declaracion  : start
+                     | token '''
+
 def p_declaracion_tokens_tipo(p):
     ''' declaracion  : declaracion_tipo tipo_dato listaTokens'''
     if p[1] != "%type":
@@ -121,7 +124,7 @@ def p_produccion(p):
     for produccion in p[3]:
         if produccion is not None:
             for token in produccion:
-                if pattern.fullmatch(token):           # es un terminal
+                if pattern.fullmatch(token) :           # es un terminal
                     tokens_terminales.add(token)
                 elif (not pattern.fullmatch(token)) and token not in tokens_terminales:  # es un no terminal
                     tokens_no_terminales.add(token)
@@ -147,6 +150,12 @@ def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
     p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    print("token_inicial:", token_inicial)
+    print("tokens_terminales:", tokens_terminales)
+    print("tokens_no_terminales:", tokens_no_terminales)
+    print("producciones:", producciones)
+
+
 
 def p_error(p):
     print(f'Syntax error at {p.value!r}')
