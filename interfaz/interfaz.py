@@ -15,6 +15,7 @@ from ply import *
 
 import operacionesTransformacion as ot
 import conjuntos as conj
+import conjuntos_tablas as conj_tab
 class NewApplication:
     def __init__(self):
         super().__init__(sys.argv)
@@ -123,11 +124,29 @@ class MainWindow(QMainWindow):
         buscar_menu.addSeparator()  # Línea de separación
         buscar_menu.addAction(irALineaAction)
 
-    def pestania_texto(self):
+    def pestania_texto(self, gramatica=False):
         text_menu = QMenu("Texto", self)
         self.menubar.addMenu(text_menu)
 
         # Opciones de menú al menú text
+        font_action = QAction("Fuente", self)
+        font_action.triggered.connect(self.cambiar_fuente)
+
+        color_action = QAction("Color", self)
+        color_action.triggered.connect(self.cambiar_color)
+
+        tab_action = QAction("Tab", self)
+        tab_action.triggered.connect(self.cambiar_tab)
+
+        extended_action = QAction("Extended", self)
+        extended_action.triggered.connect(self.mostrar_gramatica)
+        extended_action.setEnabled(gramatica)  # Deshabilitar la acción
+
+
+        compact_action = QAction("Compact", self)
+        compact_action.triggered.connect(self.mostrar_gramatica_compacta)
+        compact_action.setEnabled(gramatica)  # Deshabilitar la acción
+
         idiomaSubmenu = QMenu("Idioma", self)
 
         idiomaEnglish = QCheckBox("English", self)
@@ -146,6 +165,13 @@ class MainWindow(QMainWindow):
         guardarPreferenciasAction = QAction("Guardar preferencias", self)
 
         # Agregar las opciones de menú al menú text
+        text_menu.addAction(font_action)
+        text_menu.addAction(color_action)
+        text_menu.addAction(tab_action)
+        text_menu.addSeparator()  # Línea de separación
+        text_menu.addAction(extended_action)
+        text_menu.addAction(compact_action)
+        text_menu.addSeparator()  # Línea de separación
         text_menu.addMenu(idiomaSubmenu)
         text_menu.addAction(guardarPreferenciasAction)
 
@@ -342,7 +368,6 @@ class MainWindow(QMainWindow):
         dialogo = QFileDialog(self, "Abrir archivo")
         dialogo.setFileMode(QFileDialog.ExistingFile)
 
-        # Mostrar el diálogo para que el usuario seleccione un archivo
         if dialogo.exec_() == QFileDialog.Accepted:
             self.menu_gramaticas()
             # Obtenemos la ruta del archivo
@@ -373,7 +398,7 @@ class MainWindow(QMainWindow):
         self.menubar.clear()
         self.pestania_gramatica()
         self.pestania_buscar()
-        self.pestania_texto()
+        self.pestania_texto(True)
 
         self.pestania_herramientas()
         self.pestania_transformaciones()
@@ -439,74 +464,42 @@ class MainWindow(QMainWindow):
         msgBox.setText("Dirigido por: Joaquín Ezpeleta Mateo")
         msgBox.exec()
 
+    def cambiar_fuente(self):
+        print()
+
+    def cambiar_color(self):
+        print()
+
+    def cambiar_tab(self):
+        print()
+
     def cambiar_idioma(self):
         # Mostramos una ventana de mensaje con un pequeño texto
         QMessageBox.information(self, "Cambio idioma", "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
     def calcular_conjunto_primero(self):
         primero = conj.conjunto_primero(self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        # FIXME es mejor esto o ponerlo en primero
-        for key in primero:
-            primero[key] = list(primero[key])
-            primero[key] = list(primero[key])
-
-        # Escribiendo el diccionario en un archivo JSON
-        with open("mi_diccionario.json", "w") as archivo_json:
-            json.dump(primero, archivo_json)
-
-        dir_actual = os.path.dirname(__file__)
-        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
-        python_path = sys.executable
-        os.system(python_path + " " + ruta_archivo + " -p " + "mi_diccionario.json" + " &")
-
+        nueva_ventana = conj_tab.ConjuntoPrimero(primero, self)
+        nueva_ventana.show()
 
     def calcular_conjunto_siguiente(self): # TODO POONER LA FECHA PARA QUE NO HAYA POSIBLES CONFLICTOS
         siguiente = conj.conjunto_siguiente(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-
-        for key in siguiente:
-            siguiente[key] = list(siguiente[key])
-
-        # Escribiendo el diccionario en un archivo JSON
-        with open("mi_diccionario.json", "w") as archivo_json:
-            json.dump(siguiente, archivo_json)
-
-        dir_actual = os.path.dirname(__file__)
-        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
-        python_path = sys.executable
-        os.system(python_path + " " + ruta_archivo + " -s " + "mi_diccionario.json" + " &")
+        nueva_ventana = conj_tab.ConjuntoSiguiente(siguiente, self)
+        nueva_ventana.show()
 
     def calcular_tabla_analisis(self):
         self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        print("tabla antes:", self.tabla)
         tabla = {','.join(k): v for k, v in self.tabla.items()}
-        print("tabla despues:", tabla)
-
-        # Escribiendo el diccionario en un archivo JSON
-        with open("mi_diccionario.json", "w") as archivo_json:
-            json.dump(tabla, archivo_json)
-
-        dir_actual = os.path.dirname(__file__)
-        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
-        python_path = sys.executable
-        os.system(python_path + " " + ruta_archivo + " -t " + "mi_diccionario.json" + " &")
-
+        print("self.tabla:", self.tabla)
+        print("tabla:", tabla)
+        nueva_ventana = conj_tab.TablaAnalisis(self.tabla, self)
+        nueva_ventana.show()
 
     def calcular_conjunto_primero_frase(self):
-        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales,
-                                             self.producciones)
-        print("tabla antes:", self.tabla)
+        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         tabla = {index: elemento for index, elemento in enumerate(self.tabla)}
-        print("tabla despues:", tabla)
-
-        # Escribiendo el diccionario en un archivo JSON
-        with open("mi_diccionario.json", "w") as archivo_json:
-            json.dump(tabla, archivo_json)
-
-        dir_actual = os.path.dirname(__file__)
-        ruta_archivo = os.path.join(dir_actual, "conjuntos_tablas.py")
-        python_path = sys.executable
-        os.system(python_path + " " + ruta_archivo + " -sim " + "mi_diccionario.json" + " &")
-
+        nueva_ventana = conj_tab.TablaSimulacion(tabla, self)
+        nueva_ventana.show()
 
     def transformacion_factorizacion_izquierda(self):
         self.tokens_no_terminales, self.producciones = ot.factorizacion_izquierda(self.tokens_no_terminales, self.producciones)
@@ -556,6 +549,20 @@ class MainWindow(QMainWindow):
                 if indice != len(self.producciones[token]) - 1:
                     texto += "\n" + espacios + "| "
             texto += "\n;\n\n"
+        texto += "%%"
+        self.textEdit.setPlainText(texto)
+
+    def mostrar_gramatica_compacta(self):
+        texto = f"%start {self.token_inicial}\n%%\n"
+        for token, producciones_token in self.producciones.items():
+            texto += token + ": "
+            for indice, produccion in enumerate(producciones_token):
+                if produccion is not None:
+                    for token_produccion in produccion:
+                        texto += token_produccion + "  "
+                if indice != len(self.producciones[token]) - 1:
+                    texto += "| "
+            texto += ";\n"
         texto += "%%"
         self.textEdit.setPlainText(texto)
 

@@ -29,7 +29,6 @@ def conjunto_primero(tokens_terminales, tokens_no_terminales, producciones):
     conjunto_primero = dict()
     for token in tokens_terminales | tokens_no_terminales:
         conjunto_primero[token] = conjunto_primero_token(token, set(token), tokens_terminales, tokens_no_terminales, producciones)
-        print("PRI(", token, "): ", conjunto_primero_token(token, set(token), tokens_terminales, tokens_no_terminales, producciones))
     return conjunto_primero
 
 def conjunto_siguiente(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
@@ -109,7 +108,6 @@ def construccion_tabla(token_inicial, tokens_terminales, tokens_no_terminales, p
             if tabla[token_no_terminal, token_terminal] == dict():
                 tabla[token_no_terminal, token_terminal] = "error"  # que añado ?
                 # error
-    print(tabla)
 
-    tabla = LL1.simulate(tabla, token_inicial, tokens_terminales, "'(' 'x' ';' '(' 'x' ')' ')' $")
+    #tabla = LL1.simulate(tabla, token_inicial, tokens_terminales, "'(' 'x' ';' '(' 'x' ')' ')' $")
     return tabla

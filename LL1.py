@@ -70,8 +70,4 @@ def simulate(table, start_token, terminals, input):
                 print("error sintactico")
         x = stack[len(stack)-1]
 
-    for elemento in simulation_table:
-        print(elemento)
-    print(simulation_table)
-
     return simulation_table

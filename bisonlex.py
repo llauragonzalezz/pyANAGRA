@@ -64,7 +64,7 @@ from ply import lex
 from ply import yacc
 # All tokens must be named in advance.
 tokens = ('LEFT', 'RIGHT', 'NONASSOC', 'PRECEDENCE', 'PREC', 'EUNG', 'LITERAL',
-          'START', 'NTERM',  'TYPE', 'TOKEN',  'TOKENID', 'EMPTY', 'UNION')
+          'START', 'NTERM',  'TYPE', 'TOKEN',  'TOKENID', 'UNION')
 
 # Ignored characters
 literals = [';', '|', ':', '<', '>']
@@ -84,7 +84,6 @@ t_TOKEN = r'%token'
 t_EUNG = r'%%'
 t_UNION = r'%union'
 t_TOKENID = r'[a-zA-Z_][a-zA-Z_0-9]*'
-t_EMPTY = r'%empty'
 t_LITERAL = r'''(?P<quote>['"]).*?(?P=quote)'''
 
 
