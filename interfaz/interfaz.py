@@ -1,27 +1,111 @@
 import os
 import sys
-import json
-## 18 a las 11:30
-# terminar cosas pendientes, intentar la simulación (acabar en dolar para acabar el fichero(eof) convención), traducirlo al ingles
-
 
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
-    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QTableWidgetItem, QTableWidget
+    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
+    QPushButton, QWidget, QComboBox, QHBoxLayout
 
-import bisonlex
-import bisonparse
+import LL1
 from ply import *
 
 import operacionesTransformacion as ot
 import conjuntos as conj
 import conjuntos_tablas as conj_tab
+import simulacion as sim
+
+
 class NewApplication:
     def __init__(self):
         super().__init__(sys.argv)
 
-class MainWindow(QMainWindow):
 
+class VentanaInputGramatica(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Input")
+        self.setGeometry(200, 200, 400, 200)
+
+        layout = QVBoxLayout()
+
+        label = QLabel("Input:")
+        layout.addWidget(label)
+
+        self.text_edit = QPlainTextEdit()
+        layout.addWidget(self.text_edit)
+
+        boton_aceptar = QPushButton("Aceptar", self)
+        boton_aceptar.clicked.connect(self.aceptar)
+        layout.addWidget(boton_aceptar)
+
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def aceptar(self):
+        # Aquí puedes obtener el texto ingresado en el QPlainTextEdit
+        texto = self.text_edit.toPlainText()
+        print("Texto ingresado:", texto)
+        self.close()
+        # todo generar entrada
+        tabla = LL1.simulate(ventana.tabla, ventana.token_inicial, ventana.tokens_terminales, texto+"$")
+        print(tabla)
+        nueva_ventana = sim.VentanaSimulacion(self)
+        nueva_ventana.show()
+
+
+class VentanaInput(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Input")
+        self.setGeometry(200, 200, 400, 200)
+
+        layout = QVBoxLayout()
+
+        label = QLabel("Input:")
+        layout.addWidget(label)
+
+        self.text_edit = QPlainTextEdit()
+        layout.addWidget(self.text_edit)
+
+        row_layout = QHBoxLayout()
+        self.checkbox_dibujar_arbol = QCheckBox("Dibujar árbol")
+        row_layout.addWidget(self.checkbox_dibujar_arbol)
+
+        label_gramatica = QLabel("Gramática:")
+        row_layout.addWidget(label_gramatica)
+
+        self.dropdown_gramatica = QComboBox()
+        self.dropdown_gramatica.addItems(["Opción 1", "Opción 2", "Opción 3"])
+        row_layout.addWidget(self.dropdown_gramatica)
+
+        layout.addLayout(row_layout)
+        boton_aceptar = QPushButton("Aceptar", self)
+        boton_aceptar.clicked.connect(self.aceptar)
+        layout.addWidget(boton_aceptar)
+
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def aceptar(self):
+        self.texto = self.text_edit.toPlainText()
+        self.dibujar_arbol = self.checkbox_dibujar_arbol.isChecked()
+        self.opcion_gramatica = self.dropdown_gramatica.currentText()
+        print("Texto ingresado:", self.texto)
+        print("Dibujar árbol:", self.dibujar_arbol)
+        print("Opción de Gramática seleccionada:", self.opcion_gramatica)
+        self.close()
+        # TODO LLAMAR A LA SIMULACIÓN DE LA PILA Y CREACIÓN DEL ARBOL
+
+
+class MainWindow(QMainWindow):
     def pestania_gramatica(self):
         gramaticaMenu = QMenu("Gramática", self)
         self.menubar.addMenu(gramaticaMenu)
@@ -50,7 +134,6 @@ class MainWindow(QMainWindow):
         guardar_como_action = QAction("Guardar como...", self)
         guardar_como_action.setShortcut(QKeySequence.SaveAs)
         guardar_como_action.triggered.connect(self.guardar_como)
-
 
         salirAction = QAction("Salir", self)
         salirAction.setShortcut(QKeySequence.Quit)
@@ -142,7 +225,6 @@ class MainWindow(QMainWindow):
         extended_action.triggered.connect(self.mostrar_gramatica)
         extended_action.setEnabled(gramatica)  # Deshabilitar la acción
 
-
         compact_action = QAction("Compact", self)
         compact_action.triggered.connect(self.mostrar_gramatica_compacta)
         compact_action.setEnabled(gramatica)  # Deshabilitar la acción
@@ -200,7 +282,7 @@ class MainWindow(QMainWindow):
         tabla_action = QAction("Calcular tabla", self)
         tabla_action.triggered.connect(self.calcular_tabla_analisis)
 
-        conjunto_primero_frase_action = QAction("Analisis", self)
+        conjunto_primero_frase_action = QAction("Analisis", self) # TODO: mirar que es
         conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
@@ -254,11 +336,15 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú parse
         parsearGramaticaLL1Action = QAction("Analizar gramática LL(1)", self)
-        parsearTableLL1Action = QAction("Parsear tabla LL(1)", self)
+        parsearGramaticaLL1Action.triggered.connect(self.parsear_gramatica_LL1)
+
+        mostrarTableLL1Action = QAction("Mostrar tabla LL(1)", self)
+        mostrarTableLL1Action.triggered.connect(self.mostrar_tabla_LL1)
 
         # Agregar las opciones de menú al menú parse
         parseMenu.addAction(parsearGramaticaLL1Action)
-        parseMenu.addAction(parsearTableLL1Action)
+        parseMenu.addAction(mostrarTableLL1Action)
+
 
     def pestania_simular(self):
         simularMenu = QMenu("Simular", self)
@@ -266,7 +352,10 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú simulacion
         parsearLL1Action = QAction("Analizar entrada LL(1)", self)
+        parsearLL1Action.triggered.connect(self.parsear_entrada_LL1)
+
         parsearEntradaAction = QAction("Parsear entrada", self)
+        parsearEntradaAction.triggered.connect(self.parsear_entrada)
 
         # Agregar las opciones de menú al menú simulacion
         simularMenu.addAction(parsearLL1Action)
@@ -515,9 +604,7 @@ class MainWindow(QMainWindow):
         self.mostrar_gramatica()
 
     def transformacion_no_alcanzables(self):
-        self.tokens_terminales, self.tokens_no_terminales, \
-                           self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, \
-                           self.tokens_terminales, self.tokens_no_terminales, self.producciones)
+        self.tokens_terminales, self.tokens_no_terminales,  self.producciones = ot.eliminacion_simbolos_inutiles(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
 
     def transformacion_producciones_epsilon(self):
@@ -536,6 +623,20 @@ class MainWindow(QMainWindow):
         self.tokens_no_terminales, self.producciones = ot.forma_normal_greibach(self.token_inicial, self.tokens_no_terminales, self.producciones)
         self.mostrar_gramatica()
         self.abrir_nueva_aplicacion_texto()
+
+    def parsear_gramatica_LL1(self):
+        print()
+
+    def mostrar_tabla_LL1(self):
+        print()
+
+    def parsear_entrada_LL1(self):
+        nueva_ventana = VentanaInputGramatica(self)
+        nueva_ventana.show()
+
+    def parsear_entrada(self):
+        nueva_ventana = VentanaInput(self)
+        nueva_ventana.show()
 
     def mostrar_gramatica(self):
         texto = f"%start {self.token_inicial}\n%%\n\n"
