@@ -109,5 +109,5 @@ def construccion_tabla(token_inicial, tokens_terminales, tokens_no_terminales, p
                 tabla[token_no_terminal, token_terminal] = "error"  # que añado ?
                 # error
 
-    #tabla = LL1.simulate(tabla, token_inicial, tokens_terminales, "'(' 'x' ';' '(' 'x' ')' ')' $")
+    #tabla = LL1.simulate(tabla, token_inicial, tokens_terminales, "'(' 'x' ';' '(' 'x' ')' ')' ")
     return tabla

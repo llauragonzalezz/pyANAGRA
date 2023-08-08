@@ -33,7 +33,6 @@ class ConjuntoPrimero(QMainWindow):
             # FIXME PONGO EL BOTON DE CERRAR COMO EN ANAGRA 2
             texto += "Pri(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in primero[key]]) + "\n"
 
-        print(texto)
         self.text_edit.setPlainText(texto)
 
 
@@ -65,7 +64,6 @@ class TablaAnalisis(QMainWindow):
 
     def initUI(self, tabla):
         self.setWindowTitle("Tabla analisis")
-        print(tabla)
         no_terminales = sorted(set(k[0] for k in tabla.keys()))
         terminales = sorted(set(k[1] for k in tabla.keys()))
 
@@ -89,13 +87,16 @@ class TablaAnalisis(QMainWindow):
             table.setItem(indice_fila, indice_columna, QTableWidgetItem(item))
 
         self.setCentralWidget(table)
+        self.resize(table.horizontalHeader().length() + 20,
+                    table.verticalHeader().length() + 30)
+
+
 class TablaSimulacion(QMainWindow):
     def __init__(self, diccionario, parent=None):
         super().__init__(parent)
         self.initUI(diccionario)
 
     def initUI(self, tabla):
-        print("tabla:", tabla)
         self.setWindowTitle("Tabla simulacion")
         table = QTableWidget(len(tabla), 3)
         table.setHorizontalHeaderLabels(["Pila", "Entrada", "Producción usada(salida)"])
@@ -125,6 +126,8 @@ class TablaSimulacion(QMainWindow):
                 table.setItem(i, 2, QTableWidgetItem(item))
 
         self.setCentralWidget(table)
+        self.resize(table.horizontalHeader().length() + 20,
+                    table.verticalHeader().length() + 60)
 
 class MainWindow(QMainWindow):
 

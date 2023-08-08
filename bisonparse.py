@@ -34,7 +34,7 @@ def p_start(p):
 def p_token(p):
     ''' token : TOKEN listaTokens'''
     global tokens_terminales
-    tokens_terminales |= set(p[2]) #FIXME si no pongo bisonparse no lo reconoce, preguntar
+    tokens_terminales |= set(p[2])
 
 def p_declaracion_tipo(p):
     ''' declaracion_tipo : LEFT
@@ -154,11 +154,6 @@ def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
     p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    #print("token_inicial:", token_inicial)
-    #print("tokens_terminales:", tokens_terminales)
-    #print("tokens_no_terminales:", tokens_no_terminales)
-    #print("producciones:", producciones)
-
 
 
 def p_error(p):

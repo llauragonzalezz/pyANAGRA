@@ -6,7 +6,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
     QPushButton, QWidget, QComboBox, QHBoxLayout
 
-import LL1
+import LL1 
+import bisonlex
+import bisonparse
 from ply import *
 
 import operacionesTransformacion as ot
@@ -53,7 +55,7 @@ class VentanaInputGramatica(QMainWindow):
         # todo generar entrada
         tabla = LL1.simulate(ventana.tabla, ventana.token_inicial, ventana.tokens_terminales, texto+"$")
         print(tabla)
-        nueva_ventana = sim.VentanaSimulacion(self)
+        nueva_ventana = sim.VentanaSimulacion(tabla, self)
         nueva_ventana.show()
 
 
@@ -106,7 +108,7 @@ class VentanaInput(QMainWindow):
 
 
 class MainWindow(QMainWindow):
-    def pestania_gramatica(self):
+    def pestania_gramatica(self, gramatica=False):
         gramaticaMenu = QMenu("Gramática", self)
         self.menubar.addMenu(gramaticaMenu)
 
@@ -122,14 +124,14 @@ class MainWindow(QMainWindow):
 
         editar_action = QAction("Editar", self)
         # editar_action.setShortcut(QKeySequence.) TODO NO EXISTE EDITAR
-        editar_action.setEnabled(False)  # Deshabilitar la acción
+        editar_action.setEnabled(gramatica)  # Deshabilitar la acción
 
         cerrar_action = QAction("Cerrar", self)
         cerrar_action.setShortcut(QKeySequence.Close)
 
         guardar_action = QAction("Guardar", self)
         guardar_action.setShortcut(QKeySequence.Save)
-        guardar_action.setEnabled(False)  # Deshabilitar la acción
+        guardar_action.setEnabled(gramatica)  # Deshabilitar la acción
 
         guardar_como_action = QAction("Guardar como...", self)
         guardar_como_action.setShortcut(QKeySequence.SaveAs)
@@ -279,16 +281,12 @@ class MainWindow(QMainWindow):
         conjunto_siguiente_action = QAction("Calcular conjunto SIGUIENTE", self)
         conjunto_siguiente_action.triggered.connect(self.calcular_conjunto_siguiente)
 
-        tabla_action = QAction("Calcular tabla", self)
-        tabla_action.triggered.connect(self.calcular_tabla_analisis)
-
         conjunto_primero_frase_action = QAction("Analisis", self) # TODO: mirar que es
         conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
         herramientas_menu.addAction(conjunto_primero_action)
         herramientas_menu.addAction(conjunto_siguiente_action)
-        herramientas_menu.addAction(tabla_action)
         herramientas_menu.addAction(conjunto_primero_frase_action)
 
     def pestania_transformaciones(self):
@@ -338,12 +336,13 @@ class MainWindow(QMainWindow):
         parsearGramaticaLL1Action = QAction("Analizar gramática LL(1)", self)
         parsearGramaticaLL1Action.triggered.connect(self.parsear_gramatica_LL1)
 
-        mostrarTableLL1Action = QAction("Mostrar tabla LL(1)", self)
-        mostrarTableLL1Action.triggered.connect(self.mostrar_tabla_LL1)
+        self.mostrarTableLL1Action = QAction("Mostrar tabla LL(1)", self)
+        self.mostrarTableLL1Action.triggered.connect(self.mostrar_tabla_LL1)
 
+        self.mostrarTableLL1Action.setEnabled(False)  # Deshabilitar la acción
         # Agregar las opciones de menú al menú parse
         parseMenu.addAction(parsearGramaticaLL1Action)
-        parseMenu.addAction(mostrarTableLL1Action)
+        parseMenu.addAction(self.mostrarTableLL1Action)
 
 
     def pestania_simular(self):
@@ -351,16 +350,18 @@ class MainWindow(QMainWindow):
         self.menubar.addMenu(simularMenu)
 
         # Opciones de menú al menú simulacion
-        parsearLL1Action = QAction("Analizar entrada LL(1)", self)
-        parsearLL1Action.triggered.connect(self.parsear_entrada_LL1)
+        self.parsearLL1Action = QAction("Analizar entrada LL(1)", self)
+        self.parsearLL1Action.triggered.connect(self.parsear_entrada_LL1)
+        self.parsearLL1Action.setEnabled(False)  # Deshabilitar la acción
 
-        parsearEntradaAction = QAction("Parsear entrada", self)
-        parsearEntradaAction.triggered.connect(self.parsear_entrada)
+        self.parsearEntradaAction = QAction("Analizar entrada", self)
+        self.parsearEntradaAction.triggered.connect(self.parsear_entrada)
+        self.parsearEntradaAction.setEnabled(False)  # Deshabilitar la acción
 
         # Agregar las opciones de menú al menú simulacion
-        simularMenu.addAction(parsearLL1Action)
+        simularMenu.addAction(self.parsearLL1Action)
         simularMenu.addSeparator()
-        simularMenu.addAction(parsearEntradaAction)
+        simularMenu.addAction(self.parsearEntradaAction)
 
     def __init__(self):
         super().__init__()
@@ -485,7 +486,7 @@ class MainWindow(QMainWindow):
 
     def menu_gramaticas(self):
         self.menubar.clear()
-        self.pestania_gramatica()
+        self.pestania_gramatica(True)
         self.pestania_buscar()
         self.pestania_texto(True)
 
@@ -576,14 +577,6 @@ class MainWindow(QMainWindow):
         nueva_ventana = conj_tab.ConjuntoSiguiente(siguiente, self)
         nueva_ventana.show()
 
-    def calcular_tabla_analisis(self):
-        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
-        tabla = {','.join(k): v for k, v in self.tabla.items()}
-        print("self.tabla:", self.tabla)
-        print("tabla:", tabla)
-        nueva_ventana = conj_tab.TablaAnalisis(self.tabla, self)
-        nueva_ventana.show()
-
     def calcular_conjunto_primero_frase(self):
         self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales, self.producciones)
         tabla = {index: elemento for index, elemento in enumerate(self.tabla)}
@@ -625,10 +618,19 @@ class MainWindow(QMainWindow):
         self.abrir_nueva_aplicacion_texto()
 
     def parsear_gramatica_LL1(self):
-        print()
+        self.tabla = conj.construccion_tabla(self.token_inicial, self.tokens_terminales, self.tokens_no_terminales,
+                                             self.producciones)
+
+        self.parsearLL1Action.setEnabled(True)      # Habilitar la acción
+        self.parsearEntradaAction.setEnabled(True)  # Habilitar la acción
+        self.mostrarTableLL1Action.setEnabled(True) # Habilitar la acción
+
+        nueva_ventana = conj_tab.TablaAnalisis(self.tabla, self)
+        nueva_ventana.show()
 
     def mostrar_tabla_LL1(self):
-        print()
+        nueva_ventana = conj_tab.TablaAnalisis(self.tabla, self)
+        nueva_ventana.show()
 
     def parsear_entrada_LL1(self):
         nueva_ventana = VentanaInputGramatica(self)
