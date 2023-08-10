@@ -4,17 +4,24 @@
 
 import math
 import sys
+import simulacion as sim
 
-from PySide6.QtCore import (QEasingCurve, QLineF,
+
+
+from PyQt5.QtCore import (QEasingCurve, QLineF,
                             QParallelAnimationGroup, QPointF,
                             QPropertyAnimation, QRectF, Qt)
-from PySide6.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QPalette
-from PySide6.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
-                               QGraphicsObject, QGraphicsScene, QGraphicsView,
-                               QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QInputDialog, QPushButton)
+
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QPalette
+
+from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
+                             QGraphicsObject, QGraphicsScene, QGraphicsView,
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QInputDialog, QPushButton, QMainWindow)
 
 import networkx as nx
 from networkx.drawing.nx_agraph import write_dot, graphviz_layout
+
+
 
 class Node(QGraphicsObject):
 
@@ -112,7 +119,7 @@ class Edge(QGraphicsItem):
         self._tickness = 2 # TODO: poner un color que se vea bien tanto sobre blanco como sobre negro
         self._color = "#d6ccc2"
 
-        self._arrow_size = 15
+        self._arrow_size = 10
 
         self._source.add_edge(self)
         self._dest.add_edge(self)
@@ -157,7 +164,7 @@ class Edge(QGraphicsItem):
             start (QPointF): start position
             end (QPointF): end position
         """
-        painter.setBrush(QBrush(self._color))
+        painter.setBrush(QBrush(QColor(self._color)))
 
         line = QLineF(end, start)
 
@@ -281,28 +288,20 @@ class GraphView(QGraphicsView):
         self._nodes_map[start_token] = item
 
 
-class MainWindow(QWidget):
-    def __init__(self, parent=None):
-        super().__init__()
+class MainWindow(QMainWindow):
+    def __init__(self, start_token="S", parent=None):
+        super().__init__(parent)
+        self.node_name = start_token
+        self.initUI()
 
-        node_name = "S"
+    def initUI(self):
+        self.setGeometry(400, 200, 450, 150)
+        self.setWindowTitle('Simulación arbol de sintaxis')
         self.graph = nx.DiGraph()
-        self.view = GraphView(self.graph, node_name)
+        self.view = GraphView(self.graph, self.node_name, self)
+        self.setCentralWidget(self.view)  # Agrega el GraphView como área central
 
-        self.add_node_button = QPushButton("Agregar Nodo")
-        self.add_node_button.clicked.connect(self.add_node_dialog)
-        self.add_more_node_button = QPushButton("Agregar mas nodos")
-        self.add_more_node_button.clicked.connect(self.add_more_node)
-        self.delete_node_button = QPushButton("Borrar Nodo")
-        self.delete_node_button.clicked.connect(self.delete_node_dialog)
-
-        v_layout = QVBoxLayout(self)
-        v_layout.addWidget(self.add_node_button)
-        v_layout.addWidget(self.add_more_node_button)
-        v_layout.addWidget(self.delete_node_button)
-        v_layout.addWidget(self.view)
-
-
+        
     def add_node_dialog(self):
         nombres = ["A", "B"]
 
@@ -331,7 +330,6 @@ class MainWindow(QWidget):
 
         self.view.set_nx_layout()
 
-
     def delete_node_dialog(self):
         self.graph.remove_node(2)
 
@@ -352,15 +350,35 @@ class MainWindow(QWidget):
         self.graph.add_edge(1, 3)
 
         self.view.set_nx_layout()
+    def add_node(self, index, name, parent):
+        # Create parent
+        self.graph.add_node(index, name=name)
+        item = Node(name)
+        self.view.scene().addItem(item)
+        self.view._nodes_map[index] = item
+
+        # Create edge
+        source = self.view._nodes_map[parent]
+        dest = self.view._nodes_map[index]
+        self.view.scene().addItem(Edge(source, dest))
+        self.graph.add_edge(parent, index)          # Connect to parent
+
+        self.view.set_nx_layout()
+
+    def delete_node(self, iter):
+        self.graph.remove_node(iter)
+
+        self.view.scene().removeItem(self.view._nodes_map[iter])
+        self.view.set_nx_layout()
+
 
 
 if __name__ == "__main__":
-
     app = QApplication(sys.argv)
-
-    # Create a networkx graph
 
     widget = MainWindow()
     widget.show()
     widget.resize(800, 600)
+
     sys.exit(app.exec())
+

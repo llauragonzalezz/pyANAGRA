@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
     QPushButton, QWidget, QComboBox, QHBoxLayout
 
-import LL1 
+import LL1
 import bisonlex
 import bisonparse
 from ply import *
@@ -15,6 +15,7 @@ import operacionesTransformacion as ot
 import conjuntos as conj
 import conjuntos_tablas as conj_tab
 import simulacion as sim
+import tree
 
 
 class NewApplication:
@@ -57,7 +58,8 @@ class VentanaInputGramatica(QMainWindow):
         print(tabla)
         nueva_ventana = sim.VentanaSimulacion(tabla, self)
         nueva_ventana.show()
-
+        ventana_arbol = tree.MainWindow(parent=self)
+        ventana_arbol.show()
 
 class VentanaInput(QMainWindow):
     def __init__(self, parent=None):
@@ -683,7 +685,6 @@ class MainWindow(QMainWindow):
             texto += "\n;\n\n"
         texto += "%%"
         return texto
-
 
 
 if __name__ == "__main__":

@@ -11,10 +11,10 @@ def is_ll1(table, terminals, non_terminals):
 
 
 def simulate(table, start_token, terminals, input):
-    print(input)
-    stack = ["$", start_token]
+    stack = [("$", 0), (start_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
     #print("elementos: ", elementos)
+    iterador = 2
     it = iter(elementos)
     sig_tok = next(it)
     # simulation table: stack | entry text | output
@@ -28,19 +28,11 @@ def simulate(table, start_token, terminals, input):
             sig_tok += y
         else:
             sig_tok += y + next(it)
-    #print("sig_tok:", sig_tok)
 
     x = stack[len(stack)-1]
-
-    while x != "$":
-        print()
-        print("x:", x)
-        if x in terminals or x == "$":
-            print("es terminal o simbolo final")
-            it_copia, it = itertools.tee(it)
-            print("entrada", sig_tok+"".join(it_copia))
-
-            if x == sig_tok:
+    while x[0] != "$":
+        if x[0] in terminals or x[0] == "$":
+            if x[0] == sig_tok:
                 # Copiamos el iterador original
                 it_copia, it = itertools.tee(it)
                 simulation_table.append((stack.copy(), sig_tok+"".join(it_copia), ()))
@@ -53,26 +45,25 @@ def simulate(table, start_token, terminals, input):
                         sig_tok += y
                     else:
                         sig_tok += y + next(it)
-                print("sig_tok:", sig_tok)
             else:
                 # errorSintactico
                 print("error sintactico")
         else:
-            if table[x, sig_tok] != "error":
+            if table[x[0], sig_tok] != "error":
                 # disparamos produccion
-                print("disparamos la produccion:", table[x, sig_tok][0])
-                it_copia, it = itertools.tee(it)
-                print("entrada", sig_tok+"".join(it_copia))
-
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original
-                simulation_table.append((stack.copy(), sig_tok+"".join(it_copia), (x, table[x, sig_tok])))
-                stack.pop()
-                #print(table[x, sig_tok][0])
-                if table[x, sig_tok][0] is not None:
-                    for token in reversed(table[x, sig_tok][0]):
-                        stack.append(token)
-                    #print("stack despues de apilar: ", stack)
+                salida = []
+                if table[x[0], sig_tok][0] is not None:
+                    for token in table[x[0], sig_tok][0]:
+                        salida.append((token, iterador))
+                        iterador += 1
+                else:
+                    salida = None
 
+                simulation_table.append((stack.copy(), sig_tok+"".join(it_copia), (x, salida)))
+                stack.pop()
+                if salida is not None:
+                    stack.extend(reversed(salida))
             else:
                 # errorSintactico
                 print("error sintactico")
@@ -80,7 +71,5 @@ def simulate(table, start_token, terminals, input):
 
     simulation_table.append((stack.copy(), "$", ()))
     # '(' 'x' ';' '(' 'x' ')' ')'
-    for fila in simulation_table:
-        print(fila)
-    #print(simulation_table)
+
     return simulation_table
