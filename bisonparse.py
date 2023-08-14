@@ -17,6 +17,7 @@ tokens_terminales = set()
 tokens_no_terminales = set()
 producciones = dict()
 
+
 def p_prec(p):
     ''' prec : PREC TOKENID
              | PREC LITERAL '''
@@ -112,12 +113,12 @@ def p_listaExpresiones_expresion(p):
 def p_produccion(p):
     ''' produccion    : TOKENID ':' listaExpresiones ';' '''
     p[0] = (p[1], p[3])
-    print("p[1]: ",  p[1])
-    print("p[3]: ",  p[3])
-    if p[1] in producciones and p[3] not in producciones[p[1]]:
-        print("producciones[p[1]]: ", producciones[p[1]])
-        producciones[p[1]].extend(p[3])
-    elif p[1] not in producciones:
+
+    if p[1] in producciones :
+        for prod in p[3]:
+            if prod not in producciones[p[1]]:
+                producciones[p[1]].extend(prod)
+    else:
         producciones[p[1]] = p[3]
 
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')

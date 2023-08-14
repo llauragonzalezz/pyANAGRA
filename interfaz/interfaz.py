@@ -154,10 +154,9 @@ class RemplaceWindow(QMainWindow):
 
         else:
             self.close()
-            print(f'La palabra "{old}" no se encontró en el texto.')
             message_box = QMessageBox()
             message_box.setWindowTitle("Mensaje")
-            message_box.setText("La palabra no se encontró en el texto")
+            message_box.setText(f'La palabra "{old}" no se encontró en el texto.')
             message_box.setIcon(QMessageBox.Critical)
             message_box.exec_()
 
@@ -175,7 +174,7 @@ class MainWindow(QMainWindow):
 
         open_action = QAction("Abrir", self)
         open_action.setShortcut(QKeySequence.Open)
-        open_action.setEnabled(not gramatica)  # Enable/Disable action
+        open_action.setEnabled(not self.file)  # Enable/Disable action
         open_action.triggered.connect(self.open_file)
         grammar_menu.addAction(open_action)
 
@@ -401,6 +400,13 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.start_token = ""
+        self.terminal_tokens = set()
+        self.non_terminal_tokens = set()
+        self.productions = dict()
+        self.table = dict()
+        self.file = False
+
         self.setWindowTitle("Anagra")
         self.setGeometry(0, 0, 800, 600)
         # Center window to the middle of the screen
@@ -461,11 +467,6 @@ class MainWindow(QMainWindow):
 
         self.update_row_column()
 
-        self.start_token = ""
-        self.terminal_tokens = set()
-        self.non_terminal_tokens = set()
-        self.productions = dict()
-        self.table = dict()
 
     def update_row_column(self):
         cursor = self.text_grammar.textCursor()
@@ -497,17 +498,16 @@ class MainWindow(QMainWindow):
         dialogo.setFileMode(QFileDialog.ExistingFile)
 
         if dialogo.exec_() == QFileDialog.Accepted:
-            self.menu_gramaticas()
             # Obtenemos la ruta del archivo
             self.file = dialogo.selectedFiles()[0]
             text = open(self.file).read()
             gramatica = yacc.parse(text)
-            print("gramatica: ", gramatica)
             self.start_token = gramatica[0]
             self.terminal_tokens = gramatica[1]
             self.non_terminal_tokens = gramatica[2]
             self.productions = gramatica[3]
 
+            self.menu_gramaticas()
             self.text_grammar.setPlainText(text)     # Escribimos el fichero
             self.text_grammar.setReadOnly(True)      # Enable readOnly mode
             self.mode_label.setText(f"Modo: lectura")
@@ -520,20 +520,26 @@ class MainWindow(QMainWindow):
         self.pestania_texto()
         self.pestania_ayuda()
 
+        bisonparse.token_inicial = ""
+        bisonparse.tokens_terminales = set()
+        bisonparse.tokens_no_terminales = set()
+        bisonparse.producciones = dict()
+
         self.start_token = ""
         self.terminal_tokens = set()
         self.non_terminal_tokens = set()
         self.productions = dict()
         self.table = dict()
-        print("gramatica: ", self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
         self.text_grammar.setReadOnly(False)  # Disable readOnly mode
         self.mode_label.setText(f"Modo: escritura")
 
     def save_file(self):
-        if not self.file:
-            self.file = QFileDialog.getSaveFileName(self, 'Guardar fichero')[0]
+        if self.file:
+            file = self.file
+        else:
+            file = QFileDialog.getSaveFileName(self, 'Guardar fichero')[0]
 
-        file = open(self.file, 'w')
+        file = open(file, 'w')
         texto = self.text_grammar.toPlainText()
         file.write(texto)
         file.close()
@@ -571,9 +577,7 @@ class MainWindow(QMainWindow):
     def accept_grammar(self):
         self.menu_gramaticas()
         text = self.text_grammar.toPlainText()
-        print(text)
         grammar = yacc.parse(text)
-        print(grammar)
 
         self.start_token = grammar[0]
         self.terminal_tokens = grammar[1]
@@ -604,10 +608,9 @@ class MainWindow(QMainWindow):
                 self.text_grammar.setExtraSelections(selections)
 
             else:
-                print(f'La palabra "{search_word}" no se encontró en el texto.')
                 message_box = QMessageBox()
                 message_box.setWindowTitle("Mensaje")
-                message_box.setText("La palabra no se encontró en el texto")
+                message_box.setText(f'La palabra "{search_word}" no se encontró en el texto.')
                 message_box.setIcon(QMessageBox.Warning)
                 message_box.exec_()
 
