@@ -1,113 +1,112 @@
-import LL1
-def conjunto_primero_token(token, tokens_recursivos, tokens_terminales, tokens_no_terminales, producciones):
-    primero = set()
+def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_terminal_tokens, productions):
+    first_set = set()
 
-    if token in tokens_terminales:
-        primero.add(token)
-        return primero
+    if token in terminal_tokens:
+        first_set.add(token)
+        return first_set
 
-    if token in tokens_no_terminales and None in producciones[token]:
-        primero.add(None)
+    if token in non_terminal_tokens and None in productions[token]:
+        first_set.add(None)
 
-    for produccion in producciones[token]:
-        if produccion is not None:
+    for production in productions[token]:
+        if production is not None:
             epsilon = True
-            for token_prod in produccion:
-                if token_prod not in tokens_recursivos:
-                    primero_token = conjunto_primero_token(token_prod, tokens_recursivos | set(token_prod), tokens_terminales, tokens_no_terminales, producciones)
-                    primero |= primero_token.difference({None})
-                    if None not in primero_token:
+            for token_prod in production:
+                if token_prod not in recursive_tokens:
+                    first_set_tok = calculate_first_set_token(token_prod, recursive_tokens | set(token_prod), terminal_tokens, non_terminal_tokens, productions)
+                    first_set |= first_set_tok.difference({None})
+                    if None not in first_set_tok:
                         epsilon = False
                         break
             if epsilon:
-                primero |= {None}
+                first_set |= {None}
 
-    return primero
+    return first_set
 
 
-def conjunto_primero(tokens_terminales, tokens_no_terminales, producciones):
-    conjunto_primero = dict()
-    for token in tokens_terminales | tokens_no_terminales:
-        conjunto_primero[token] = conjunto_primero_token(token, set(token), tokens_terminales, tokens_no_terminales, producciones)
-    return conjunto_primero
+def calculate_first_set(terminal_tokens, non_terminal_tokens, productions):
+    first_set = dict()
+    for token in terminal_tokens | non_terminal_tokens:
+        first_set[token] = calculate_first_set_token(token, set(token), terminal_tokens, non_terminal_tokens, productions)
+    return first_set
 
-def conjunto_siguiente(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+
+def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions):
     siguiente_viejo = dict()
-    siguiente = dict()
-    siguiente[token_inicial] = {"$"}
-    while siguiente != siguiente_viejo:
-        siguiente_viejo = siguiente.copy()
-        for token in tokens_no_terminales:
-            for produccion in producciones[token]:
-                if produccion is not None:
-                    for index, token_prod in enumerate(produccion):
-                        conjunto_primero_beta = set()
-                        if token_prod in tokens_no_terminales: # A -> a B b
+    follow_set = dict()
+    follow_set[starting_token] = {"$"}
+    while follow_set != siguiente_viejo:
+        siguiente_viejo = follow_set.copy()
+        for token in non_terminal_tokens:
+            for production in productions[token]:
+                if production is not None:
+                    for index, token_prod in enumerate(production):
+                        first_set_beta = set()
+                        if token_prod in non_terminal_tokens: # A -> a B b
                             epsilon = True
                             # Calculate Pri(þ)
-                            for t in produccion[index+1:]:
-                                conjunto_primero_t = conjunto_primero_token(t, set(t), tokens_terminales, tokens_no_terminales, producciones)
-                                conjunto_primero_beta |= conjunto_primero_t.difference({None})
-                                if None not in conjunto_primero_t:
+                            for t in production[index+1:]:
+                                first_set_tok = calculate_first_set_token(t, set(t), terminal_tokens, non_terminal_tokens, productions)
+                                first_set_beta |= first_set_tok.difference({None})
+                                if None not in first_set_tok:
                                     epsilon = False
                                     break
 
                             if epsilon:
-                                conjunto_primero_beta |= {None}
+                                first_set_beta |= {None}
 
-                            if token_prod in siguiente:
-                                siguiente[token_prod] |= conjunto_primero_beta.difference({None})
+                            if token_prod in follow_set:
+                                follow_set[token_prod] |= first_set_beta.difference({None})
                             else:
-                                siguiente[token_prod] = conjunto_primero_beta.difference({None})
+                                follow_set[token_prod] = first_set_beta.difference({None})
 
-                            if index == len(produccion) or None in conjunto_primero_beta:  # A -> a B  or A -> a B b con eps in PRI(b)
-                                if token_prod in siguiente and token in siguiente:
-                                    siguiente[token_prod] |= siguiente[token]
-                                elif token in siguiente:
-                                    siguiente[token_prod] = siguiente[token]
+                            if index == len(production) or None in first_set_beta:  # A -> a B  or A -> a B b con eps in PRI(b)
+                                if token_prod in follow_set and token in follow_set:
+                                    follow_set[token_prod] |= follow_set[token]
+                                elif token in follow_set:
+                                    follow_set[token_prod] = follow_set[token]
 
-    return siguiente
+    return follow_set
 
 
-def construccion_tabla(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    siguiente = conjunto_siguiente(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    tabla = dict()
+def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, productions):
+    follow_set = calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions)
+    table = dict()
 
-    for token_no_terminal in tokens_no_terminales:
-        for token_terminal in tokens_terminales | {"$"}:
-            tabla[token_no_terminal, token_terminal] = []
+    for non_terminal_token in non_terminal_tokens:
+        for token_terminal in terminal_tokens | {"$"}:
+            table[non_terminal_token, token_terminal] = []
 
-    for token in tokens_no_terminales:
-        for produccion in producciones[token]:
-            primero = set()
-            if produccion is not None:
+    for token in non_terminal_tokens:
+        for production in productions[token]:
+            first_set_token = set()
+            if production is not None:
                 epsilon = True
-                for t in produccion:
-                    conj_pri = conjunto_primero_token(t, set(t), tokens_terminales, tokens_no_terminales, producciones)
-                    primero |= conj_pri.difference({None})
-                    if None not in conj_pri:
+                for t in production:
+                    first_set = calculate_first_set_token(t, set(t), terminal_tokens, non_terminal_tokens, productions)
+                    first_set_token |= first_set.difference({None})
+                    if None not in first_set:
                         epsilon = False
                         break
 
                 if epsilon:
-                    primero |= {None}
+                    first_set_token |= {None}
             else:
-                primero = {None}
+                first_set_token = {None}
 
-            for elemento in primero & tokens_terminales:
-                tabla[token, elemento].append(produccion)
+            for elemento in first_set_token & terminal_tokens:
+                table[token, elemento].append(production)
 
-            if None in primero:
-                for b in tokens_terminales & siguiente[token]:
-                    tabla[token, b].append(produccion)
-                if "$" in siguiente[token]:
-                    tabla[token, "$"].append(produccion)
+            if None in first_set_token:
+                for b in terminal_tokens & follow_set[token]:
+                    table[token, b].append(production)
+                if "$" in follow_set[token]:
+                    table[token, "$"].append(production)
 
-    for token_no_terminal in tokens_no_terminales:
-        for token_terminal in tokens_terminales | {"$"}:
-            if tabla[token_no_terminal, token_terminal] == dict():
-                tabla[token_no_terminal, token_terminal] = "error"  # que añado ?
+    for non_terminal_token in non_terminal_tokens:
+        for token_terminal in terminal_tokens | {"$"}:
+            if table[non_terminal_token, token_terminal] == dict():
+                table[non_terminal_token, token_terminal] = "error"  # TODO: que pongo
                 # error
 
-    #tabla = LL1.simulate(tabla, token_inicial, tokens_terminales, "'(' 'x' ';' '(' 'x' ')' ')' ")
-    return tabla
+    return table

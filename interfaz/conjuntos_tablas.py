@@ -1,124 +1,132 @@
-import os
-import sys
-import json
+
+from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
 
 
-from PyQt5.QtWidgets import QApplication, QMainWindow,  QWidgetAction, \
-    QPlainTextEdit, QTableWidgetItem, QTableWidget
+def center_window(window):
+    screen = QDesktopWidget().availableGeometry()
+    window_size = window.frameGeometry()
+    x = (screen.width() - window_size.width()) // 2
+    y = (screen.height() - window_size.height()) // 2
+    window.move(x, y)
 
-
-class NewApplication:
-    def __init__(self):
-        super().__init__(sys.argv)
-
-class ConjuntoPrimero(QMainWindow):
-    def __init__(self, diccionario, parent=None):
+class FirstSet(QMainWindow):
+    def __init__(self, dicc, parent=None):
         super().__init__(parent)
-        self.initUI(diccionario)
+        self.dicc = dicc
+        self.initUI()
 
-    def initUI(self, diccionario):
-        self.setGeometry(100, 100, 400, 300)
-
+    def initUI(self):
         self.setWindowTitle("Conjunto primero")
+        self.setGeometry(0, 0, 400, 300)
+        # Center window to the middle of the screen
+        center_window(self)
+
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
-        font = self.text_edit.font()
-        font.setPointSize(14) # TODO: PONER PARA CAMBIAR EL TAMAÑO DE LA LETRA?? Y FUENTE (?)
-        self.text_edit.setFont(font)
+        #font = self.text_edit.font()
+        #font.setPointSize(14) # TODO: PONER PARA CAMBIAR EL TAMAÑO DE LA LETRA?? Y FUENTE (?)
+        #self.text_edit.setFont(font)
         self.text_edit.setReadOnly(True)
-        primero = diccionario
-        texto = ""
-        for key in primero.keys():  # FIXME LOS ESPACIOS NO FUNCIONAN TIENE QUE SER CARACTERES NO IMPRIMIBLES COMO \u00A0
-            # FIXME PONGO EL BOTON DE CERRAR COMO EN ANAGRA 2
-            texto += "Pri(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in primero[key]]) + "\n"
 
-        self.text_edit.setPlainText(texto)
+        text = ""
+        for key in self.dicc.keys():  # FIXME LOS ESPACIOS NO FUNCIONAN TIENE QUE SER CARACTERES NO IMPRIMIBLES COMO \u00A0
+            text += "Pri(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in self.dicc[key]]) + "\n"
+
+        self.text_edit.setPlainText(text)
 
 
-class ConjuntoSiguiente(QMainWindow):
-    def __init__(self, diccionario, parent=None):
+class FollowSet(QMainWindow):
+    def __init__(self, dicc, parent=None):
         super().__init__(parent)
-        self.initUI(diccionario)
+        self.dicc = dicc
+        self.initUI()
 
-    def initUI(self, diccionario):
+    def initUI(self):
         self.setWindowTitle("Conjunto siguiente")
-        self.text_edit = QPlainTextEdit(self)
-        self.setCentralWidget(self.text_edit)
-        font = self.text_edit.font()
-        font.setPointSize(14)
-        self.text_edit.setFont(font)
-        self.text_edit.setReadOnly(True)
+        self.setGeometry(0, 0, 400, 300)
+        # Center window to the middle of the screen
+        center_window(self)
 
-        siguiente = diccionario
-        texto = ""
-        for key in siguiente.keys():
-            texto += "Sig(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in siguiente[key]]) + "\n"
+        self.text_follow_set = QPlainTextEdit(self)
+        self.setCentralWidget(self.text_follow_set)
+        #font = self.text_edit.font()
+        #font.setPointSize(14)
+        #self.text_edit.setFont(font)
+        self.text_follow_set.setReadOnly(True)
 
-        self.text_edit.setPlainText(texto)
+        text = ""
+        for key in self.dicc.keys():
+            text += "Sig(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in self.dicc[key]]) + "\n"
+        self.text_follow_set.setPlainText(text)
 
-class TablaAnalisis(QMainWindow):
-    def __init__(self, diccionario, parent=None):
+
+class AnalysisTable(QMainWindow):
+    def __init__(self, dicc, parent=None):
         super().__init__(parent)
-        self.initUI(diccionario)
+        self.dicc = dicc
+        self.initUI()
 
-    def initUI(self, tabla):
+    def initUI(self):
         self.setWindowTitle("Tabla analisis")
-        no_terminales = sorted(set(k[0] for k in tabla.keys()))
-        terminales = sorted(set(k[1] for k in tabla.keys()))
+        # Center window to the middle of the screen
+        center_window(self)
+        non_terminals = sorted(set(k[0] for k in self.dicc.keys()))
+        terminals = sorted(set(k[1] for k in self.dicc.keys()))
 
         table = QTableWidget()
-        table.setRowCount(len(no_terminales))
-        table.setColumnCount(len(terminales))
-        table.setVerticalHeaderLabels(no_terminales)
-        table.setHorizontalHeaderLabels(terminales)
+        table.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
+        table.setSelectionMode(QTableWidget.NoSelection)
+        table.setRowCount(len(non_terminals))
+        table.setColumnCount(len(terminals))
+        table.setVerticalHeaderLabels(non_terminals)
+        table.setHorizontalHeaderLabels(terminals)
 
-        for fila, columna in tabla.keys():
-            indice_fila = no_terminales.index(fila)
-            indice_columna = terminales.index(columna)
-            if tabla[(fila, columna)]:
-                if tabla[(fila, columna)][0] is None:
-                    item = str(fila) + "  → ε"
+        for row, col in self.dicc.keys():
+            if self.dicc[(row, col)]:
+                if self.dicc[(row, col)][0] is None:
+                    item = str(row) + "  → ε"
                 else:
-                    item = "{} → {}".format(fila, "  ".join(
-                        [str(x) if x is not None else 'ε' for x in tabla[(fila, columna)][0]]))
+                    item = "{} → {}".format(row, "  ".join(
+                        [str(x) if x is not None else 'ε' for x in self.dicc[(row, col)][0]]))
             else:
                 item = ""
-            table.setItem(indice_fila, indice_columna, QTableWidgetItem(item))
+            table.setItem(non_terminals.index(row), terminals.index(col), QTableWidgetItem(item))
 
         self.setCentralWidget(table)
         self.resize(table.horizontalHeader().length() + 20,
                     table.verticalHeader().length() + 30)
 
 
-class TablaSimulacion(QMainWindow):
-    def __init__(self, diccionario, parent=None):
+class SimulationTable(QMainWindow):
+    def __init__(self, dicc, parent=None):
         super().__init__(parent)
-        self.initUI(diccionario)
+        self.dicc = dicc
+        self.initUI()
 
-    def initUI(self, tabla):
+    def initUI(self):
         self.setWindowTitle("Tabla simulacion")
-        table = QTableWidget(len(tabla), 3)
+        table = QTableWidget(len(self.dicc), 3)
         table.setHorizontalHeaderLabels(["Pila", "Entrada", "Producción usada(salida)"])
 
-        for i, tupla in enumerate(tabla.values()):
-            pila = tupla[0]
-            item = QTableWidgetItem("".join(pila))
+        for i, tuple in enumerate(self.dicc.values()):
+            stack = tuple[0]
+            item = QTableWidgetItem("".join(stack))
             table.setItem(i, 0, item)
 
-            cadena = tupla[1]
-            item = QTableWidgetItem(cadena)
+            input = tuple[1]
+            item = QTableWidgetItem(input)
             table.setItem(i, 1, item)
 
-            if len(tupla) == 2:
+            if len(tuple) == 2:
                 item = QTableWidgetItem("")
                 table.setItem(i, 2, item)
             else:
-                produccion = tupla[2]
-                if produccion:
-                    if produccion[1][0] is None:
-                        item = str(produccion[0]) + "  → ε"
+                production = tuple[2]
+                if production:
+                    if production[1][0] is None:
+                        item = str(production[0]) + "  → ε"
                     else:
-                        item = "{} → {}".format(produccion[0], "  ".join(str(x) for x in produccion[1][0]))
+                        item = "{} → {}".format(production[0], "  ".join(str(x) for x in production[1][0]))
                 else:
                     item = ""
 
@@ -127,20 +135,4 @@ class TablaSimulacion(QMainWindow):
         self.setCentralWidget(table)
         self.resize(table.horizontalHeader().length() + 20,
                     table.verticalHeader().length() + 60)
-
-
-class MainWindow(QMainWindow):
-
-    def __init__(self):
-        super().__init__()
-        self.setGeometry(100, 100, 400, 300)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    ventana = MainWindow()
-    ventana.show()
-    app.exec_()
-    sys.exit()
-
 

@@ -7,8 +7,6 @@ from ply import *
 
 tokens = bisonlex.tokens
 
-
-
 # TODO mirar si se meten producciones repetidas
 
 start = 'bison'
@@ -18,8 +16,6 @@ token_inicial = ""
 tokens_terminales = set()
 tokens_no_terminales = set()
 producciones = dict()
-
-
 
 def p_prec(p):
     ''' prec : PREC TOKENID
@@ -116,9 +112,12 @@ def p_listaExpresiones_expresion(p):
 def p_produccion(p):
     ''' produccion    : TOKENID ':' listaExpresiones ';' '''
     p[0] = (p[1], p[3])
-    if p[1] in producciones:
+    print("p[1]: ",  p[1])
+    print("p[3]: ",  p[3])
+    if p[1] in producciones and p[3] not in producciones[p[1]]:
+        print("producciones[p[1]]: ", producciones[p[1]])
         producciones[p[1]].extend(p[3])
-    else:
+    elif p[1] not in producciones:
         producciones[p[1]] = p[3]
 
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
@@ -160,4 +159,4 @@ def p_error(p):
     print(f'Syntax error at {p.value!r}')
 
 
-yacc.yacc(debug=True)
+yacc.yacc()

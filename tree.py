@@ -16,7 +16,8 @@ from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QPalette
 
 from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
                              QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QInputDialog, QPushButton, QMainWindow)
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QInputDialog, QPushButton, QMainWindow,
+                             QDesktopWidget)
 
 import networkx as nx
 from networkx.drawing.nx_agraph import write_dot, graphviz_layout
@@ -40,7 +41,7 @@ class Node(QGraphicsObject):
             self._color = "#f07167"
         else:
             self._color = "#00afb9"
-        self._radius = 30
+        self._radius = 25
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
         #self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -119,7 +120,7 @@ class Edge(QGraphicsItem):
         self._tickness = 2 # TODO: poner un color que se vea bien tanto sobre blanco como sobre negro
         self._color = "#d6ccc2"
 
-        self._arrow_size = 10
+        self._arrow_size = 7
 
         self._source.add_edge(self)
         self._dest.add_edge(self)
@@ -246,7 +247,7 @@ class GraphView(QGraphicsView):
         self.setScene(self._scene)
 
         # Used to add space between nodes
-        self._graph_scale = 2
+        self._graph_scale = 1.2
 
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
@@ -285,100 +286,58 @@ class GraphView(QGraphicsView):
         # Add start token
         item = Node(start_token)
         self.scene().addItem(item)
-        self._nodes_map[start_token] = item
+        self._nodes_map[1] = item
 
 
 class MainWindow(QMainWindow):
     def __init__(self, start_token="S", parent=None):
         super().__init__(parent)
-        self.node_name = start_token
+        self.start_token = start_token
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(400, 200, 450, 150)
         self.setWindowTitle('Simulación arbol de sintaxis')
+        self.setGeometry(0, 0, 850, 800)
+        screen = QDesktopWidget().availableGeometry()
+        window_size = self.frameGeometry()
+        x = screen.width() // 2
+        y = (screen.height() - window_size.height()) // 2
+        self.move(x, y)
+
         self.graph = nx.DiGraph()
-        self.view = GraphView(self.graph, self.node_name, self)
-        self.setCentralWidget(self.view)  # Agrega el GraphView como área central
+        self.edges = dict()
+        self.graph.add_node(1, name=self.start_token)
+        self.view = GraphView(self.graph, self.start_token, self)
+        self.setCentralWidget(self.view)
 
-        
-    def add_node_dialog(self):
-        nombres = ["A", "B"]
 
-        self.graph.add_node(1, name="A")
-        self.graph.add_node(2, name="A")
-
-        item = Node("A")
+    def add_node(self, index, name, terminal, parent):
+        # Create node
+        self.graph.add_node(index, name=name)                   # Add node to graph
+        item = Node(name, terminal=terminal)
         self.view.scene().addItem(item)
-        self.view._nodes_map[1] = item
+        self.view._nodes_map[index] = item                      # Add node to the view
 
-        source = self.view._nodes_map["S"]
-        dest = self.view._nodes_map[1]
-        self.view.scene().addItem(Edge(source, dest))
-
-        self.graph.add_edge("S", 1)
-
-        item = Node("A")
-        self.view.scene().addItem(item)
-        self.view._nodes_map[2] = item
-
-        source = self.view._nodes_map["S"]
-        dest = self.view._nodes_map[2]
-        self.view.scene().addItem(Edge(source, dest))
-
-        self.graph.add_edge("S", 2)
-
-        self.view.set_nx_layout()
-
-    def delete_node_dialog(self):
-        self.graph.remove_node(2)
-
-        self.view.scene().removeItem(self.view._nodes_map[2])
-        self.view.set_nx_layout()
-
-    def add_more_node(self):
-        self.graph.add_node(3, name="a")
-
-        item = Node("a", terminal=True)
-        self.view.scene().addItem(item)
-        self.view._nodes_map[3] = item
-
-        source = self.view._nodes_map[1]
-        dest = self.view._nodes_map[3]
-        self.view.scene().addItem(Edge(source, dest))
-
-        self.graph.add_edge(1, 3)
-
-        self.view.set_nx_layout()
-    def add_node(self, index, name, parent):
-        # Create parent
-        self.graph.add_node(index, name=name)
-        item = Node(name)
-        self.view.scene().addItem(item)
-        self.view._nodes_map[index] = item
-
-        # Create edge
+        # Create edge (parent -> new node)
         source = self.view._nodes_map[parent]
         dest = self.view._nodes_map[index]
-        self.view.scene().addItem(Edge(source, dest))
-        self.graph.add_edge(parent, index)          # Connect to parent
+        self.edges[parent, index] = Edge(source, dest)
+        self.view.scene().addItem(self.edges[parent, index])    # Add edge to the view
+        self.graph.add_edge(parent, index)                      # Add edge to graph
 
+        # Update layout
         self.view.set_nx_layout()
 
     def delete_node(self, iter):
+        # Delete edges conecting the node to erease
+        for edge in self.graph.edges:
+            if edge[1] == iter:
+                self.view.scene().removeItem(self.edges[edge[0], iter])
+
+        # Delete the node from the graph and from the view
         self.graph.remove_node(iter)
-
         self.view.scene().removeItem(self.view._nodes_map[iter])
+
+        # Update layout
         self.view.set_nx_layout()
-
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    widget = MainWindow()
-    widget.show()
-    widget.resize(800, 600)
-
-    sys.exit(app.exec())
 

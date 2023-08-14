@@ -2480,3 +2480,6 @@ def yacc(*, debug=yaccdebug, module=None, start=None,
 
     parse = parser.parse
     return parser
+
+def clear():
+    self.lr_productions = []

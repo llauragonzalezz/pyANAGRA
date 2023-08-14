@@ -1,38 +1,48 @@
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
-    QHBoxLayout, QApplication
+    QHBoxLayout, QApplication, QDesktopWidget
 
 import tree
 
 
 class VentanaSimulacion(QMainWindow):
-    def __init__(self, tabla=None, parent=None):
+    def __init__(self, table, start_token, terminals, non_terminals, parent=None):
         super().__init__(parent)
-        self.tabla = tabla
+        self.table = table
+        self.terminals = terminals
+        self.non_terminals = non_terminals
         self.iter = 0
+        self.tree_window = tree.MainWindow(start_token=start_token, parent=self)
+        self.tree_window.show()
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(400, 200, 450, 150)
+        self.setGeometry(0, 0, 450, 150)
+        screen = QDesktopWidget().availableGeometry()
+        window_size = self.frameGeometry()
+        x = screen.width() // 2 - window_size.width()
+        y = screen.height() // 2 - window_size.height()
+        self.move(x, y)
+
         self.setWindowTitle('Ventana de simulación')
         central_widget = QWidget(self)
         grid_layout = QGridLayout(central_widget)
 
         # Crear los QPlainTextEdit y agregarlos al diseño de cuadrícula
-        self.text_edit1 = QPlainTextEdit()
-        self.text_edit1.setReadOnly(True)
+        self.text_production = QPlainTextEdit()
+        self.text_production.setReadOnly(True)
 
-        self.text_edit2 = QPlainTextEdit()
-        self.text_edit2.setReadOnly(True)
+        self.text_stack = QPlainTextEdit()
+        self.text_stack.setReadOnly(True)
 
         self.text_edit3 = QPlainTextEdit()
         self.text_edit3.setReadOnly(True)
-        #self.text_edit3.setPlainText(self.tabla[self.iter][1])  # Escribimos el fichero
+        self.text_edit3.setPlainText(self.table[self.iter][1])  # Escribimos el fichero
 
-        self.text_edit4 = QPlainTextEdit()
-        self.text_edit4.setReadOnly(True)
-        #self.text_edit4.setPlainText(self.tabla[self.iter][1][:-1])  # Escribimos el fichero
+        self.text_input = QPlainTextEdit()
+        self.text_input.setReadOnly(True)
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])  # Escribimos el fichero
 
         # Crear las etiquetas y los QPlainTextEdit
         label1 = QLabel("Secuencia de producciones")
@@ -40,13 +50,13 @@ class VentanaSimulacion(QMainWindow):
         label3 = QLabel("Entrada")
         label4 = QLabel("Texto a analizar")
 
-        # Establecer la alineación del texto en las etiquetas
+        # Aling labels center
         label1.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         label2.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         label3.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
         label4.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
 
-        # Crear los botones
+        # Buttons
         self.btn_retrocede = QPushButton("Retrocede")
         self.btn_retrocede.clicked.connect(self.retroceder)
         self.btn_retrocede.setEnabled(False)
@@ -65,50 +75,51 @@ class VentanaSimulacion(QMainWindow):
         grid_layout.addWidget(label3, 2, 0, 1, 2)
         grid_layout.addWidget(label4, 4, 0, 1, 2)
 
-        grid_layout.addWidget(self.text_edit1, 1, 0)
-        grid_layout.addWidget(self.text_edit2, 1, 1)
+        grid_layout.addWidget(self.text_production, 1, 0)
+        grid_layout.addWidget(self.text_stack, 1, 1)
         grid_layout.addWidget(self.text_edit3, 3, 0, 1, 3)
-        grid_layout.addWidget(self.text_edit4, 5, 0, 1, 3)
+        grid_layout.addWidget(self.text_input, 5, 0, 1, 3)
 
         # Agregar el layout de los botones al diseño de cuadrícula
-        grid_layout.addLayout(button_layout, 6, 0, 1, 3)  # Fila 4, Columna 0, Ocupa 1 fila y 3 columnas
+        grid_layout.addLayout(button_layout, 6, 0, 1, 3)
 
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
-
-
     def retroceder(self):
         # Tree window
-        #for nodo in self.tabla[self.iter][1][1]:
-        #    self.tree_window.delete_node(nodo[1])
+        if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
+            for nodo in self.table[self.iter][2][1]:
+                print("Borramos el nodo:", nodo[1])
+                self.tree_window.delete_node(nodo[1])
 
         self.iter -= 1
         if self.iter == 0:
             self.btn_retrocede.setEnabled(False)
         self.btn_avanza.setEnabled(True)
 
-        self.text_edit1.setPlainText(write_production(self.tabla[self.iter][2]))
-        self.text_edit2.setPlainText(' '.join(self.tabla[self.iter][0]))
-        self.text_edit3.setPlainText(self.tabla[self.iter][1])
-        self.text_edit4.setPlainText(self.tabla[self.iter][1][:-1])
+        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
+        #self.text_edit3.setPlainText(self.table[self.iter][1])
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
 
     def avanzar(self): # '(''x'';''(''x'')'')'
         self.iter += 1
-        if self.iter == len(self.tabla):
+        if self.iter == len(self.table)-1:
             self.btn_avanza.setEnabled(False)
         self.btn_retrocede.setEnabled(True)
 
-        self.text_edit1.setPlainText(write_production(self.tabla[self.iter][2]))
-        self.text_edit2.setPlainText(write_stack(self.tabla[self.iter][0]))
-        self.text_edit3.setPlainText(self.tabla[self.iter][1])
-        self.text_edit4.setPlainText(self.tabla[self.iter][1][:-1])
+        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
+        #self.text_edit3.setPlainText(self.table[self.iter][1])
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
-        # Tree window
-        #for nodo in self.tabla[self.iter][1][1]:
-        #    self.tree_window.add_node(nodo[1], nodo[0], self.tabla[self.iter][1][0][1])
-
+        # Update tree window
+        print(self.table[self.iter][2])
+        if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
+            for nodo in self.table[self.iter][2][1]:
+                self.tree_window.add_node(nodo[1], nodo[0], nodo[0] in self.terminals, self.table[self.iter][2][0][1])
 
 def write_stack(stack):
     string = ""
@@ -117,7 +128,6 @@ def write_stack(stack):
     return string
 
 def write_production(tuple):
-    print("tupla", tuple)
     if tuple == ():
         return ""
     elif tuple[1] is None:
@@ -125,15 +135,6 @@ def write_production(tuple):
     else:
         string = tuple[0][0] + "→"
         for elem in tuple[1]:
-            print(elem[0])
             string += elem[0]
 
         return string
-
-if __name__ == "__main__":
-
-    app = QApplication(sys.argv)
-    widget = VentanaSimulacion()
-    widget.show()
-    widget.resize(800, 600)
-    sys.exit(app.exec())
