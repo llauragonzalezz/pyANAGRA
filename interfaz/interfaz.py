@@ -627,12 +627,12 @@ class MainWindow(QMainWindow):
     def cambiar_fuente(self):
         font, ok = QFontDialog.getFont()
         if ok:
-            self.text_edit.setFont(font)
+            self.text_grammar.setFont(font)
 
     def cambiar_color(self):
         color = QColorDialog.getColor()
         if color.isValid():
-            self.text_edit.setTextColor(color)
+            self.text_grammar.setTextColor(color)
 
     def cambiar_tab(self):  # TODO
         spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
