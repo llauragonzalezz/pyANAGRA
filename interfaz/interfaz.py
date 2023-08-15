@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -15,6 +16,7 @@ import operacionesTransformacion as ot
 import conjuntos as conj
 import conjuntos_tablas as conj_tab
 import simulacion as sim
+
 
 def center_window(window):
     screen = QDesktopWidget().availableGeometry()
@@ -55,7 +57,8 @@ class VentanaInputGramatica(QMainWindow):
         texto = self.text_edit.toPlainText()
         self.close()
         tabla = LL1.simulate(ventana.table, ventana.start_token, ventana.terminal_tokens, texto + "$")
-        nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+        nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens,
+                                              ventana.non_terminal_tokens, self)
         nueva_ventana.show()
 
 
@@ -106,6 +109,7 @@ class VentanaInput(QMainWindow):
         print("Dibujar árbol:", self.dibujar_arbol)
         print("Opción de Gramática seleccionada:", self.opcion_gramatica)
         self.close()
+
 
 class RemplaceWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -202,7 +206,6 @@ class MainWindow(QMainWindow):
         exit_action.triggered.connect(self.exit)
         grammar_menu.addAction(exit_action)
 
-
     def pestania_editar(self, gramatica=False):
         editar_menu = QMenu("Editar", self)
         self.menubar.addMenu(editar_menu)
@@ -247,7 +250,7 @@ class MainWindow(QMainWindow):
         find_action.setShortcut(QKeySequence.Find)
         find_action.triggered.connect(self.find)
         find_menu.addAction(find_action)
-        
+
         remplace_action = QAction("Reemplazar", self)
         remplace_action.setShortcut(QKeySequence.Replace)
         remplace_action.triggered.connect(self.remplace)
@@ -323,7 +326,7 @@ class MainWindow(QMainWindow):
         follow_set_action = QAction("Calcular conjunto SIGUIENTE", self)
         follow_set_action.triggered.connect(self.calcular_conjunto_siguiente)
 
-        conjunto_primero_frase_action = QAction("Analisis", self) # TODO: mirar que es
+        conjunto_primero_frase_action = QAction("Analisis", self)  # TODO: mirar que es
         conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
@@ -380,7 +383,6 @@ class MainWindow(QMainWindow):
         self.show_LL1_table_action.setEnabled(False)  # Enable/Disable action
         parse_menu.addAction(self.show_LL1_table_action)
 
-
     def pestania_simular(self):
         simular_menu = QMenu("Simular", self)
         self.menubar.addMenu(simular_menu)
@@ -397,13 +399,21 @@ class MainWindow(QMainWindow):
         self.parse_input_action.setEnabled(False)  # Enable/Disable action
         simular_menu.addAction(self.parse_input_action)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
+        super().__init__(parent)
 
-        self.start_token = ""
-        self.terminal_tokens = set()
-        self.non_terminal_tokens = set()
-        self.productions = dict()
+        if terminal_tokens is None:
+            terminal_tokens = set()
+        if non_terminal_tokens is None:
+            non_terminal_tokens = set()
+        if productions is None:
+            productions = dict()
+
+        self.start_token = start_token
+        self.terminal_tokens = terminal_tokens
+        self.non_terminal_tokens = non_terminal_tokens
+        self.productions = productions
+
         self.table = dict()
         self.file = False
 
@@ -414,12 +424,6 @@ class MainWindow(QMainWindow):
 
         self.menubar = QMenuBar(self)
         self.setMenuBar(self.menubar)
-
-        self.pestania_gramatica()
-        self.pestania_editar()
-        self.pestania_buscar()
-        self.pestania_texto()
-        self.pestania_ayuda()
 
         self.text_grammar = QPlainTextEdit(self)
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
@@ -437,36 +441,15 @@ class MainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.row_label)
         self.status_bar.addPermanentWidget(self.column_label)
 
-        if len(sys.argv) > 1 and sys.argv[1] == "-f":
+        if self.start_token != "":
             self.menu_gramaticas()
-            fichero = open(sys.argv[2]).read()
-            gramatica = yacc.parse(fichero)
-            self.start_token = gramatica[0]
-            self.terminal_tokens = gramatica[1]
-            self.non_terminal_tokens = gramatica[2]
-            self.productions = gramatica[3]
-
-            self.text_grammar.setPlainText(fichero)  # Escribimos el fichero
-            self.text_grammar.setReadOnly(True)      # Activamos modo lectura
-            self.mode_label.setText(f"Modo: lectura")
-            os.remove("ficheroANAGRA_temporal.txt")
-        elif len(sys.argv) > 1 and sys.argv[1] == "-i":
-            self.menu_gramaticas()
-            gramatica = yacc.parse(sys.argv[2])
-            self.start_token = gramatica[0]
-            self.terminal_tokens = gramatica[1]
-            self.non_terminal_tokens = gramatica[2]
-            self.productions = gramatica[3]
-
-            self.text_grammar.setPlainText(sys.argv[2])  # Escribimos el fichero
-            self.text_grammar.setReadOnly(True)  # Activamos modo lectura
-            self.mode_label.setText(f"Modo: lectura")
-
+            self.show_compact_grammar()
         else:
+            self.menu_inicial()
+            self.text_grammar.setReadOnly(False)  # Activamos modo lectura
             self.mode_label.setText(f"Modo: escritura")
 
         self.update_row_column()
-
 
     def update_row_column(self):
         cursor = self.text_grammar.textCursor()
@@ -478,20 +461,9 @@ class MainWindow(QMainWindow):
         self.text_grammar.setExtraSelections([])
         self.text_grammar.setCurrentCharFormat(QTextCharFormat())
 
-    def new_app(self):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
+    def new_app(self):  # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
         python_path = sys.executable
         os.system(python_path + " " + os.path.abspath(__file__) + " &")
-
-    def abrir_nueva_aplicacion_texto(self, texto):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
-        fichero = open("ficheroANAGRA_temporal.txt", "w")
-        fichero.write(texto)
-        fichero.close()
-        python_path = sys.executable
-        os.system(python_path + " " + os.path.abspath(__file__) + " -f ficheroANAGRA_temporal.txt &")
-
-    def abrir_nueva_aplicacion_input(self, texto):       # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
-        python_path = sys.executable
-        os.system(python_path + " " + os.path.abspath(__file__) + " -f ficheroANAGRA_temporal.txt " + texto + "&")
 
     def open_file(self):
         dialogo = QFileDialog(self, "Abrir archivo")
@@ -508,17 +480,11 @@ class MainWindow(QMainWindow):
             self.productions = gramatica[3]
 
             self.menu_gramaticas()
-            self.text_grammar.setPlainText(text)     # Escribimos el fichero
-            self.text_grammar.setReadOnly(True)      # Enable readOnly mode
-            self.mode_label.setText(f"Modo: lectura")
+            self.text_grammar.setPlainText(text)  # Escribimos el fichero
 
-    def edit_file(self):# TODO
+    def edit_file(self):  # TODO
         self.menubar.clear()
-        self.pestania_gramatica()
-        self.pestania_editar()
-        self.pestania_buscar()
-        self.pestania_texto()
-        self.pestania_ayuda()
+        self.menu_inicial()
 
         bisonparse.token_inicial = ""
         bisonparse.tokens_terminales = set()
@@ -530,8 +496,7 @@ class MainWindow(QMainWindow):
         self.non_terminal_tokens = set()
         self.productions = dict()
         self.table = dict()
-        self.text_grammar.setReadOnly(False)  # Disable readOnly mode
-        self.mode_label.setText(f"Modo: escritura")
+        self.file = False
 
     def save_file(self):
         if self.file:
@@ -561,6 +526,15 @@ class MainWindow(QMainWindow):
         if result == QMessageBox.Yes:
             QApplication.quit()
 
+    def menu_inicial(self):
+        self.pestania_gramatica()
+        self.pestania_editar()
+        self.pestania_buscar()
+        self.pestania_texto()
+        self.pestania_ayuda()
+
+        self.text_grammar.setReadOnly(False)  # Activamos modo escritura
+        self.mode_label.setText(f"Modo: escritura")
 
     def menu_gramaticas(self):
         self.menubar.clear()
@@ -574,6 +548,9 @@ class MainWindow(QMainWindow):
         self.pestania_simular()
         self.pestania_ayuda()
 
+        self.text_grammar.setReadOnly(True)  # Activamos modo lectura
+        self.mode_label.setText(f"Modo: lectura")
+
     def accept_grammar(self):
         self.menu_gramaticas()
         text = self.text_grammar.toPlainText()
@@ -584,11 +561,7 @@ class MainWindow(QMainWindow):
         self.non_terminal_tokens = grammar[2]
         self.productions = grammar[3]
 
-        self.text_grammar.setReadOnly(True)     # Activamos modo lectura
-        self.mode_label.setText(f"Modo: lectura")
-
-
-    def find(self): #TODO
+    def find(self):  # TODO
         text = self.text_grammar.toPlainText()
         search_word, ok = QInputDialog.getText(self, 'Buscar Palabra', 'Ingrese la palabra a buscar:')
         if ok and search_word:
@@ -614,53 +587,53 @@ class MainWindow(QMainWindow):
                 message_box.setIcon(QMessageBox.Warning)
                 message_box.exec_()
 
-    def remplace(self): #TODO
+    def remplace(self):  # TODO
         remplace_window = RemplaceWindow(self)
         remplace_window.show()
 
     def cut(self):
         clipboard = qApp.clipboard()
         texto = self.text_grammar.textCursor().selectedText()  # Obtenemos el texto seleccionado
-        clipboard.setText(texto)                               # Lo guardamos en el clipboard
-        self.text_grammar.textCursor().removeSelectedText()    # Borramos el texto seleccionado
+        clipboard.setText(texto)  # Lo guardamos en el clipboard
+        self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
 
     def copy(self):
         clipboard = qApp.clipboard()
         text = self.text_grammar.textCursor().selectedText()  # Obtenemos el texto seleccionado
-        clipboard.setText(text)                               # Lo guardamos en el portapapeles
+        clipboard.setText(text)  # Lo guardamos en el portapapeles
 
     def paste(self):
         clipboard = qApp.clipboard()
-        text = clipboard.text(QClipboard.Clipboard)            # Obtenemos el texto del portapapeles
-        self.text_grammar.textCursor().insertText(text)        # Lo pegamos
+        text = clipboard.text(QClipboard.Clipboard)  # Obtenemos el texto del portapapeles
+        self.text_grammar.textCursor().insertText(text)  # Lo pegamos
 
     def erease(self):
-        self.text_grammar.textCursor().removeSelectedText()     # Borramos el texto seleccionado
+        self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
 
     def select_all(self):
         cursor = self.text_grammar.textCursor()
         cursor.select(QTextCursor.Document)
         self.text_grammar.setTextCursor(cursor)
 
-
-    def show_information(self): #TODO
+    def show_information(self):  # TODO
         msgBox = QMessageBox()
         msgBox.setText("Realizado por: Laura González Pizarro")
         msgBox.setText("Dirigido por: Joaquín Ezpeleta Mateo")
         msgBox.exec()
 
-    def cambiar_fuente(self): #TODO
+    def cambiar_fuente(self):  # TODO
         print()
 
-    def cambiar_color(self):  #TODO
+    def cambiar_color(self):  # TODO
         print()
 
-    def cambiar_tab(self):   #TODO
+    def cambiar_tab(self):  # TODO
         print()
 
     def cambiar_idioma(self):
         # Mostramos una ventana de mensaje con un pequeño texto
-        QMessageBox.information(self, "Cambio idioma", "Los cambios se realizaran la siguiente vez que se inicie Anagra")
+        QMessageBox.information(self, "Cambio idioma",
+                                "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
     def calcular_conjunto_primero(self):
         first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
@@ -668,56 +641,67 @@ class MainWindow(QMainWindow):
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
-        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                               self.productions)
         follow_set_window = conj_tab.FollowSet(follow_set, self)
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                          self.productions)
         table = {index: elem for index, elem in enumerate(self.table)}
         simulation_window = conj_tab.SimulationTable(table, self)
         simulation_window.show()
 
     def left_factoring(self):
-        self.non_terminal_tokens, self.productions = ot.factorizacion_izquierda(self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens,
+                                                                                self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+        new_window.show()
 
     def transformacion_no_derivables(self):
-        self.non_terminal_tokens, self.productions = ot.eliminacion_simolos_no_termibales(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
-        ot.gramatica_no_vacia(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+        new_window.show()
 
     def eliminating_left_recursion(self):
-        self.non_terminal_tokens, self.productions, _ = ot.eliminar_recursividad_izquierda(self.start_token, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+        new_window.show()
 
     def transformacion_no_alcanzables(self):
-        self.terminal_tokens, self.non_terminal_tokens,  self.productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
+        new_window.show()
 
     def eliminating_eps_prod(self):
-        self.productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
-
+        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
+        new_window.show()
     def eliminating_unit_prod(self):
-        self.productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
+        new_window.show()
 
     def chomsky_normal_form(self):
-        self.productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
+        new_window.show()
 
     def greibach_normal_form(self):
-        self.non_terminal_tokens, self.productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens, self.productions)
-        self.show_grammar()
+        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens, self.productions)
+        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+        new_window.show()
 
     def parse_LL1_grammar(self):
         self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
-        # Enable options
-        self.parse_LL1_input_action.setEnabled(True)
-        self.parse_input_action.setEnabled(True)
-        self.show_LL1_table_action.setEnabled(True)
+        # Enable options if possible
+        conclicts_ll1 = LL1.is_ll1(self.table, self.terminal_tokens, self.non_terminal_tokens)
+        is_ll1 = conclicts_ll1 == 0
+        self.parse_LL1_input_action.setEnabled(is_ll1)
+        self.parse_input_action.setEnabled(is_ll1)
+        self.show_LL1_table_action.setEnabled(is_ll1)
 
         analysis_table_window = conj_tab.AnalysisTable(self.table, self)
         analysis_table_window.show()
@@ -735,26 +719,6 @@ class MainWindow(QMainWindow):
         input_window.show()
 
     def show_grammar(self):
-        self.text_grammar.setPlainText(self.write_grammar())
-
-    def show_compact_grammar(self):
-        self.text_grammar.setPlainText(self.write_compact_grammar())
-
-    def write_compact_grammar(self):
-        text = f"%start {self.start_token}\n%%\n"
-        for token, prods_token in self.productions.items():
-            text += token + ": "
-            for index, prod in enumerate(prods_token):
-                if prod is not None:
-                    for token_prod in prod:
-                        text += token_prod + "  "
-                if index != len(self.productions[token]) - 1:
-                    text += "| "
-            text += ";\n"
-        text += "%%"
-        return text
-
-    def write_grammar(self):
         text = f"%start {self.start_token}\n%%\n\n"
         for token, prods_token in self.productions.items():
             text += token + ": "
@@ -767,7 +731,21 @@ class MainWindow(QMainWindow):
                     text += "\n" + spacing + "| "
             text += "\n;\n\n"
         text += "%%"
-        return text
+        self.text_grammar.setPlainText(text)
+
+    def show_compact_grammar(self):
+        text = f"%start {self.start_token}\n%%\n"
+        for token, prods_token in self.productions.items():
+            text += token + ": "
+            for index, prod in enumerate(prods_token):
+                if prod is not None:
+                    for token_prod in prod:
+                        text += token_prod + "  "
+                if index != len(self.productions[token]) - 1:
+                    text += "| "
+            text += ";\n"
+        text += "%%"
+        self.text_grammar.setPlainText(text)
 
 
 if __name__ == "__main__":

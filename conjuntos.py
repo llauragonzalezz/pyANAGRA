@@ -95,6 +95,7 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
                 first_set_token = {None}
 
             for elemento in first_set_token & terminal_tokens:
+                #print("table[", token, ",", elemento, "] = ", production)
                 table[token, elemento].append(production)
 
             if None in first_set_token:

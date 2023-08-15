@@ -1,4 +1,4 @@
-
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
 
 
@@ -68,8 +68,7 @@ class AnalysisTable(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("Tabla analisis")
-        # Center window to the middle of the screen
-        center_window(self)
+
         non_terminals = sorted(set(k[0] for k in self.dicc.keys()))
         terminals = sorted(set(k[1] for k in self.dicc.keys()))
 
@@ -81,21 +80,36 @@ class AnalysisTable(QMainWindow):
         table.setVerticalHeaderLabels(non_terminals)
         table.setHorizontalHeaderLabels(terminals)
 
+        row_height = table.rowHeight(0)
         for row, col in self.dicc.keys():
+            item_text = ""
             if self.dicc[(row, col)]:
-                if self.dicc[(row, col)][0] is None:
-                    item = str(row) + "  → ε"
-                else:
-                    item = "{} → {}".format(row, "  ".join(
-                        [str(x) if x is not None else 'ε' for x in self.dicc[(row, col)][0]]))
-            else:
-                item = ""
-            table.setItem(non_terminals.index(row), terminals.index(col), QTableWidgetItem(item))
+                for i, prod in enumerate(self.dicc[(row, col)]):
+                    if prod is None:
+                        item_text += str(row) + "  → ε"
+                    else:
+                        item_text += "{} → {}".format(row, "  ".join([str(x) for x in prod]))
+
+                    if i < len(self.dicc[(row, col)]) - 1:
+                        item_text += "\n"
+
+            item = QTableWidgetItem(item_text)
+
+            if len(self.dicc[(row, col)]) > 1:
+                # Adapt margins
+                if table.rowHeight(non_terminals.index(row)) < len(self.dicc[(row, col)] * row_height):
+                    table.setRowHeight(non_terminals.index(row), len(self.dicc[(row, col)]) * row_height)
+
+                item.setBackground(QColor("red"))   # LL1 conflict
+
+            table.setItem(non_terminals.index(row), terminals.index(col), item)
 
         self.setCentralWidget(table)
         self.resize(table.horizontalHeader().length() + 20,
                     table.verticalHeader().length() + 30)
 
+        # Center window to the middle of the screen
+        center_window(self)
 
 class SimulationTable(QMainWindow):
     def __init__(self, dicc, parent=None):
@@ -105,6 +119,9 @@ class SimulationTable(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle("Tabla simulacion")
+        # Center window to the middle of the screen
+        center_window(self)
+
         table = QTableWidget(len(self.dicc), 3)
         table.setHorizontalHeaderLabels(["Pila", "Entrada", "Producción usada(salida)"])
 
@@ -126,6 +143,7 @@ class SimulationTable(QMainWindow):
                     if production[1][0] is None:
                         item = str(production[0]) + "  → ε"
                     else:
+                        print(production[1][0])
                         item = "{} → {}".format(production[0], "  ".join(str(x) for x in production[1][0]))
                 else:
                     item = ""

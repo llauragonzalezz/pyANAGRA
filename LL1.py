@@ -3,11 +3,13 @@ import re
 
 
 def is_ll1(table, terminals, non_terminals):
+    num_conflicts = 0
     for token_no_terminal in non_terminals:
         for token_terminal in terminals | {"$"}:
-            if len(table[token_no_terminal, token_terminal]) != 1:
-                return False
-    return True
+            if len(table[token_no_terminal, token_terminal]) > 1:
+                num_conflicts += 1
+
+    return num_conflicts
 
 
 def simulate(table, start_token, terminals, input):
