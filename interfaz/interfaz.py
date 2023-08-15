@@ -427,7 +427,7 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menubar)
 
         self.text_grammar = QPlainTextEdit(self)
-        #self.text_grammar.setFont(QFont("Helvetica [Cronyx]"))
+        # self.text_grammar.setFont(QFont("Helvetica [Cronyx]"))
         # Helvetica Serif Times TypeWriter Courier OldEnglish Decorative Monospace Fantasy Cursive System
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
         self.setCentralWidget(self.text_grammar)
@@ -619,10 +619,8 @@ class MainWindow(QMainWindow):
         self.text_grammar.setTextCursor(cursor)
 
     def show_information(self):  # TODO
-        msgBox = QMessageBox()
-        msgBox.setText("Realizado por: Laura González Pizarro")
-        msgBox.setText("Dirigido por: Joaquín Ezpeleta Mateo")
-        msgBox.exec()
+        message = "ANAGRA 3.0: Herramienta para el estudio de gramaticas\n   libres de contexto y técnicas de analisis sintáctico \n\nRealizado por: Laura González Pizarro \nDirigido por: Joaquín Ezpeleta Mateo"
+        QMessageBox.information(self, 'About...', message)
 
     def cambiar_fuente(self):
         font, ok = QFontDialog.getFont()
@@ -632,7 +630,7 @@ class MainWindow(QMainWindow):
     def cambiar_color(self):
         color = QColorDialog.getColor()
         if color.isValid():
-            self.text_grammar.setTextColor(color)
+            self.text_grammar.setStyleSheet(f"color: {color.name()};")
 
     def cambiar_tab(self):  # TODO
         spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
@@ -650,59 +648,76 @@ class MainWindow(QMainWindow):
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
-        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                               self.productions)
         follow_set_window = conj_tab.FollowSet(follow_set, self)
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                          self.productions)
         table = {index: elem for index, elem in enumerate(self.table)}
         simulation_window = conj_tab.SimulationTable(table, self)
         simulation_window.show()
 
     def left_factoring(self):
-        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(),
+                                                                      copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-
     def transformacion_no_derivables(self):
-        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token,
+                                                                                self.terminal_tokens.copy(),
+                                                                                self.non_terminal_tokens.copy(),
+                                                                                copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_left_recursion(self):
-        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token,
+                                                                                 self.non_terminal_tokens.copy(),
+                                                                                 copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def transformacion_no_alcanzables(self): # TODO COMPROBAR SI EL LENGUAGE ES VACIO O NO JIIJIJ
-        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+    def transformacion_no_alcanzables(self):  # TODO COMPROBAR SI EL LENGUAGE ES VACIO O NO JIIJIJ
+        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token,
+                                                                                             self.terminal_tokens.copy(),
+                                                                                             self.non_terminal_tokens.copy(),
+                                                                                             copy.deepcopy(
+                                                                                                 self.productions))
         new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_eps_prod(self):
-        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens.copy(),
+                                                          copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_unit_prod(self):
-        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens.copy(),
+                                                            self.non_terminal_tokens.copy(),
+                                                            copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def chomsky_normal_form(self):
-        productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens.copy(),
+                                              self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def greibach_normal_form(self):
-        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens.copy(),
+                                                                    copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def parse_LL1_grammar(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                          self.productions)
 
         # Enable options if possible
         conclicts_ll1 = LL1.is_ll1(self.table, self.terminal_tokens, self.non_terminal_tokens)

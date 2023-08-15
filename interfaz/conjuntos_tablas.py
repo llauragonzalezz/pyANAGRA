@@ -143,7 +143,6 @@ class SimulationTable(QMainWindow):
                     if production[1][0] is None:
                         item = str(production[0]) + "  → ε"
                     else:
-                        print(production[1][0])
                         item = "{} → {}".format(production[0], "  ".join(str(x) for x in production[1][0]))
                 else:
                     item = ""

@@ -90,7 +90,6 @@ class VentanaSimulacion(QMainWindow):
         # Tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
             for nodo in self.table[self.iter][2][1]:
-                print("Borramos el nodo:", nodo[1])
                 self.tree_window.delete_node(nodo[1])
 
         self.iter -= 1
@@ -116,7 +115,6 @@ class VentanaSimulacion(QMainWindow):
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
         # Update tree window
-        print(self.table[self.iter][2])
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
             for nodo in self.table[self.iter][2][1]:
                 self.tree_window.add_node(nodo[1], nodo[0], nodo[0] in self.terminals, self.table[self.iter][2][0][1])
