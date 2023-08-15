@@ -134,12 +134,13 @@ def is_nullable(token, tokens_no_terminales, producciones):
         viejo = nuevo
 
         for token1 in nuevos_token:
-            if None in producciones[token1]:
-                return True
-            if token1 in tokens_no_terminales:
-                print("tokens a añadir: ", [token1 for produccion in producciones[token1] for token1 in produccion])
-                nuevo |= set(token1 for produccion in producciones[token1] for token1 in produccion)
-                print(nuevo)
+            if token not in tokens_terminales:
+                if None in producciones[token1]:
+                    return True
+                if token1 in tokens_no_terminales:
+                    print("tokens a añadir: ", [token1 for produccion in producciones[token1] for token1 in produccion])
+                    nuevo |= set(token1 for produccion in producciones[token1] for token1 in produccion)
+                    print(nuevo)
     return False
 
 def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones):

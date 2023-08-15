@@ -3,10 +3,10 @@ import json
 import os
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QPalette, QColor, QTextDocument
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QFont, QColor, QTextDocument
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
-    QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit
+    QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog
 
 import LL1
 import bisonlex
@@ -427,6 +427,8 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menubar)
 
         self.text_grammar = QPlainTextEdit(self)
+        #self.text_grammar.setFont(QFont("Helvetica [Cronyx]"))
+        # Helvetica Serif Times TypeWriter Courier OldEnglish Decorative Monospace Fantasy Cursive System
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
         self.setCentralWidget(self.text_grammar)
 
@@ -622,14 +624,20 @@ class MainWindow(QMainWindow):
         msgBox.setText("Dirigido por: Joaquín Ezpeleta Mateo")
         msgBox.exec()
 
-    def cambiar_fuente(self):  # TODO
-        print()
+    def cambiar_fuente(self):
+        font, ok = QFontDialog.getFont()
+        if ok:
+            self.text_edit.setFont(font)
 
-    def cambiar_color(self):  # TODO
-        print()
+    def cambiar_color(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.text_edit.setTextColor(color)
 
     def cambiar_tab(self):  # TODO
-        print()
+        spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
+        if ok:
+            print(spaces)
 
     def cambiar_idioma(self):
         # Mostramos una ventana de mensaje con un pequeño texto
@@ -668,7 +676,7 @@ class MainWindow(QMainWindow):
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def transformacion_no_alcanzables(self):
+    def transformacion_no_alcanzables(self): # TODO COMPROBAR SI EL LENGUAGE ES VACIO O NO JIIJIJ
         terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
