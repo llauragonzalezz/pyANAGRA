@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import sys
@@ -483,9 +484,6 @@ class MainWindow(QMainWindow):
             self.text_grammar.setPlainText(text)  # Escribimos el fichero
 
     def edit_file(self):  # TODO
-        self.menubar.clear()
-        self.menu_inicial()
-
         bisonparse.token_inicial = ""
         bisonparse.tokens_terminales = set()
         bisonparse.tokens_no_terminales = set()
@@ -497,6 +495,9 @@ class MainWindow(QMainWindow):
         self.productions = dict()
         self.table = dict()
         self.file = False
+
+        self.menubar.clear()
+        self.menu_inicial()
 
     def save_file(self):
         if self.file:
@@ -641,55 +642,54 @@ class MainWindow(QMainWindow):
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
-        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                               self.productions)
+        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
         follow_set_window = conj_tab.FollowSet(follow_set, self)
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                          self.productions)
+        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
         table = {index: elem for index, elem in enumerate(self.table)}
         simulation_window = conj_tab.SimulationTable(table, self)
         simulation_window.show()
 
     def left_factoring(self):
-        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens,
-                                                                                self.productions)
+        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
+
     def transformacion_no_derivables(self):
-        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_left_recursion(self):
-        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token, self.non_terminal_tokens, self.productions)
+        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def transformacion_no_alcanzables(self):
-        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_eps_prod(self):
-        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens, self.productions)
+        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
+
     def eliminating_unit_prod(self):
-        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def chomsky_normal_form(self):
-        productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens.copy(), self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def greibach_normal_form(self):
-        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens, self.productions)
+        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 

@@ -58,7 +58,6 @@ def eliminacion_simolos_no_termibales(token_inicial, tokens_terminales, tokens_n
     for token in nuevo:
         lista_producciones = []
         for produccion in producciones[token]:
-            print(produccion)
             if produccion is None or set(produccion) <= nuevo | tokens_terminales:
                 lista_producciones.append(produccion)
 
@@ -138,8 +137,9 @@ def is_nullable(token, tokens_no_terminales, producciones):
             if None in producciones[token1]:
                 return True
             if token1 in tokens_no_terminales:
+                print("tokens a añadir: ", [token1 for produccion in producciones[token1] for token1 in produccion])
                 nuevo |= set(token1 for produccion in producciones[token1] for token1 in produccion)
-
+                print(nuevo)
     return False
 
 def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones):
@@ -177,7 +177,7 @@ def tokens_unitarios_alanzables(token, tokens_terminales, tokens_no_terminales, 
     nuevo = set()
     # Añadimos todos los tokens que sean producción unitaria de un token
     for produccion in producciones[token]:
-        if len(produccion) == 1 and produccion[0] in tokens_no_terminales:
+        if produccion is not None and len(produccion) == 1 and produccion[0] in tokens_no_terminales:
             producciones[token].remove(produccion) # Eliminamos la producción unitaria
             nuevo.add(produccion[0])
 
