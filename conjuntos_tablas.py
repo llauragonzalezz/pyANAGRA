@@ -9,6 +9,7 @@ def center_window(window):
     y = (screen.height() - window_size.height()) // 2
     window.move(x, y)
 
+
 class FirstSet(QMainWindow):
     def __init__(self, dicc, parent=None):
         super().__init__(parent)

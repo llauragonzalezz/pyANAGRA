@@ -1,9 +1,8 @@
 import copy
-import json
 import os
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QFont, QColor, QTextDocument
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
     QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog
@@ -384,6 +383,15 @@ class MainWindow(QMainWindow):
         self.show_LL1_table_action.setEnabled(False)  # Enable/Disable action
         parse_menu.addAction(self.show_LL1_table_action)
 
+        parse_SLR_grammar_action = QAction("Analizar gramática SLR", self)
+        parse_SLR_grammar_action.triggered.connect(self.parse_SLR_grammar)
+        parse_menu.addAction(parse_SLR_grammar_action)
+
+        self.show_SLR_table_action = QAction("Mostrar tabla SLR", self)
+        self.show_SLR_table_action.triggered.connect(self.show_SLR_table)
+        self.show_SLR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_menu.addAction(self.show_SLR_table_action)
+
     def pestania_simular(self):
         simular_menu = QMenu("Simular", self)
         self.menubar.addMenu(simular_menu)
@@ -392,6 +400,11 @@ class MainWindow(QMainWindow):
         self.parse_LL1_input_action.triggered.connect(self.parse_LL1_input)
         self.parse_LL1_input_action.setEnabled(False)  # Enable/Disable action
         simular_menu.addAction(self.parse_LL1_input_action)
+
+        self.parse_SLR_input_action = QAction("Analizar entrada SLR", self)
+        self.parse_SLR_input_action.triggered.connect(self.parse_SLR_input)
+        self.parse_SLR_input_action.setEnabled(False)  # Enable/Disable action
+        simular_menu.addAction(self.parse_SLR_input_action)
 
         simular_menu.addSeparator()
 
@@ -427,8 +440,6 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.menubar)
 
         self.text_grammar = QPlainTextEdit(self)
-        # self.text_grammar.setFont(QFont("Helvetica [Cronyx]"))
-        # Helvetica Serif Times TypeWriter Courier OldEnglish Decorative Monospace Fantasy Cursive System
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
         self.setCentralWidget(self.text_grammar)
 
@@ -506,6 +517,8 @@ class MainWindow(QMainWindow):
             file = self.file
         else:
             file = QFileDialog.getSaveFileName(self, 'Guardar fichero')[0]
+            if not file:
+                return
 
         file = open(file, 'w')
         texto = self.text_grammar.toPlainText()
@@ -513,11 +526,12 @@ class MainWindow(QMainWindow):
         file.close()
 
     def save_file_as(self):
-        nom_fich = QFileDialog.getSaveFileName(self, 'Guardar fichero como')[0]
-        fichero = open(nom_fich, 'w')
-        texto = self.text_grammar.toPlainText()
-        fichero.write(texto)
-        fichero.close()
+        name_fich, _ = QFileDialog.getSaveFileName(self, 'Guardar fichero como')
+        if name_fich:
+            fichero = open(name_fich, 'w')
+            texto = self.text_grammar.toPlainText()
+            fichero.write(texto)
+            fichero.close()
 
     def exit(self):
         confirm_dialog = QMessageBox(self)
@@ -733,9 +747,18 @@ class MainWindow(QMainWindow):
         analysis_table_window = conj_tab.AnalysisTable(self.table, self)
         analysis_table_window.show()
 
+    def parse_SLR_grammar(self):
+        print()
+
+    def show_SLR_table(self):
+        print()
+
     def parse_LL1_input(self):
         ll1_input_window = VentanaInputGramatica(self)
         ll1_input_window.show()
+
+    def parse_SLR_input(self):
+        print()
 
     def parse_input(self):
         input_window = VentanaInput(self)

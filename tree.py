@@ -3,25 +3,16 @@
 
 
 import math
-import sys
-import simulacion as sim
 
+from PyQt5.QtCore import (QEasingCurve, QLineF, QParallelAnimationGroup, QPointF, QPropertyAnimation, QRectF, Qt)
 
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
 
-from PyQt5.QtCore import (QEasingCurve, QLineF,
-                            QParallelAnimationGroup, QPointF,
-                            QPropertyAnimation, QRectF, Qt)
-
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QPalette
-
-from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
-                             QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QInputDialog, QPushButton, QMainWindow,
-                             QDesktopWidget)
+from PyQt5.QtWidgets import (QGraphicsItem, QGraphicsObject, QGraphicsScene, QGraphicsView,
+                             QStyleOptionGraphicsItem, QWidget, QMainWindow, QDesktopWidget)
 
 import networkx as nx
-from networkx.drawing.nx_agraph import write_dot, graphviz_layout
-
+from networkx.drawing.nx_agraph import  graphviz_layout
 
 
 class Node(QGraphicsObject):
