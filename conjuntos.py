@@ -13,7 +13,6 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
             epsilon = True
             for token_prod in production:
                 if token_prod not in recursive_tokens:
-                    print("LLamo a conjunto primero de:", token_prod, ", con los tokens_recursivos: ", recursive_tokens | {token_prod})
                     first_set_tok = calculate_first_set_token(token_prod, recursive_tokens | {token_prod}, terminal_tokens, non_terminal_tokens, productions)
                     first_set |= first_set_tok.difference({None})
                     if None not in first_set_tok:

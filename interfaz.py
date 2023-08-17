@@ -487,7 +487,8 @@ class MainWindow(QMainWindow):
             # Obtenemos la ruta del archivo
             self.file = dialogo.selectedFiles()[0]
             text = open(self.file).read()
-            gramatica = yacc.parse(text)
+            gramatica = yacc.parse(text)    # PRINT MENSAJE DE SINTAX ERROR SISI ERROR
+            print(gramatica)
             self.start_token = gramatica[0]
             self.terminal_tokens = gramatica[1]
             self.non_terminal_tokens = gramatica[2]

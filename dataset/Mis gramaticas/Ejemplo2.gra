@@ -1,0 +1,9 @@
+%token a b c
+%%
+S : A B c ;
+A : a;
+A : ;
+B : b ;
+B : ;
+C : b;
+%%

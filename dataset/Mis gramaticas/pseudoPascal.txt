@@ -1,0 +1,306 @@
+%start program
+
+%token IDENTIFIER
+
+%token BECOMES NIL IN OR AND NOT 
+
+%token IF THEN CASE OF  
+
+%token CONST VAR ARRAY RECORD SET SFILE FUNCTION
+
+%token PROCEDURE LABEL PACKED PROGRAM
+
+
+%%
+
+program		: PROGRAM newident external_files block '.'
+
+		;
+
+external_files  :
+
+		| '('  newident_list ')'
+
+		;
+
+
+
+block		: opt_declarations  statement_part
+
+		;
+
+opt_declarations:
+
+		| declarations
+
+		;
+
+declarations	: declarations declaration
+
+		| declaration
+
+		;
+
+declaration	: label_dcl_part
+
+      | var_dcl_part
+		;
+
+
+
+label_dcl_part	: LABEL labels 
+		;
+
+labels		: labels ',' label
+
+		| label
+
+		;
+
+label		:
+
+		;
+
+
+
+const_defs	: const_defs const_def
+
+		;
+
+const_def	:  newident '=' constant
+
+		;
+
+
+
+constant	: 
+		| ident
+
+		| '+' ident
+
+		;
+
+
+
+var_dcl_part	: VAR variable_dcls 
+
+		;
+
+variable_dcls	: variable_dcls variable_dcl
+
+		;
+
+variable_dcl	: newident_list ':'
+
+		;
+
+newident_list	: new_id_list
+
+		;
+
+new_id_list	: new_id_list ',' newident
+
+		| newident
+
+		;
+
+
+
+proc_dcl_part	: proc_or_func
+
+		;
+
+proc_or_func	: proc_heading body
+
+		;
+
+proc_heading	: PROCEDURE
+
+			formal_params
+
+		;
+
+
+
+body		: block
+
+		| IDENTIFIER
+
+		;
+
+formal_params	:
+
+		| '('  formal_p_sects ')'
+
+		;
+
+formal_p_sects	: formal_p_sects formal_p_sect
+
+		;
+
+formal_p_sect	:  param_group
+
+		;
+
+param_group	: newident_list ':' paramtype
+
+		;
+
+paramtype	: ident
+
+		;
+
+index_specs	: index_spec
+
+		;
+
+index_spec	:  newident ':' ident
+
+		;
+
+
+
+statement_part	: compound_stmt
+
+		;
+
+compound_stmt	: statements 
+
+		;
+
+statements	: statement
+
+		;
+
+statement	:
+
+		| label ':' statement
+
+		;
+
+
+
+assignment	: variable BECOMES expression
+
+		;
+
+
+
+actual_params	:
+
+		| '(' actuals_list ')'
+
+		;
+
+actuals_list	: actuals_list ',' actual_param
+
+		| actual_param
+
+		;
+
+actual_param	: expression
+
+		| expression colon_things
+
+		;
+
+colon_things    : ':' expression
+
+		| ':' expression ':' expression 
+
+		;
+
+
+
+rec_var_list	: record_var
+
+		;
+
+
+
+expression	: simple_expr
+
+		| simple_expr relational_op simple_expr
+
+		;
+
+relational_op	: '='
+
+		;
+
+
+
+simple_expr	: term
+
+		| '+' term
+
+		;
+
+add_op		: '+'
+
+		| '-'
+
+		;
+
+
+
+term		: term mult_op 
+
+		;
+
+mult_op		: '*'
+
+		| '/'
+
+		;
+
+
+
+set		: '[' member_list ']'
+
+		;
+
+member_list	:
+
+		| members
+
+		;
+
+members		: members ',' member
+
+		;
+
+member		: expression
+
+		;
+
+
+
+
+variable	: ident actual_params
+
+		| variable '.' ident
+
+		| variable '^'
+
+		;
+
+expressions	: expressions ',' expression
+
+		| expression
+
+		;
+
+record_var	: variable
+
+		;
+
+ident		: IDENTIFIER
+
+		;
+
+newident	: IDENTIFIER
+
+		;
+
+%%
