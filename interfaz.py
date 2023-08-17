@@ -496,7 +496,7 @@ class MainWindow(QMainWindow):
             self.menu_gramaticas()
             self.text_grammar.setPlainText(text)  # Escribimos el fichero
 
-    def edit_file(self):  # TODO
+    def edit_file(self):
         bisonparse.token_inicial = ""
         bisonparse.tokens_terminales = set()
         bisonparse.tokens_no_terminales = set()
