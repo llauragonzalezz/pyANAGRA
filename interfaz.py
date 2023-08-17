@@ -756,7 +756,7 @@ class MainWindow(QMainWindow):
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
-        SLR.ampliar_gramatica(self.start_token, self.non_terminal_tokens, self.productions)
+        SLR.ampliar_gramatica(self.start_token, self.terminal_tokens,self.non_terminal_tokens, self.productions)
 
     def show_SLR_table(self):
         print()
