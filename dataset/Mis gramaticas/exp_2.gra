@@ -1,0 +1,12 @@
+%token tID
+%%
+E : T EP;
+EP: '+' T EP;
+EP: ;
+T: F TP;
+TP: '*' F TP;
+TP: ;
+F: tID;
+F: '(' E ')';
+F: '-' F;
+%%

@@ -475,6 +475,25 @@ class MainWindow(QMainWindow):
         self.text_grammar.setExtraSelections([])
         self.text_grammar.setCurrentCharFormat(QTextCharFormat())
 
+    def yacc_parse_grammar(self, text):
+        try:
+            grammar = yacc.parse(text)
+            self.start_token = grammar[0]
+            self.terminal_tokens = grammar[1]
+            self.non_terminal_tokens = grammar[2]
+            self.productions = grammar[3]
+
+            self.menu_gramaticas()
+            self.text_grammar.setPlainText(text)
+
+        except SyntaxError as e:
+            error_message = QMessageBox()
+            error_message.setIcon(QMessageBox.Critical)
+            error_message.setWindowTitle("Error")
+            error_message.setText(str(e))
+            error_message.setStandardButtons(QMessageBox.Ok)
+            error_message.exec_()
+
     def new_app(self):  # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
         python_path = sys.executable
         os.system(python_path + " " + os.path.abspath(__file__) + " &")
@@ -487,15 +506,8 @@ class MainWindow(QMainWindow):
             # Obtenemos la ruta del archivo
             self.file = dialogo.selectedFiles()[0]
             text = open(self.file).read()
-            gramatica = yacc.parse(text)    # PRINT MENSAJE DE SINTAX ERROR SISI ERROR
-            print(gramatica)
-            self.start_token = gramatica[0]
-            self.terminal_tokens = gramatica[1]
-            self.non_terminal_tokens = gramatica[2]
-            self.productions = gramatica[3]
+            self.yacc_parse_grammar(text)
 
-            self.menu_gramaticas()
-            self.text_grammar.setPlainText(text)  # Escribimos el fichero
 
     def edit_file(self):
         bisonparse.token_inicial = ""
@@ -570,14 +582,8 @@ class MainWindow(QMainWindow):
         self.mode_label.setText(f"Modo: lectura")
 
     def accept_grammar(self):
-        self.menu_gramaticas()
         text = self.text_grammar.toPlainText()
-        grammar = yacc.parse(text)
-
-        self.start_token = grammar[0]
-        self.terminal_tokens = grammar[1]
-        self.non_terminal_tokens = grammar[2]
-        self.productions = grammar[3]
+        self.yacc_parse_grammar(text)
 
     def find(self):  # TODO
         text = self.text_grammar.toPlainText()

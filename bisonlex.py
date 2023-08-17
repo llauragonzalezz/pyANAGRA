@@ -104,9 +104,11 @@ t_ignore_comment = r'//.*'
 
 # Error handler for illegal characters
 def t_error(t):
-    print(f'Illegal character {t.value[0]!r}')
-    print(t.value)
-    t.lexer.skip(1)
+    raise SyntaxError(f'Illegal character {t.value[0]!r}')
+    # print(f'Illegal character {t.value[0]!r}')
+    # print(t.value)
+    # t.lexer.skip(1)
+
 
 lex.lex()
 

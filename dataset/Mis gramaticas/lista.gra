@@ -1,0 +1,5 @@
+%token id
+%%
+lID : id lID
+    | id
+;

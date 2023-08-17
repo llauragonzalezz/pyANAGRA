@@ -1,0 +1,7 @@
+%token id tM tAP tCP
+%%
+E : E tM T ;
+E : T;
+T : tAP E tCP;
+T : id;
+%%

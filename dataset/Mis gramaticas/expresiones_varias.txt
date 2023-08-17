@@ -1,0 +1,85 @@
+E : E_S ( op_rel E )*
+
+op_rel :
+  <tIG>
+|  <tMEN>
+|  <tMAY>
+|  <tMENI>
+|  <tMAYI>
+|  <tDIF>
+
+E_S :
+  ('-')? T ( op_sum E_S )*
+
+op_sum :
+  '-'
+|  '+''
+
+T :
+  F ( '*' T )*
+
+
+F :
+  <tNOT> F
+|  '(' E ')'
+|  <tID>
+
+
+============================================================
+%token id not
+%%
+E : E_S E_plus;
+E_plus: '>' E E_plus
+|
+;
+
+E_S : '-' T E_S_plus
+|     T E_S_plus
+;
+
+E_S_plus : '+' E_S E_S_plus
+|
+;
+
+T : F F_plus;
+F_plus : '*' T F
+|
+;
+
+F :
+  not F
+|  '(' E ')'
+|  id
+;
+==================Una que es LL(1)
+%token tID
+%%
+E : T EP;
+EP: '+' T EP;
+EP: ;
+T: F TP;
+TP: '*' F TP;
+TP: ;
+F: tID;
+F: '(' E ')';
+F: '-' F;
+%%
+==================Una que es LL(1), incluyendo exp simple
+%token tID not
+%%
+E: ES EP;
+EP: '>' ES E;
+EP:;
+ES: T EPP;
+EPP: '+' T EPP;
+EPP: ;
+T: F TP;
+TP: '*' F TP;
+TP: ;
+F: tID;
+F: '(' E ')';
+F: '-' F;
+F: not F;
+%%
+
+

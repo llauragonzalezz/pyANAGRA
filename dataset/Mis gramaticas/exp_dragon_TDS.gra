@@ -1,0 +1,14 @@
+%token NUM
+%%
+E : T TP;
+
+TP: '+' T TP;
+
+TP: '-' T TP;
+
+TP: ;
+
+T: NUM;
+
+T: '(' E ')';
+%%

@@ -1,0 +1,7 @@
+%token tPC tAP tCP x
+%%
+S : tAP A tCP ;
+A : C B ;
+B : tPC A ;
+B : ;
+C : x | S ;

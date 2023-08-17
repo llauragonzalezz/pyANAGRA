@@ -1,0 +1,208 @@
+%start program
+
+%token IDENTIFIER
+%token BECOMES NIL IN OR AND NOT 
+%token IF THEN CASE OF  
+%token CONST VAR ARRAY RECORD SET SFILE FUNCTION
+%token PROCEDURE LABEL PACKED PROGRAM
+
+%%   /*start of rules*/
+program		: PROGRAM {its_a="program";} newident external_files block '.'
+		;
+external_files  : /*empty*/
+		| '(' {its_a="external-file";} newident_list ')'
+		;
+
+block		: opt_declarations  statement_part
+		;
+opt_declarations: /*empty*/
+		| declarations
+		;
+declarations	: declarations declaration	/*should be left-recursive*/
+		| declaration
+		;
+declaration	: label_dcl_part
+      | var_dcl_part
+		;
+
+label_dcl_part	: LABEL labels 
+		;
+labels		: labels ',' label
+		| label
+		;
+label		: 	/* 0 <= value <= 9999 [6.1.6] */
+		;
+
+const_defs	: const_defs const_def
+		;
+const_def	: {its_a="constant";} newident '=' constant
+		;
+
+constant	: 
+		| ident				/*check it is constant*/
+		| '+' ident
+		;
+
+var_dcl_part	: VAR variable_dcls 
+		;
+variable_dcls	: variable_dcls variable_dcl
+		;
+variable_dcl	: {its_a="variable";} newident_list ':' 
+		;
+newident_list	: new_id_list {its_a="don't know";}
+		;
+new_id_list	: new_id_list ',' newident
+		| newident
+		;
+
+proc_dcl_part	: proc_or_func
+		;
+proc_or_func	: proc_heading body     /*check if forward or fwd refd*/
+			{lexical_level--;
+			}
+		;
+proc_heading	: PROCEDURE
+			{if(param_level==0)its_a="procedure";}
+		  newident {lexical_level++;}
+			formal_params
+		;
+
+body		: block
+			/* result determined in block */
+		| IDENTIFIER				/*directive-FORWARD*/
+		;
+formal_params	: /*empty*/
+		| '(' {param_level++;} formal_p_sects ')' {param_level--;}
+		;
+formal_p_sects	: formal_p_sects formal_p_sect
+		;
+formal_p_sect	: {its_a="value-parameter";} param_group
+		;
+param_group	: newident_list ':' paramtype
+		;
+paramtype	: ident
+		;
+index_specs	: index_spec
+		;
+index_spec	: {its_a="conformant-bound";} newident newident ':' ident
+		;
+
+statement_part	: compound_stmt
+		;
+compound_stmt	: statements 
+		;
+statements	: statement
+		;
+statement	: /*empty*/
+		| label ':' statement
+		;
+
+assignment	: variable BECOMES expression	/* must test for fn_ident */
+	/*	| ident BECOMES expression	*/
+		;
+
+actual_params	:  /*empty*/
+		| '(' actuals_list ')'
+		;
+actuals_list	: actuals_list ',' actual_param
+		| actual_param
+		;
+actual_param	: expression    /* which could be a variable or a proc/fn id */
+		| expression colon_things  /* only in i/o */
+		;
+colon_things    : ':' expression	/*integer*/
+		| ':' expression ':' expression 
+		;
+
+rec_var_list	: record_var
+		;
+
+expression	: simple_expr
+		| simple_expr relational_op simple_expr
+		;
+relational_op	: '='
+		;
+
+simple_expr	: term
+		| '+' term
+		;
+add_op		: '+'
+		| '-'
+		;
+
+term		: term mult_op 
+		;
+mult_op		: '*'
+		| '/'
+		;
+
+/*
+function_call	: ident actual_params
+		;
+*/
+
+set		: '[' member_list ']'
+		;
+member_list	: /*empty*/
+		| members
+		;
+members		: members ',' member
+		;
+member		: expression
+		;
+
+/* kludge */
+variable	: ident actual_params	/* check variable, const_id, fn_call */
+		| variable '.' ident
+		| variable '^'
+		;
+expressions	: expressions ',' expression
+		| expression
+		;
+record_var	: variable
+		;
+ident		: IDENTIFIER
+		;
+newident	: IDENTIFIER
+		    { 
+			if(param_level<2)
+			    printf("%s\t%s\n", its_a, lastident);
+		    }
+		;
+%%   /*start of routines*/
+
+yyerror(msg) char *msg;
+{
+    if(msg==NULL || *msg=='\0')
+	fprintf(stderr, "Error at %s near line %d\n",
+				token_name(yychar), yylineno);
+    else
+	fprintf(stderr, "Error at %s near line %d : %s\n",
+				token_name(yychar), yylineno, msg);
+    exit(1);
+}
+
+parser_info()
+{
+    printf("\n%d line%s parsed\n", yylineno, plural(yylineno));
+}
+
+
+internal_error(s,a1,a2,a3,a4)
+{
+    fprintf(stderr, "Internal error: ");
+    fprintf(stderr, s, a1, a2, a3, a4);
+    exit(2);
+}
+
+warning(fmt, a1, a2, a3, a4)
+{
+    fprintf(stderr, "Warning line %d: ", yylineno);
+    fprintf(stderr, fmt, a1, a2, a3, a4);
+    fprintf(stderr, "\n");
+}
+
+main()
+{
+    yyparse();
+}

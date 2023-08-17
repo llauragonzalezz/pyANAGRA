@@ -1,0 +1,11 @@
+%token IF EXP THEN ELSE OTRA
+%%
+inst : instC 
+       | instI
+;
+instC : IF EXP THEN instC ELSE instC
+        | OTRA
+;
+instI : IF EXP THEN inst
+      | IF EXP THEN instC ELSE instI
+;

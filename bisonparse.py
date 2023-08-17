@@ -145,7 +145,7 @@ def p_listaProducciones_produccion(p):
 
 
 def p_reglas(p):
-    ''' reglas : EUNG listaProducciones EUNG '''
+    ''' reglas : EUNG listaProducciones '''
     if bisonparse.token_inicial == "":
         bisonparse.token_inicial = p[2][0][0]
 
@@ -157,7 +157,6 @@ def p_bison(p):
 
 
 def p_error(p):
-    print(f'Syntax error at {p.value!r}')
-
+    raise SyntaxError(f'Syntax error at {p.value!r}')
 
 yacc.yacc()

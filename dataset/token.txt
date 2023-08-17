@@ -1,0 +1,10 @@
+%token OP CP PC X
+%%
+
+S: OP A CP ;
+
+A: C B;
+
+B: PC A | ;
+
+C: X | S ;

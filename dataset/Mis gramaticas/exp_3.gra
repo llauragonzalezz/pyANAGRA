@@ -1,0 +1,31 @@
+%token id
+%%
+E : 
+  E_S E_plus
+;
+
+E_plus: 
+  '>' E_S E_plus
+|
+;
+
+E_S : 
+  '-' T E_S_plus
+| '+' T E_S_plus
+| T E_S_plus
+;
+
+E_S_plus : '+' T E_S_plus
+|
+;
+
+T : F T_plus;
+
+T_plus : '*' F T_plus
+|
+;
+
+F :
+  '(' E ')'
+|  id
+;
