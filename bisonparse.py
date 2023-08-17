@@ -117,7 +117,7 @@ def p_produccion(p):
     if p[1] in producciones :
         for prod in p[3]:
             if prod not in producciones[p[1]]:
-                producciones[p[1]].extend(prod)
+                producciones[p[1]].append(prod)
     else:
         producciones[p[1]] = p[3]
 

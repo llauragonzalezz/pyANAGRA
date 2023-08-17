@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
     QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog
 
 import LL1
+import SLR
 import bisonlex
 import bisonparse
 from ply import *
@@ -755,7 +756,7 @@ class MainWindow(QMainWindow):
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
-        print()
+        SLR.ampliar_gramatica(self.start_token, self.non_terminal_tokens, self.productions)
 
     def show_SLR_table(self):
         print()

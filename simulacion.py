@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
-    QHBoxLayout, QApplication, QDesktopWidget
+    QHBoxLayout, QApplication, QDesktopWidget, QMessageBox
 
 import tree
 
@@ -107,6 +107,12 @@ class VentanaSimulacion(QMainWindow):
         self.iter += 1
         if self.iter == len(self.table)-1:
             self.btn_avanza.setEnabled(False)
+
+            message_box = QMessageBox() # TODO ver que ponia en el mensaje original
+            message_box.setWindowTitle("Mensaje")
+            message_box.setText("La cadena es aceptada por la gramática")
+            message_box.exec_()
+
         self.btn_retrocede.setEnabled(True)
 
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
