@@ -2,15 +2,13 @@ import re
 import conjuntos
 
 
-def ampliar_gramatica(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+def ampliar_gramatica(token_inicial, tokens_no_terminales, producciones):
     nuevo_token_inicial = token_inicial + "*"
     tokens_no_terminales |= {nuevo_token_inicial}
     producciones[nuevo_token_inicial] = [['.', token_inicial]]
     # I = clausura(producciones[nuevo_token_inicial], tokens_no_terminales, producciones)
     # print(conj_LR0(nuevo_token_inicial, tokens_no_terminales, producciones))
-    accion = tabla_accion(nuevo_token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    ir_a = tabla_ir_a(nuevo_token_inicial, tokens_no_terminales, producciones)
-    simulate(accion, ir_a, "id '+' id" + " $")
+    #simulate(accion, ir_a, "id '+' id" + " $")
     return nuevo_token_inicial, tokens_no_terminales, producciones
 
 
@@ -88,6 +86,10 @@ def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producc
             if [token_inicial[:-1], '.'] in I:
                 accion[C.index(I), "$"] = "aceptar"
 
+    for i in range(len(C)):
+        for token in tokens_terminales | {"$"}:
+            if (i, token) not in accion:
+                accion[i, token] = "ERROR"
     return accion
 
 
@@ -109,7 +111,10 @@ def tabla_ir_a(token_inicial, tokens_no_terminales, producciones):
             if sucesor_token in C:
                 ir_a[i, token_no_terminal] = C.index(sucesor_token)
 
-
+    for i in range(len(C)):
+        for token in tokens_no_terminales | {"$"}:
+            if (i, token) not in ir_a:
+                ir_a[i, token] = "ERROR"
     return ir_a
 
 

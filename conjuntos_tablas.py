@@ -1,3 +1,4 @@
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
 
@@ -61,7 +62,7 @@ class FollowSet(QMainWindow):
         self.text_follow_set.setPlainText(text)
 
 
-class AnalysisTable(QMainWindow):
+class AnalysisTableLL1(QMainWindow):
     def __init__(self, dicc, parent=None):
         super().__init__(parent)
         self.dicc = dicc
@@ -103,6 +104,7 @@ class AnalysisTable(QMainWindow):
 
                 item.setBackground(QColor("red"))   # LL1 conflict
 
+            item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
             table.setItem(non_terminals.index(row), terminals.index(col), item)
 
         self.setCentralWidget(table)
@@ -111,6 +113,121 @@ class AnalysisTable(QMainWindow):
 
         # Center window to the middle of the screen
         center_window(self)
+
+
+class ExpandedGrammar(QMainWindow):
+    def __init__(self, start_token, productions, parent=None):
+        super().__init__(parent)
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Gramática ampliada")
+
+
+class Automaton(QMainWindow):
+    def __init__(self, start_token, productions, parent=None):
+        super().__init__(parent)
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Gramática ampliada")
+
+
+class AutomatonText(QMainWindow):
+    def __init__(self, start_token, productions, parent=None):
+        super().__init__(parent)
+
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Gramática ampliada")
+
+
+class ActionTable(QMainWindow):
+    def __init__(self, accion, terminal_tokens, parent=None):
+        super().__init__(parent)
+        self.tabla_accion = accion
+        self.terminal_tokens = list(terminal_tokens | {"$"})
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Tabla acción")
+        rows = sum(1 for key in self.tabla_accion.keys() if key[1] == "$")
+        table_action = QTableWidget()
+        table_action.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
+        table_action.setSelectionMode(QTableWidget.NoSelection)
+        table_action.setColumnCount(len(self.terminal_tokens))
+        table_action.setRowCount(rows)
+        table_action.setHorizontalHeaderLabels(self.terminal_tokens)
+        table_action.setVerticalHeaderLabels([str(i) for i in range(rows)])
+
+        for row, col in self.tabla_accion.keys():
+            item_text = ""
+            if self.tabla_accion[row, col][:9] == "desplazar":
+                item_text = "d" + self.tabla_accion[row, col][10:]
+            elif self.tabla_accion[row, col] == "aceptar":
+                item_text = "acep"
+            elif self.tabla_accion[row, col][:7] == "reducir":
+                item_text = "r " + self.tabla_accion[row, col][8:]
+
+            item = QTableWidgetItem(item_text)
+            item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            table_action.setItem(row, self.terminal_tokens.index(col), item)
+
+        self.setCentralWidget(table_action)
+        self.resize(table_action.horizontalHeader().length() + 20,
+                    table_action.verticalHeader().length() + 30)
+        screen = QDesktopWidget().availableGeometry()
+        window_size = self.frameGeometry()
+        x = screen.width() // 2 - window_size.width()
+        y = (screen.height() - window_size.height()) // 2
+        self.move(x, y)
+
+
+class GoToTable(QMainWindow):
+    def __init__(self, ir_a, non_terminal_tokens, parent=None):
+        super().__init__(parent)
+        self.ir_a = ir_a
+        self.non_terminals = list(non_terminal_tokens) # todo quitar el token inicial
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Tabla ir a")
+        rows = sum(1 for key in self.ir_a.keys() if key[1] == "$")
+        table_go_to = QTableWidget()
+        table_go_to.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
+        table_go_to.setSelectionMode(QTableWidget.NoSelection)
+        table_go_to.setColumnCount(len(self.non_terminals))
+        table_go_to.setRowCount(rows)
+        table_go_to.setHorizontalHeaderLabels(self.non_terminals)
+        table_go_to.setVerticalHeaderLabels([str(i) for i in range(rows)])
+
+        for row, col in self.ir_a.keys():
+            if self.ir_a[row, col] != "ERROR":
+                item = QTableWidgetItem(str(self.ir_a[(row, col)]))
+                item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                table_go_to.setItem(row, self.non_terminals.index(col), item)
+
+        self.setCentralWidget(table_go_to)
+        self.resize(table_go_to.horizontalHeader().length() + 20,
+                    table_go_to.verticalHeader().length() + 30)
+        screen = QDesktopWidget().availableGeometry()
+        window_size = self.frameGeometry()
+        x = screen.width() // 2
+        y = (screen.height() - window_size.height()) // 2
+        self.move(x, y)
+
+
+class AnalysisTableSLR1(QMainWindow):
+    def __init__(self, accion, ir_a, terminal_tokens, non_terminal_tokens, parent=None):
+        super().__init__(parent)
+        self.action_window = ActionTable(accion, terminal_tokens, self)
+        self.action_window.show()
+        self.go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
+        self.go_to_window.show()
+
 
 class SimulationTable(QMainWindow):
     def __init__(self, dicc, parent=None):

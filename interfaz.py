@@ -384,11 +384,11 @@ class MainWindow(QMainWindow):
         self.show_LL1_table_action.setEnabled(False)  # Enable/Disable action
         parse_menu.addAction(self.show_LL1_table_action)
 
-        parse_SLR_grammar_action = QAction("Analizar gramática SLR", self)
+        parse_SLR_grammar_action = QAction("Analizar gramática SLR(1)", self)
         parse_SLR_grammar_action.triggered.connect(self.parse_SLR_grammar)
         parse_menu.addAction(parse_SLR_grammar_action)
 
-        self.show_SLR_table_action = QAction("Mostrar tabla SLR", self)
+        self.show_SLR_table_action = QAction("Mostrar tabla y automata SLR(1)", self)
         self.show_SLR_table_action.triggered.connect(self.show_SLR_table)
         self.show_SLR_table_action.setEnabled(False)  # Enable/Disable action
         parse_menu.addAction(self.show_SLR_table_action)
@@ -750,20 +750,27 @@ class MainWindow(QMainWindow):
         is_ll1 = conclicts_ll1 == 0
         self.parse_LL1_input_action.setEnabled(is_ll1)
         self.parse_input_action.setEnabled(is_ll1)
-        self.show_LL1_table_action.setEnabled(is_ll1)
+        self.show_LL1_table_action.setEnabled(True)
 
-        analysis_table_window = conj_tab.AnalysisTable(self.table, self)
+        analysis_table_window = conj_tab.AnalysisTableLL1(self.table, self)
         analysis_table_window.show()
 
     def show_LL1_table(self):
-        analysis_table_window = conj_tab.AnalysisTable(self.table, self)
+        analysis_table_window = conj_tab.AnalysisTableLL1(self.table, self)
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
-        SLR.ampliar_gramatica(self.start_token, self.terminal_tokens,self.non_terminal_tokens, self.productions)
+        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.ampliar_gramatica(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        #self.conj_LR0 =
+        self.accion = SLR.tabla_accion(self.token_inicial_ampliado, self.terminal_tokens, self.non_terminal_tokens, self.producciones_ampliados)
+        self.ir_a = SLR.tabla_ir_a(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+        conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.terminal_tokens, self.non_terminal_tokens, self)
+
+        self.show_SLR_table_action.setEnabled(True)
+
 
     def show_SLR_table(self):
-        print()
+        conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.terminal_tokens, self.non_terminal_tokens, self)
 
     def parse_LL1_input(self):
         ll1_input_window = VentanaInputGramatica(self)
