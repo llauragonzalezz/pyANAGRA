@@ -135,8 +135,6 @@ def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
             if sucesor_token in C:
                 edges[str(C.index(I)), str(C.index(sucesor_token))] = token
 
-    print(edges)
-
     return edges
 
 

@@ -8,10 +8,10 @@ import sys
 from PyQt5.QtCore import (QEasingCurve, QLineF,
                             QParallelAnimationGroup, QPointF,
                             QPropertyAnimation, QRectF, Qt)
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QFont, QPalette
 from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
                              QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow)
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget)
 
 import networkx as nx
 
@@ -30,7 +30,7 @@ class Node(QGraphicsObject):
         super().__init__(parent)
         self._name = name
         self._edges = []
-        self._color = "#5AD469"
+        self._color = "#00afb9"
         self._radius = 30
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
@@ -96,7 +96,7 @@ class Node(QGraphicsObject):
 
 
 class Edge(QGraphicsItem):
-    def __init__(self, source: Node, dest: Node, parent: QGraphicsItem = None):
+    def __init__(self, source: Node, dest: Node, label = "", parent: QGraphicsItem = None):
         """Edge constructor
 
         Args:
@@ -106,9 +106,10 @@ class Edge(QGraphicsItem):
         super().__init__(parent)
         self._source = source
         self._dest = dest
+        self._label = label
 
         self._tickness = 2
-        self._color = "#2BB53C"
+        self._color = "#0081a7"
         self._arrow_size = 20
 
         self._source.add_edge(self)
@@ -218,7 +219,20 @@ class Edge(QGraphicsItem):
             )
             painter.drawLine(self._line)
             self._draw_arrow(painter, self._line.p1(), self._arrow_target())
+
+            if self._label:
+                middle_point = QPointF(
+                    (self._line.p1().x() + self._line.p2().x()) / 2,
+                    (self._line.p1().y() + self._line.p2().y()) / 2
+                )
+
+                painter.setPen(QPen(QColor("#6d6875")))
+                painter.setFont(QFont(painter.font().family(), 15)) # TODO, cambiamo el tamaño de letra?
+                painter.drawText(middle_point, self._label)
+
             self._arrow_target()
+
+
 class GraphView(QGraphicsView):
     def __init__(self, graph: nx.DiGraph, edges, parent=None):
         """GraphView constructor
@@ -297,7 +311,8 @@ class GraphView(QGraphicsView):
         for a, b in self._graph.edges:
             source = self._nodes_map[a]
             dest = self._nodes_map[b]
-            self.scene().addItem(Edge(source, dest))
+            label = self._edges[a, b]
+            self.scene().addItem(Edge(source, dest, label))
 
 
 class AutomatonWindow(QMainWindow):
@@ -308,22 +323,35 @@ class AutomatonWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Automata gramática')
+        self.setGeometry(0, 0, 800, 600)
+
         self.graph = nx.DiGraph()
         self.graph.add_edges_from(list(self.edges.keys()))
 
-        print("nodos: ", list(self.edges.keys()))
-
-        self.view = GraphView(self.graph, self)
+        self.view = GraphView(self.graph, self.edges, self)
         self.setCentralWidget(self.view)
+
+        screen = QDesktopWidget().availableGeometry()   # TODO VER DONDE LO PONGO
+        window_size = self.frameGeometry()
+        x = (screen.width() - window_size.width()) // 2
+        y = (screen.height() - window_size.height()) // 2
+        self.move(x, y)
+
 
 
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
+    palette = app.instance().palette()
+    print(palette)
+    text_color = palette.color(QPalette.Text)
+    print(text_color)
+    background_color = palette.color(QPalette.Window)
+    print(background_color)
+
     # Create a networkx graph
 
     widget = AutomatonWindow({('0', '2'): 'T', ('0', '3'): "'('", ('0', '1'): 'E', ('0', '4'): 'id', ('1', '5'): "'+'", ('3', '2'): 'T', ('3', '3'): "'('", ('3', '6'): 'E', ('3', '4'): 'id', ('5', '7'): 'T', ('5', '3'): "'('", ('5', '4'): 'id', ('6', '5'): "'+'", ('6', '8'): "')'"})
     widget.show()
-    widget.resize(800, 600)
     sys.exit(app.exec())
