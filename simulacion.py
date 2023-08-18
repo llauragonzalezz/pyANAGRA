@@ -13,7 +13,7 @@ class VentanaSimulacion(QMainWindow):
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
-        self.tree_window = tree.MainWindow(start_token=start_token, parent=self)
+        self.tree_window = tree.TreeWindow(start_token=start_token, parent=self)
         self.tree_window.show()
         self.initUI()
 

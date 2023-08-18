@@ -3,23 +3,25 @@
 
 
 import math
+import sys
 
-from PyQt5.QtCore import (QEasingCurve, QLineF, QParallelAnimationGroup, QPointF, QPropertyAnimation, QRectF, Qt)
-
+from PyQt5.QtCore import (QEasingCurve, QLineF,
+                            QParallelAnimationGroup, QPointF,
+                            QPropertyAnimation, QRectF, Qt)
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF
-
-from PyQt5.QtWidgets import (QGraphicsItem, QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QWidget, QMainWindow, QDesktopWidget)
+from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
+                             QGraphicsObject, QGraphicsScene, QGraphicsView,
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow)
 
 import networkx as nx
-from networkx.drawing.nx_agraph import  graphviz_layout
+
 
 
 class Node(QGraphicsObject):
 
     """A QGraphicsItem representing node in a graph"""
 
-    def __init__(self, name: str, terminal=False, parent=None):
+    def __init__(self, name: str, parent=None):
         """Node constructor
 
         Args:
@@ -28,14 +30,11 @@ class Node(QGraphicsObject):
         super().__init__(parent)
         self._name = name
         self._edges = []
-        if terminal:
-            self._color = "#f07167"
-        else:
-            self._color = "#00afb9"
-        self._radius = 25
+        self._color = "#5AD469"
+        self._radius = 30
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
-        #self.setFlag(QGraphicsItem.ItemIsMovable)
+        self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
 
@@ -108,10 +107,9 @@ class Edge(QGraphicsItem):
         self._source = source
         self._dest = dest
 
-        self._tickness = 2 # TODO: poner un color que se vea bien tanto sobre blanco como sobre negro
-        self._color = "#d6ccc2"
-
-        self._arrow_size = 7
+        self._tickness = 2
+        self._color = "#2BB53C"
+        self._arrow_size = 20
 
         self._source.add_edge(self)
         self._dest.add_edge(self)
@@ -221,10 +219,8 @@ class Edge(QGraphicsItem):
             painter.drawLine(self._line)
             self._draw_arrow(painter, self._line.p1(), self._arrow_target())
             self._arrow_target()
-
-
 class GraphView(QGraphicsView):
-    def __init__(self, graph: nx.DiGraph, start_token, parent=None):
+    def __init__(self, graph: nx.DiGraph, edges, parent=None):
         """GraphView constructor
 
         This widget can display a directed graph
@@ -234,22 +230,40 @@ class GraphView(QGraphicsView):
         """
         super().__init__()
         self._graph = graph
+        self._edges = edges
+        print("edges: ", edges)
         self._scene = QGraphicsScene()
         self.setScene(self._scene)
 
         # Used to add space between nodes
-        self._graph_scale = 1.2
+        self._graph_scale = 200
 
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
 
-        self._load_graph(start_token)
+        # List of networkx layout function
+        self._nx_layout = nx.kamada_kawai_layout # TODO preguntar si le gusta mas este o circular_layout
+        self._load_graph()
         self.set_nx_layout()
-
+        # self._nx_layout = {
+        #    "circular": nx.circular_layout,
+        #    "planar": nx.planar_layout,
+        #    "random": nx.random_layout,
+        #    "shell_layout": nx.shell_layout,
+        #    "kamada_kawai_layout": nx.kamada_kawai_layout,
+        #    "spring_layout": nx.spring_layout,
+        #    "spiral_layout": nx.spiral_layout,
+        #}
 
     def set_nx_layout(self):
+        """Set networkx layout and start animation
 
-        positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
+        Args:
+            name (str): Layout name
+        """
+
+        # Compute node position from layout function
+        positions = self._nx_layout(self._graph)
 
         # Change position of all nodes using an animation
         self.animations = QParallelAnimationGroup()
@@ -267,68 +281,49 @@ class GraphView(QGraphicsView):
 
         self.animations.start()
 
-
-    def _load_graph(self, start_token):
+    def _load_graph(self):
         """Load graph into QGraphicsScene using Node class and Edge class"""
 
         self.scene().clear()
         self._nodes_map.clear()
 
-        # Add start token
-        item = Node(start_token)
-        self.scene().addItem(item)
-        self._nodes_map[1] = item
+        # Add nodes
+        for node in self._graph:
+            item = Node(node)
+            self.scene().addItem(item)
+            self._nodes_map[node] = item
+
+        # Add edges
+        for a, b in self._graph.edges:
+            source = self._nodes_map[a]
+            dest = self._nodes_map[b]
+            self.scene().addItem(Edge(source, dest))
 
 
-class TreeWindow(QMainWindow):
-    def __init__(self, start_token="S", parent=None):
+class AutomatonWindow(QMainWindow):
+    def __init__(self, edges, parent=None):
         super().__init__(parent)
-        self.start_token = start_token
+        self.edges = edges
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Simulación arbol de sintaxis')
-        self.setGeometry(0, 0, 850, 800)
-        screen = QDesktopWidget().availableGeometry()
-        window_size = self.frameGeometry()
-        x = screen.width() // 2
-        y = (screen.height() - window_size.height()) // 2
-        self.move(x, y)
-
+        self.setWindowTitle('Automata gramática')
         self.graph = nx.DiGraph()
-        self.edges = dict()
-        self.graph.add_node(1, name=self.start_token)
-        self.view = GraphView(self.graph, self.start_token, self)
+        self.graph.add_edges_from(list(self.edges.keys()))
+
+        print("nodos: ", list(self.edges.keys()))
+
+        self.view = GraphView(self.graph, self)
         self.setCentralWidget(self.view)
 
 
-    def add_node(self, index, name, terminal, parent):
-        # Create node
-        self.graph.add_node(index, name=name)                   # Add node to graph
-        item = Node(name, terminal=terminal)
-        self.view.scene().addItem(item)
-        self.view._nodes_map[index] = item                      # Add node to the view
+if __name__ == "__main__":
 
-        # Create edge (parent -> new node)
-        source = self.view._nodes_map[parent]
-        dest = self.view._nodes_map[index]
-        self.edges[parent, index] = Edge(source, dest)
-        self.view.scene().addItem(self.edges[parent, index])    # Add edge to the view
-        self.graph.add_edge(parent, index)                      # Add edge to graph
+    app = QApplication(sys.argv)
 
-        # Update layout
-        self.view.set_nx_layout()
+    # Create a networkx graph
 
-    def delete_node(self, iter):
-        # Delete edges conecting the node to erease
-        for edge in self.graph.edges:
-            if edge[1] == iter:
-                self.view.scene().removeItem(self.edges[edge[0], iter])
-
-        # Delete the node from the graph and from the view
-        self.graph.remove_node(iter)
-        self.view.scene().removeItem(self.view._nodes_map[iter])
-
-        # Update layout
-        self.view.set_nx_layout()
-
+    widget = AutomatonWindow({('0', '2'): 'T', ('0', '3'): "'('", ('0', '1'): 'E', ('0', '4'): 'id', ('1', '5'): "'+'", ('3', '2'): 'T', ('3', '3'): "'('", ('3', '6'): 'E', ('3', '4'): 'id', ('5', '7'): 'T', ('5', '3'): "'('", ('5', '4'): 'id', ('6', '5'): "'+'", ('6', '8'): "')'"})
+    widget.show()
+    widget.resize(800, 600)
+    sys.exit(app.exec())

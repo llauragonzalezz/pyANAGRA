@@ -118,12 +118,33 @@ def tabla_ir_a(token_inicial, tokens_no_terminales, producciones):
     return ir_a
 
 
+def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
+    C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['E', '.'], ['E', '.', "'+'", 'T']],
+         [['T', '.']],
+         [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['id', '.']],
+         [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
+         [['E', "'+'", 'T', '.']],
+         [["'('", 'E', "')'", '.']]]
+    edges = dict()
+    for I in C:
+        for token in terminal_tokens | non_terminal_tokens | {"$"}:
+            sucesor_token = sucesor(I, token, non_terminal_tokens, productions)
+            if sucesor_token in C:
+                edges[str(C.index(I)), str(C.index(sucesor_token))] = token
+
+    print(edges)
+
+    return edges
+
+
 def simulate(accion, ir_a, input):
     aceptado = False
     error = False
     stack = [0]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
-    print("elementos: ", elementos)
     it = iter(elementos)
     n = next(it)
 

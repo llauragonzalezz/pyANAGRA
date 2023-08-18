@@ -2,6 +2,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
 
+import automaton
 
 def center_window(window):
     screen = QDesktopWidget().availableGeometry()
@@ -221,13 +222,14 @@ class GoToTable(QMainWindow):
 
 
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, accion, ir_a, terminal_tokens, non_terminal_tokens, parent=None):
+    def __init__(self, accion, ir_a, edges, terminal_tokens, non_terminal_tokens, parent=None):
         super().__init__(parent)
-        self.action_window = ActionTable(accion, terminal_tokens, self)
-        self.action_window.show()
-        self.go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
-        self.go_to_window.show()
-
+        #self.action_window = ActionTable(accion, terminal_tokens, self)
+        #self.action_window.show()
+        #self.go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
+        #self.go_to_window.show()
+        automaton_window = automaton.AutomatonWindow(edges, self)
+        automaton_window.show()
 
 class SimulationTable(QMainWindow):
     def __init__(self, dicc, parent=None):

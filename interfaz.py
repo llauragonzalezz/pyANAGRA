@@ -632,7 +632,7 @@ class MainWindow(QMainWindow):
         text = clipboard.text(QClipboard.Clipboard)  # Obtenemos el texto del portapapeles
         self.text_grammar.textCursor().insertText(text)  # Lo pegamos
 
-    def erease(self):
+    def erase(self):
         self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
 
     def select_all(self):
@@ -761,12 +761,16 @@ class MainWindow(QMainWindow):
 
     def parse_SLR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.ampliar_gramatica(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        #self.conj_LR0 =
+        self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
         self.accion = SLR.tabla_accion(self.token_inicial_ampliado, self.terminal_tokens, self.non_terminal_tokens, self.producciones_ampliados)
         self.ir_a = SLR.tabla_ir_a(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.terminal_tokens, self.non_terminal_tokens, self)
 
-        self.show_SLR_table_action.setEnabled(True)
+        self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+
+        conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.edges, self.terminal_tokens, self.non_terminal_tokens, self)
+
+
+        #self.show_SLR_table_action.setEnabled(True)
 
 
     def show_SLR_table(self):
