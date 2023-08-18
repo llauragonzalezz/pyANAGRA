@@ -15,14 +15,12 @@ def is_ll1(table, terminals, non_terminals):
 def simulate(table, start_token, terminals, input):
     stack = [("$", 0), (start_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
-    #print("elementos: ", elementos)
     iterador = 2
     it = iter(elementos)
     sig_tok = next(it)
     # simulation table: stack | entry text | output
     simulation_table = []
     simulation_table.append(("", input, ()))
-    #simulation_table.append((stack, input, (start_token, table[start_token, sig_tok])))
 
     if sig_tok == "'":
         y = next(it)

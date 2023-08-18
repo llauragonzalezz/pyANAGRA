@@ -1,12 +1,16 @@
+import re
 import conjuntos
+
+
 def ampliar_gramatica(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     nuevo_token_inicial = token_inicial + "*"
     tokens_no_terminales |= {nuevo_token_inicial}
     producciones[nuevo_token_inicial] = [['.', token_inicial]]
-    #I = clausura(producciones[nuevo_token_inicial], tokens_no_terminales, producciones)
-    print(conj_LR0(nuevo_token_inicial, tokens_no_terminales, producciones))
-    tabla_accion(nuevo_token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    tabla_ir_a(tokens_no_terminales, producciones)
+    # I = clausura(producciones[nuevo_token_inicial], tokens_no_terminales, producciones)
+    # print(conj_LR0(nuevo_token_inicial, tokens_no_terminales, producciones))
+    accion = tabla_accion(nuevo_token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    ir_a = tabla_ir_a(nuevo_token_inicial, tokens_no_terminales, producciones)
+    simulate(accion, ir_a, "id '+' id" + " $")
     return nuevo_token_inicial, tokens_no_terminales, producciones
 
 
@@ -52,7 +56,6 @@ def conj_LR0(token_inicial, tokens_no_terminales, producciones):
 
 
 def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    print("TABLA ACCION")
     accion = dict()
     follow_set = conjuntos.calculate_follow_set(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
     C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
@@ -64,6 +67,7 @@ def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producc
          [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
          [['E', "'+'", 'T', '.']],
          [["'('", 'E', "')'", '.']]]
+    #conj_LR0(token_inicial, tokens_no_terminales, producciones)
     for i in range(len(C)):
         for token_terminal in tokens_terminales:
             for prod in C[i]:
@@ -87,8 +91,7 @@ def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producc
     return accion
 
 
-def tabla_ir_a(tokens_no_terminales, producciones):
-    print("TABLA IR_A")
+def tabla_ir_a(token_inicial, tokens_no_terminales, producciones):
     ir_a = dict()
     C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
          [['E', '.'], ['E', '.', "'+'", 'T']],
@@ -99,20 +102,68 @@ def tabla_ir_a(tokens_no_terminales, producciones):
          [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
          [['E', "'+'", 'T', '.']],
          [["'('", 'E', "')'", '.']]]
+    #conj_LR0(token_inicial, tokens_no_terminales, producciones)
     for i in range(len(C)):
         for token_no_terminal in tokens_no_terminales:
             sucesor_token = sucesor(C[i], token_no_terminal, tokens_no_terminales, producciones)
             if sucesor_token in C:
                 ir_a[i, token_no_terminal] = C.index(sucesor_token)
 
-    for i in range(len(C)):
-        for token in tokens_no_terminales:
-            if (i, token) not in ir_a:
-                ir_a[i, token] = "ERROR"
-            else:
-                print("ir_a[", i, " ,", token, "] =", ir_a[i, token])
+
     return ir_a
 
 
-def algoritmo(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    print()
+def simulate(accion, ir_a, input):
+    aceptado = False
+    error = False
+    stack = [0]
+    elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
+    print("elementos: ", elementos)
+    it = iter(elementos)
+    n = next(it)
+
+    if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
+        y = next(it)
+        if y != "'":
+            n += y
+        else:
+            n += y + next(it)
+    print("n: ", n)
+    while not (aceptado or error):
+        s = int(stack[len(stack) - 1])
+        if accion[s, n][:9] == "desplazar":
+            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
+            stack.append(n)
+            stack.append(accion[s, n][10:])
+            print("añado: ", n)
+            print("añado: ", accion[s, n][10:])
+            print("stack despues de añadir: ", stack)
+            n = next(it)
+            if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
+                y = next(it)
+                if y != "'":
+                    n += y
+                else:
+                    n += y + next(it)
+            print("n: ", n)
+
+        elif accion[s, n] == "aceptar":
+            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
+            aceptado = True
+        elif accion[s, n] == "ERROR":
+            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
+            error = True
+        elif accion[s, n][:7] == "reducir":
+            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
+            partes = accion[s, n][8:].split("→")
+            print("stack: ", stack)
+            for i in range(2*len(partes[1].strip().split())):
+                print("hago pop")
+                stack.pop()
+            print("stack despues de borrar: ", stack)
+            s = int(stack[len(stack) - 1])
+            print("añado: ", partes[0][0])
+            print("añado", ir_a[s, partes[0][0]])
+            stack.append(partes[0][0])
+            stack.append(ir_a[s, partes[0][0]])
+            print("stack despues de añadir: ", stack)

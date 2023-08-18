@@ -695,6 +695,11 @@ class MainWindow(QMainWindow):
                                                                                 copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
+        if self.start_token in productions:
+            message_box = QMessageBox()  # TODO ver que ponia en el mensaje original
+            message_box.setWindowTitle("ATENCIÓN!!")
+            message_box.setText("La gramática original y la transformada reconocen la palabra vacía")
+            message_box.exec_()
 
     def eliminating_left_recursion(self):
         non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token,
@@ -707,8 +712,7 @@ class MainWindow(QMainWindow):
         terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token,
                                                                                              self.terminal_tokens.copy(),
                                                                                              self.non_terminal_tokens.copy(),
-                                                                                             copy.deepcopy(
-                                                                                                 self.productions))
+                                                                                             copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
