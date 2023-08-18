@@ -6,10 +6,8 @@ def ampliar_gramatica(token_inicial, tokens_terminales, tokens_no_terminales, pr
     #I = clausura(producciones[nuevo_token_inicial], tokens_no_terminales, producciones)
     print(conj_LR0(nuevo_token_inicial, tokens_no_terminales, producciones))
     tabla_accion(nuevo_token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-
+    tabla_ir_a(tokens_no_terminales, producciones)
     return nuevo_token_inicial, tokens_no_terminales, producciones
-
-
 
 
 def clausura(I, tokens_no_terminales, producciones):
@@ -44,26 +42,19 @@ def conj_LR0(token_inicial, tokens_no_terminales, producciones):
     while viejo != nuevo:
         viejo = nuevo
         for I in nuevo:
-            #print("I: ", I)
             prods = {token for prod in I for token in prod if token != '.' }
-            #print("prods: ", prods)
             for token in prods:
-                #print("token:", token)
                 sucesor_token = sucesor(I, token, tokens_no_terminales, producciones)
-                #print("sucesor_token: ", sucesor_token)
                 if sucesor_token != [] and sucesor_token not in nuevo:
                     nuevo.append(sucesor_token)
-                    #print("nuevo tras añadir:", nuevo)
 
     return nuevo
 
 
 def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
+    print("TABLA ACCION")
     accion = dict()
     follow_set = conjuntos.calculate_follow_set(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
-    for token in tokens_no_terminales:
-        print("Sig(", token, ") = ", follow_set[token])
-
     C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
          [['E', '.'], ['E', '.', "'+'", 'T']],
          [['T', '.']],
@@ -74,7 +65,6 @@ def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producc
          [['E', "'+'", 'T', '.']],
          [["'('", 'E', "')'", '.']]]
     for i in range(len(C)):
-        print("i:", i)
         for token_terminal in tokens_terminales:
             for prod in C[i]:
                 if prod.index('.') < len(prod) - 1 and prod[prod.index('.') + 1] == token_terminal:
@@ -94,16 +84,34 @@ def tabla_accion(token_inicial, tokens_terminales, tokens_no_terminales, producc
             if [token_inicial[:-1], '.'] in I:
                 accion[C.index(I), "$"] = "aceptar"
 
-    for i in range(len(C)):
-        for token in tokens_no_terminales | tokens_terminales | {"$"}:
-            if (i, token) not in  accion:
-                accion[i, token] = "ERROR"
-            else:
-                print("accion[", i, " ,", token, "] =", accion[i, token])
     return accion
 
-def tabla_ir_a(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    print()
+
+def tabla_ir_a(tokens_no_terminales, producciones):
+    print("TABLA IR_A")
+    ir_a = dict()
+    C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['E', '.'], ['E', '.', "'+'", 'T']],
+         [['T', '.']],
+         [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['id', '.']],
+         [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
+         [['E', "'+'", 'T', '.']],
+         [["'('", 'E', "')'", '.']]]
+    for i in range(len(C)):
+        for token_no_terminal in tokens_no_terminales:
+            sucesor_token = sucesor(C[i], token_no_terminal, tokens_no_terminales, producciones)
+            if sucesor_token in C:
+                ir_a[i, token_no_terminal] = C.index(sucesor_token)
+
+    for i in range(len(C)):
+        for token in tokens_no_terminales:
+            if (i, token) not in ir_a:
+                ir_a[i, token] = "ERROR"
+            else:
+                print("ir_a[", i, " ,", token, "] =", ir_a[i, token])
+    return ir_a
 
 
 def algoritmo(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
