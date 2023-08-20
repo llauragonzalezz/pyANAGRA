@@ -13,7 +13,7 @@ class VentanaSimulacion(QMainWindow):
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
-        self.tree_window = tree.TreeWindow(start_token=start_token, parent=self)
+        self.tree_window = tree.TreeWindow(start_token, self)
         self.tree_window.show()
         self.initUI()
 
@@ -223,7 +223,7 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
 
-    def avanzar(self): # '(''x'';''(''x'')'')'
+    def avanzar(self):  # '(''x'';''(''x'')'')'
         self.iter += 1
         self.btn_retrocede.setEnabled(True)
 
@@ -235,12 +235,12 @@ class VentanaSimulacionSLR(QMainWindow):
         # Update tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
             self.tree_window.add_parent_to_nodes(self.table[self.iter][2][0][1], self.table[self.iter][2][0][0],
-                                                 self.table[self.iter][2][0][1] in self.terminals,
+                                                 self.table[self.iter][2][0][0] in self.terminals,
                                                  [tupla[1] for tupla in self.table[self.iter][2][1]])
 
         if self.table[self.iter][3] != ():
             self.tree_window.create_node(self.table[self.iter][3][1], self.table[self.iter][3][0],
-                                         self.table[self.iter][3][1] in self.terminals)
+                                         self.table[self.iter][3][0] in self.terminals)
 
         if self.iter == len(self.table) - 1:
             self.btn_avanza.setEnabled(False)
@@ -254,13 +254,12 @@ class VentanaSimulacionSLR(QMainWindow):
 def write_stack(stack):
     string = ""
     for elem in stack:
-        string += str(elem[0])
+        string += str(elem[0]) + " "
     return string
 # id '+' id
 
 
 def write_production(tuple):
-    print("tuple: ", tuple)
     if tuple == ():
         return ""
     elif tuple[1] is None:

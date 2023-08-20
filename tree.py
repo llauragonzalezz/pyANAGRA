@@ -232,7 +232,7 @@ class GraphView(QGraphicsView):
         Args:
             graph (nx.DiGraph): a networkx directed graph
         """
-        super().__init__()
+        super().__init__(parent)
         self._graph = graph
         self._scene = QGraphicsScene()
         self.setScene(self._scene)
@@ -243,16 +243,22 @@ class GraphView(QGraphicsView):
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
 
-        self._load_graph()
+
         if start_token is not None:
-            print("entro, mi start token es:", start_token)
+            self._load_graph(start_token)
+            self.rightmost = False
             self.set_nx_layout()
+        else:
+            self._load_graph()
+            self.rightmost = True
 
 
     def set_nx_layout(self):
+        if self.rightmost: # rightmost o right
+            positions = graphviz_layout(self._graph, prog='dot')
+        else:
+            positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
 
-        positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
-        print(positions)
         # Change position of all nodes using an animation
         self.animations = QParallelAnimationGroup()
         for node, pos in positions.items():
@@ -304,7 +310,7 @@ class TreeWindow(QMainWindow):
             self.graph.add_node(1, name=self.start_token)
             self.view = GraphView(self.graph, self.start_token, self)
         else:
-            self.view = GraphView(self.graph, self)
+            self.view = GraphView(self.graph, parent=None)
 
         self.setCentralWidget(self.view)
 
