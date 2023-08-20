@@ -32,7 +32,7 @@ class Node(QGraphicsObject):
             self._color = "#f07167"
         else:
             self._color = "#00afb9"
-        self._radius = 25
+        self._radius = 30
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
         #self.setFlag(QGraphicsItem.ItemIsMovable)
@@ -108,10 +108,10 @@ class Edge(QGraphicsItem):
         self._source = source
         self._dest = dest
 
-        self._tickness = 2 # TODO: poner un color que se vea bien tanto sobre blanco como sobre negro
-        self._color = "#d6ccc2"
+        self._tickness = 2
+        self._color = "#9c9c9c"
 
-        self._arrow_size = 7
+        self._arrow_size = 10
 
         self._source.add_edge(self)
         self._dest.add_edge(self)
@@ -238,18 +238,18 @@ class GraphView(QGraphicsView):
         self.setScene(self._scene)
 
         # Used to add space between nodes
-        self._graph_scale = 1.2
+        self._graph_scale = 1.5
 
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
 
-
+        self._load_graph(start_token)
         if start_token is not None:
-            self._load_graph(start_token)
+            #self._load_graph(start_token)
             self.rightmost = False
             self.set_nx_layout()
         else:
-            self._load_graph()
+            #self._load_graph()
             self.rightmost = True
 
 

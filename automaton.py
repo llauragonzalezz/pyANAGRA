@@ -30,7 +30,7 @@ class Node(QGraphicsObject):
         super().__init__(parent)
         self._name = name
         self._edges = []
-        self._color = "#3a6ea5"
+        self._color = "#00afb9"
         self._radius = 30
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
@@ -109,8 +109,8 @@ class Edge(QGraphicsItem):
         self._label = label
 
         self._tickness = 2
-        self._color = "#004e98"
-        self._arrow_size = 20
+        self._color = QColor("#00afb9").darker()
+        self._arrow_size = 10
 
         self._source.add_edge(self)
         self._dest.add_edge(self)
@@ -249,7 +249,7 @@ class GraphView(QGraphicsView):
         self.setScene(self._scene)
 
         # Used to add space between nodes
-        self._graph_scale = 200
+        self._graph_scale = 270
 
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
@@ -322,7 +322,7 @@ class AutomatonWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Automata gramática')
-        self.setGeometry(0, 0, 600, 500)
+        self.setGeometry(0, 0, 650, 550)
 
         self.graph = nx.DiGraph()
         self.graph.add_edges_from(list(self.edges.keys()))

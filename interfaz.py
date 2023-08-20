@@ -780,7 +780,7 @@ class MainWindow(QMainWindow):
         self.parse_SLR_input_action.setEnabled(True)
 
     def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
 
     def parse_LL1_input(self):
         ll1_input_window = VentanaInputGramatica("LL1",self)

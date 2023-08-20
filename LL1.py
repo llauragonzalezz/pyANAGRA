@@ -49,6 +49,7 @@ def simulate(table, start_token, terminals, input):
                 # errorSintactico
                 print("error sintactico")
         else:
+            # TODO TRY CATCH POR SI KeyError A LA HORA DE ACCEDER A LA TABLA
             if table[x[0], sig_tok] != "error":
                 # disparamos produccion
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original
