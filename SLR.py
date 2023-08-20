@@ -63,15 +63,15 @@ def conj_LR0(start_token, non_terminal_tokens, productions):
 
 def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productions):
     action = dict()
-    #C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [['E', '.'], ['E', '.', "'+'", 'T']],
-    #     [['T', '.']],
-    #     [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [['id', '.']],
-    #     [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
-    #     [['E', "'+'", 'T', '.']],
-    #     [["'('", 'E', "')'", '.']]]
+    C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['E', '.'], ['E', '.', "'+'", 'T']],
+         [['T', '.']],
+         [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['id', '.']],
+         [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
+         [['E', "'+'", 'T', '.']],
+         [["'('", 'E', "')'", '.']]]
     follow_set = conjuntos.calculate_follow_set(start_token, terminal_tokens, non_terminal_tokens, productions)
     for i in range(len(C)):
         for token_terminal in terminal_tokens:
@@ -103,15 +103,15 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
 
 def go_to_table(C, non_terminal_tokens, productions):
     ir_a = dict()
-    #C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [['E', '.'], ['E', '.', "'+'", 'T']],
-    #     [['T', '.']],
-    #     [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [['id', '.']],
-    #     [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
-    #     [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
-    #     [['E', "'+'", 'T', '.']],
-    #     [["'('", 'E', "')'", '.']]]
+    C = [[['.', 'E'], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['E', '.'], ['E', '.', "'+'", 'T']],
+         [['T', '.']],
+         [["'('", '.', 'E', "')'"], ['.', 'E', "'+'", 'T'], ['.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [['id', '.']],
+         [['E', "'+'", '.', 'T'], ['.', "'('", 'E', "')'"], ['.', 'id']],
+         [["'('", 'E', '.', "')'"], ['E', '.', "'+'", 'T']],
+         [['E', "'+'", 'T', '.']],
+         [["'('", 'E', "')'", '.']]]
     #conj_LR0(start_token, non_terminal_tokens, productions)
     for i in range(len(C)):
         for token_no_terminal in non_terminal_tokens:
@@ -140,35 +140,31 @@ def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
 def simulate(accion, ir_a, input):
     aceptado = False
     error = False
-    stack = [0]
+    stack = [(0,)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
-    print("elementos:", elementos)
     it = iter(elementos)
     n = next(it)
 
+    index = 0
     # simulation table: stack | entry text | output
     simulation_table = []
-    simulation_table.append((stack, input, ""))
+    simulation_table.append((stack.copy(), input, (), ()))
     if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
         y = next(it)
         if y != "'":
             n += y
         else:
             n += y + next(it)
-    print("n: ", n)
     while not (aceptado or error):
-        s = int(stack[len(stack) - 1])
+        s = int(stack[len(stack) - 1][0])
         if accion[s, n][:9] == "desplazar":
-            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
-            stack.append(n)
-            stack.append(accion[s, n][10:])
+            stack.append((n, index))
+            stack.append((accion[s, n][10:],))
 
             it_copia, it = itertools.tee(it)
-            simulation_table.append((stack.copy(), n + "".join(it_copia), ""))
+            simulation_table.append((stack.copy(), "".join(it_copia), (), (n, index)))
+            index += 1
 
-            print("añado: ", n)
-            print("añado: ", accion[s, n][10:])
-            print("stack despues de añadir: ", stack)
             n = next(it)
             if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
                 y = next(it)
@@ -176,31 +172,27 @@ def simulate(accion, ir_a, input):
                     n += y
                 else:
                     n += y + next(it)
-            print("n: ", n)
 
         elif accion[s, n] == "aceptar":
-            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
             aceptado = True
         elif accion[s, n] == "ERROR":
-            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
             error = True
         elif accion[s, n][:7] == "reducir":
-            print("tabla_accion[", s, ",", n, "] = ", accion[s, n])
             production = accion[s, n][8:]
             partes = production.split("→")
-            print("stack: ", stack)
-            for i in range(2*len(partes[1].strip().split())):
+            right_part = []
+            for i in range(len(partes[1].strip().split())):
                 stack.pop()
-            print("stack despues de borrar: ", stack)
+                right_part.append(stack.pop())
 
-            s = int(stack[len(stack) - 1])
-            print("añado: ", partes[0][0])
-            print("añado", ir_a[s, partes[0][0]])
-            stack.append(partes[0][0])
-            stack.append(ir_a[s, partes[0][0]])
-            print("stack despues de añadir: ", stack)
+            s = int(stack[len(stack) - 1][0])
+            stack.append((partes[0][0], index))
+            stack.append((ir_a[s, partes[0][0]],))
+            left_part = (partes[0][0], index)
+            index += 1
+
             it_copia, it = itertools.tee(it)
-            simulation_table.append((stack.copy(), n + "".join(it_copia), production))
+            simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
 
     i = 1
     for entrada in simulation_table:

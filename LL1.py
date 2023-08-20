@@ -71,5 +71,8 @@ def simulate(table, start_token, terminals, input):
 
     simulation_table.append((stack.copy(), "$", ()))
     # '(' 'x' ';' '(' 'x' ')' ')'
-
+    i = 1
+    for entrada in simulation_table:
+        print(str(i), ") ", entrada)
+        i += 1
     return simulation_table

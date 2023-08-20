@@ -28,8 +28,9 @@ def center_window(window):
 
 
 class VentanaInputGramatica(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, type, parent=None):
         super().__init__(parent)
+        self.type = type
         self.initUI()
 
     def initUI(self):
@@ -57,9 +58,14 @@ class VentanaInputGramatica(QMainWindow):
     def accept(self):
         texto = self.text_edit.toPlainText()
         self.close()
-        tabla = LL1.simulate(ventana.table, ventana.start_token, ventana.terminal_tokens, texto + "$")
-        nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens,
-                                              ventana.non_terminal_tokens, self)
+        if self.type == "LL1":
+            tabla = LL1.simulate(ventana.table, ventana.start_token, ventana.terminal_tokens, texto + " $")
+            nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens,
+                                                  ventana.non_terminal_tokens, self)
+
+        elif self.type == "SLR1":
+            tabla = SLR.simulate(ventana.action_table, ventana.go_to_table, texto + " $")
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
         nueva_ventana.show()
 
 
@@ -762,26 +768,27 @@ class MainWindow(QMainWindow):
     def parse_SLR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.accion = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.ir_a = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+        self.action_table = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+        self.go_to_table = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
         self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
-        #conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
 
-        SLR.simulate(self.accion, self.ir_a, "id '+' id" + " $")
+        #SLR.simulate(self.action_table, self.go_to_table, "id '+' id" + " $")
 
-        #self.show_SLR_table_action.setEnabled(True)
-
+        self.show_SLR_table_action.setEnabled(True)
+        self.parse_SLR_input_action.setEnabled(True)
 
     def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.accion, self.ir_a, self.edges, self.terminal_tokens, self.non_terminal_tokens, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self)
 
     def parse_LL1_input(self):
-        ll1_input_window = VentanaInputGramatica(self)
+        ll1_input_window = VentanaInputGramatica("LL1",self)
         ll1_input_window.show()
 
     def parse_SLR_input(self):
-        print()
+        input_window = VentanaInputGramatica("SLR1", self)
+        input_window.show()
 
     def parse_input(self):
         input_window = VentanaInput(self)

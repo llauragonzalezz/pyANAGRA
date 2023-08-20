@@ -224,7 +224,7 @@ class Edge(QGraphicsItem):
 
 
 class GraphView(QGraphicsView):
-    def __init__(self, graph: nx.DiGraph, start_token, parent=None):
+    def __init__(self, graph: nx.DiGraph, start_token=None, parent=None):
         """GraphView constructor
 
         This widget can display a directed graph
@@ -243,14 +243,16 @@ class GraphView(QGraphicsView):
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
 
-        self._load_graph(start_token)
-        self.set_nx_layout()
+        self._load_graph()
+        if start_token is not None:
+            print("entro, mi start token es:", start_token)
+            self.set_nx_layout()
 
 
     def set_nx_layout(self):
 
         positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
-
+        print(positions)
         # Change position of all nodes using an animation
         self.animations = QParallelAnimationGroup()
         for node, pos in positions.items():
@@ -268,20 +270,21 @@ class GraphView(QGraphicsView):
         self.animations.start()
 
 
-    def _load_graph(self, start_token):
+    def _load_graph(self, start_token=None):
         """Load graph into QGraphicsScene using Node class and Edge class"""
 
         self.scene().clear()
         self._nodes_map.clear()
 
-        # Add start token
-        item = Node(start_token)
-        self.scene().addItem(item)
-        self._nodes_map[1] = item
+        if start_token:
+            # Add start token
+            item = Node(start_token)
+            self.scene().addItem(item)
+            self._nodes_map[1] = item
 
 
 class TreeWindow(QMainWindow):
-    def __init__(self, start_token="S", parent=None):
+    def __init__(self, start_token=None, parent=None):
         super().__init__(parent)
         self.start_token = start_token
         self.initUI()
@@ -297,12 +300,26 @@ class TreeWindow(QMainWindow):
 
         self.graph = nx.DiGraph()
         self.edges = dict()
-        self.graph.add_node(1, name=self.start_token)
-        self.view = GraphView(self.graph, self.start_token, self)
+        if self.start_token:
+            self.graph.add_node(1, name=self.start_token)
+            self.view = GraphView(self.graph, self.start_token, self)
+        else:
+            self.view = GraphView(self.graph, self)
+
         self.setCentralWidget(self.view)
 
+    def create_node(self, index, name, terminal):
+        # Create node
+        self.graph.add_node(index, name=name)                   # Add node to graph
+        item = Node(name, terminal=terminal)
+        self.view.scene().addItem(item)
+        self.view._nodes_map[index] = item                      # Add node to the view
 
-    def add_node(self, index, name, terminal, parent):
+        # Update layout
+        self.view.set_nx_layout()
+
+
+    def add_node_to_parent(self, index, name, terminal, parent):
         # Create node
         self.graph.add_node(index, name=name)                   # Add node to graph
         item = Node(name, terminal=terminal)
@@ -315,6 +332,24 @@ class TreeWindow(QMainWindow):
         self.edges[parent, index] = Edge(source, dest)
         self.view.scene().addItem(self.edges[parent, index])    # Add edge to the view
         self.graph.add_edge(parent, index)                      # Add edge to graph
+
+        # Update layout
+        self.view.set_nx_layout()
+
+    def add_parent_to_nodes(self, index, name, terminal, childs):
+        # Create parent
+        self.graph.add_node(index, name=name)                   # Add node to graph
+        item = Node(name, terminal=terminal)
+        self.view.scene().addItem(item)
+        self.view._nodes_map[index] = item                      # Add node to the view
+
+        for child in childs:
+            # Create edge (new node -> child)
+            source = self.view._nodes_map[index]
+            dest = self.view._nodes_map[child]
+            self.edges[index, child] = Edge(source, dest)
+            self.view.scene().addItem(self.edges[index, child])    # Add edge to the view
+            self.graph.add_edge(child, index)                      # Add edge to graph
 
         # Update layout
         self.view.set_nx_layout()
