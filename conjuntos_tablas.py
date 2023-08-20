@@ -172,17 +172,29 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
         table_action.setHorizontalHeaderLabels(self.terminal_tokens)
         table_action.setVerticalHeaderLabels([str(i) for i in range(rows)])
 
+        row_height = table_action.rowHeight(0)
         for row, col in self.tabla_accion.keys():
             item_text = ""
-            if self.tabla_accion[row, col][:9] == "desplazar":
-                item_text = "d" + self.tabla_accion[row, col][10:]
-            elif self.tabla_accion[row, col] == "aceptar":
-                item_text = "acep"
-            elif self.tabla_accion[row, col][:7] == "reducir":
-                item_text = "r " + self.tabla_accion[row, col][8:]
+            for i, prod in enumerate(self.tabla_accion[row, col]):
+                if prod[:9] == "desplazar":
+                    item_text += "d" + prod[10:]
+                elif prod == "aceptar":
+                    item_text += "acep"
+                elif prod[:7] == "reducir":
+                    item_text += "r " + prod[8:]
+                if i < len(self.tabla_accion[row, col]) - 1:
+                    item_text += "\n"
 
             item = QTableWidgetItem(item_text)
             item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+
+            if len(self.tabla_accion[row, col]) > 1:
+                # Adapt margins
+                if table_action.rowHeight(row) < len(self.tabla_accion[row, col] * row_height):
+                    table_action.setRowHeight(row, len(self.tabla_accion[row, col]) * row_height)
+
+                item.setBackground(QColor("red"))   # SLR conflict
+
             table_action.setItem(row, self.terminal_tokens.index(col), item)
 
         self.setCentralWidget(table_action)

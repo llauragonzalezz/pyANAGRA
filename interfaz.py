@@ -748,7 +748,7 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def parse_LL1_grammar(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+        self.table = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
                                           self.productions)
 
         # Enable options if possible
@@ -773,8 +773,6 @@ class MainWindow(QMainWindow):
         self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
         conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
-
-        #SLR.simulate(self.action_table, self.go_to_table, "id '+' id" + " $")
 
         self.show_SLR_table_action.setEnabled(True)
         self.parse_SLR_input_action.setEnabled(True)

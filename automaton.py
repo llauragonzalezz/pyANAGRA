@@ -11,7 +11,7 @@ from PyQt5.QtCore import (QEasingCurve, QLineF,
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QFont, QPalette
 from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
                              QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget)
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget, QMessageBox)
 
 import networkx as nx
 
@@ -37,6 +37,24 @@ class Node(QGraphicsObject):
         self.setFlag(QGraphicsItem.ItemIsMovable)
         self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setCacheMode(QGraphicsItem.DeviceCoordinateCache)
+
+        self.setAcceptHoverEvents(True)
+
+    def hoverEnterEvent(self, event):
+        self.setCursor(Qt.PointingHandCursor)
+
+    def hoverLeaveEvent(self, event):
+        self.setCursor(Qt.ArrowCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.show_message_box()
+
+    def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle(f"Node Label: {self._name}")
+        msg_box.setText("hola caracola")
+        msg_box.exec_()
 
     def boundingRect(self) -> QRectF:
         """Override from QGraphicsItem
@@ -249,7 +267,7 @@ class GraphView(QGraphicsView):
         self.setScene(self._scene)
 
         # Used to add space between nodes
-        self._graph_scale = 270
+        self._graph_scale = 250
 
         # Map node name to Node object {str=>Node}
         self._nodes_map = {}
@@ -293,6 +311,7 @@ class GraphView(QGraphicsView):
             self.animations.addAnimation(animation)
 
         self.animations.start()
+
 
     def _load_graph(self):
         """Load graph into QGraphicsScene using Node class and Edge class"""
