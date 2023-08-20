@@ -117,23 +117,31 @@ class AnalysisTableLL1(QMainWindow):
 
 
 class ExpandedGrammar(QMainWindow):
-    def __init__(self, start_token, productions, parent=None):
+    def __init__(self, start_token, non_terminal_tokens, productions, parent=None):
         super().__init__(parent)
-
+        self.start_token = start_token
+        self.non_terminal_tokens = non_terminal_tokens
+        self.productions = productions
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Gramática ampliada")
+        self.setGeometry(0, 0, 300, 200)
 
+        self.text_edit = QPlainTextEdit(self)
+        self.setCentralWidget(self.text_edit)
 
-class Automaton(QMainWindow):
-    def __init__(self, start_token, productions, parent=None):
-        super().__init__(parent)
+        i = 2
+        text = "1) " + self.start_token + " → " + self.productions[self.start_token][0][1] + "\n"
+        for token in self.non_terminal_tokens:
+            for production in self.productions[token]:
+                if production is None:
+                    text += str(i) + ") " + token + "  → ε" + "\n"
+                else:
+                    text += str(i) + ") " + "{} → {}".format(token, "  ".join(str(x) for x in production)) + "\n"
+                i += 1
 
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Gramática ampliada")
+        self.text_edit.setPlainText(text)
 
 
 class AutomatonText(QMainWindow):
@@ -146,7 +154,7 @@ class AutomatonText(QMainWindow):
         self.setWindowTitle("Gramática ampliada")
 
 
-class ActionTable(QMainWindow):
+class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
     def __init__(self, accion, terminal_tokens, parent=None):
         super().__init__(parent)
         self.tabla_accion = accion
@@ -222,14 +230,17 @@ class GoToTable(QMainWindow):
 
 
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, accion, ir_a, edges, terminal_tokens, non_terminal_tokens, parent=None):
+    def __init__(self, accion, ir_a, edges, terminal_tokens, non_terminal_tokens, start_token, productions, parent=None):
         super().__init__(parent)
-        #self.action_window = ActionTable(accion, terminal_tokens, self)
-        #self.action_window.show()
-        #self.go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
-        #self.go_to_window.show()
+        action_window = ActionTable(accion, terminal_tokens, self)
+        action_window.show()
+        go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
+        go_to_window.show()
         automaton_window = automaton.AutomatonWindow(edges, self)
         automaton_window.show()
+        extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, self)
+        extended_grammar.show()
+
 
 class SimulationTable(QMainWindow):
     def __init__(self, dicc, parent=None):

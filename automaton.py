@@ -30,7 +30,7 @@ class Node(QGraphicsObject):
         super().__init__(parent)
         self._name = name
         self._edges = []
-        self._color = "#00afb9"
+        self._color = "#3a6ea5"
         self._radius = 30
         self._rect = QRectF(0, 0, self._radius * 2, self._radius * 2)
 
@@ -109,7 +109,7 @@ class Edge(QGraphicsItem):
         self._label = label
 
         self._tickness = 2
-        self._color = "#0081a7"
+        self._color = "#004e98"
         self._arrow_size = 20
 
         self._source.add_edge(self)
@@ -226,7 +226,7 @@ class Edge(QGraphicsItem):
                     (self._line.p1().y() + self._line.p2().y()) / 2
                 )
 
-                painter.setPen(QPen(QColor("#6d6875")))
+                painter.setPen(QPen(QColor("#9c9c9c")))
                 painter.setFont(QFont(painter.font().family(), 15)) # TODO, cambiamo el tamaño de letra?
                 painter.drawText(middle_point, self._label)
 
@@ -245,7 +245,6 @@ class GraphView(QGraphicsView):
         super().__init__()
         self._graph = graph
         self._edges = edges
-        print("edges: ", edges)
         self._scene = QGraphicsScene()
         self.setScene(self._scene)
 
@@ -323,7 +322,7 @@ class AutomatonWindow(QMainWindow):
 
     def initUI(self):
         self.setWindowTitle('Automata gramática')
-        self.setGeometry(0, 0, 800, 600)
+        self.setGeometry(0, 0, 600, 500)
 
         self.graph = nx.DiGraph()
         self.graph.add_edges_from(list(self.edges.keys()))
@@ -342,13 +341,6 @@ class AutomatonWindow(QMainWindow):
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
-
-    palette = app.instance().palette()
-    print(palette)
-    text_color = palette.color(QPalette.Text)
-    print(text_color)
-    background_color = palette.color(QPalette.Window)
-    print(background_color)
 
     # Create a networkx graph
 
