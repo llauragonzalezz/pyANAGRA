@@ -223,10 +223,10 @@ class MainWindow(QMainWindow):
         cut_action.triggered.connect(self.cut)
         editar_menu.addAction(cut_action)
 
-        copiar_action = QAction("Copiar", self)
-        copiar_action.setShortcut(QKeySequence.Copy)
-        copiar_action.triggered.connect(self.copy)
-        editar_menu.addAction(copiar_action)
+        copy_action = QAction("Copiar", self)
+        copy_action.setShortcut(QKeySequence.Copy)
+        copy_action.triggered.connect(self.copy)
+        editar_menu.addAction(copy_action)
 
         pegar_action = QAction("Pegar", self)
         pegar_action.setShortcut(QKeySequence.Paste)
@@ -300,7 +300,7 @@ class MainWindow(QMainWindow):
         idiomaSubmenu.setContentsMargins(15, 0, 0, 0)
         idiomaSubmenu.addAction(widgetEnglish)
         idiomaSubmenu.addAction(widgetCastellano)
-        guardarPreferenciasAction = QAction("Guardar preferencias", self)
+        guardarPreferenciasAction = QAction("Guardar preferencias", self) # json
 
         # Agregar las opciones de menú al menú text
         text_menu.addAction(font_action)
@@ -319,7 +319,7 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú ayuda
         about_action = QAction("Sobre...", self)
-        about_action.triggered.connect(self.show_information)
+        about_action.triggered.connect(self.show_information) # poner enlace al repositiorio git
         help_menu.addAction(about_action)
 
     def pestania_herramientas(self):
@@ -772,10 +772,16 @@ class MainWindow(QMainWindow):
         self.go_to_table = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
         self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+        # Enable options if possible
+        conclicts_slr1 = SLR.is_slr1(self.table)
+        is_slr1 = conclicts_slr1 == 0
 
         self.show_SLR_table_action.setEnabled(True)
-        self.parse_SLR_input_action.setEnabled(True)
+        self.parse_SLR_input_action.setEnabled(is_slr1)
+
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+
+
 
     def show_SLR_table(self):
         conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)

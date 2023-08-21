@@ -245,19 +245,12 @@ class GraphView(QGraphicsView):
 
         self._load_graph(start_token)
         if start_token is not None:
-            #self._load_graph(start_token)
-            self.rightmost = False
             self.set_nx_layout()
-        else:
-            #self._load_graph()
-            self.rightmost = True
 
 
     def set_nx_layout(self):
-        if self.rightmost: # rightmost o right
-            positions = graphviz_layout(self._graph, prog='dot')
-        else:
-            positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
+
+        positions = graphviz_layout(self._graph.reverse(copy=True), prog='dot')
 
         # Change position of all nodes using an animation
         self.animations = QParallelAnimationGroup()
@@ -355,7 +348,7 @@ class TreeWindow(QMainWindow):
             dest = self.view._nodes_map[child]
             self.edges[index, child] = Edge(source, dest)
             self.view.scene().addItem(self.edges[index, child])    # Add edge to the view
-            self.graph.add_edge(child, index)                      # Add edge to graph
+            self.graph.add_edge(index, child)                      # Add edge to graph
 
         # Update layout
         self.view.set_nx_layout()
@@ -365,6 +358,7 @@ class TreeWindow(QMainWindow):
         for edge in self.graph.edges:
             if edge[1] == iter:
                 self.view.scene().removeItem(self.edges[edge[0], iter])
+                #del self.edges[edge[0], iter]
 
         # Delete the node from the graph and from the view
         self.graph.remove_node(iter)
@@ -373,3 +367,16 @@ class TreeWindow(QMainWindow):
         # Update layout
         self.view.set_nx_layout()
 
+    def delete_parent(self, iter):
+        # Delete edges conecting the node to erease
+        for edge in self.graph.edges:
+            if edge[0] == iter:
+                self.view.scene().removeItem(self.edges[iter, edge[1]])
+                #del self.edges[iter, edge[1]]
+
+        # Delete the node from the graph and from the view
+        self.graph.remove_node(iter)
+        self.view.scene().removeItem(self.view._nodes_map[iter])
+
+        # Update layout
+        self.view.set_nx_layout()

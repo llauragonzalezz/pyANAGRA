@@ -209,8 +209,14 @@ class VentanaSimulacionSLR(QMainWindow):
 
     def retroceder(self):
         # Tree window
-        if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
-            self.tree_window.delete_node(self.table[self.iter][2][0])
+        if self.table[self.iter][2] != ():
+            print("borro: ", self.table[self.iter][2][0][1])
+            self.tree_window.delete_parent(self.table[self.iter][2][0][1])
+
+        if self.table[self.iter][3] != ():
+            print("borro: ", self.table[self.iter][3][1])
+            self.tree_window.delete_node(self.table[self.iter][3][1])
+
 
         self.iter -= 1
         if self.iter == 0:

@@ -40,20 +40,20 @@ class Node(QGraphicsObject):
 
         self.setAcceptHoverEvents(True)
 
-    def hoverEnterEvent(self, event):
-        self.setCursor(Qt.PointingHandCursor)
+    # def hoverEnterEvent(self, event):
+    #    self.setCursor(Qt.PointingHandCursor)
 
-    def hoverLeaveEvent(self, event):
-        self.setCursor(Qt.ArrowCursor)
+    # def hoverLeaveEvent(self, event):
+    #    self.setCursor(Qt.ArrowCursor)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.show_message_box()
+    # def mousePressEvent(self, event):
+    #    if event.button() == Qt.LeftButton:
+    #        self.show_message_box()
 
     def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
         msg_box = QMessageBox()
         msg_box.setWindowTitle(f"Node Label: {self._name}")
-        msg_box.setText("hola caracola")
+        msg_box.setText("hola")
         msg_box.exec_()
 
     def boundingRect(self) -> QRectF:
