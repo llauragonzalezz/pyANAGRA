@@ -28,7 +28,9 @@ def clausura(I, non_terminal_tokens, productions):
         for token, prod in viejo:
             if prod.index('.') < len(prod) - 1 and prod[prod.index('.')+1] in non_terminal_tokens:
                 for prod_B in productions[prod[prod.index('.')+1]]:
-                    if (prod[prod.index('.')+1], ['.'] + prod_B) not in nuevo:
+                    if prod_B is None and (prod[prod.index('.')+1], ['.']) not in nuevo:
+                        nuevo.append((prod[prod.index('.')+1], ['.']))
+                    elif prod_B is not None and (prod[prod.index('.')+1], ['.'] + prod_B) not in nuevo:
                         nuevo.append((prod[prod.index('.')+1], ['.'] + prod_B))
 
     return nuevo
@@ -41,8 +43,12 @@ def sucesor(I, token, non_terminal_tokens, productions):
         if pos_dot < len(prod) - 1 and prod[pos_dot + 1] == token:
             S.append((token_prod, prod[:pos_dot] + [prod[pos_dot + 1]] + ['.'] + prod[pos_dot+2:]))
             if prod.index('.') < len(prod) - 2 and prod[prod.index('.')+2] in non_terminal_tokens:
-                for prof_token in productions[prod[prod.index('.') + 2]]:
-                    S.append((prod[prod.index('.') + 2], ['.'] + prof_token))
+                for prod_token in productions[prod[prod.index('.') + 2]]:
+                    if prod_token is None:
+                        S.append((prod[prod.index('.') + 2], ['.']))
+                    else:
+                        S.append((prod[prod.index('.') + 2], ['.'] + prod_token))
+
 
     return clausura(S.copy(), non_terminal_tokens, productions)
 
@@ -80,7 +86,11 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
                         action[i, terminal_token] = [new_action]
 
             if prod.index('.') == len(prod) - 1:
-                new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                if prod[0] == '.':   # epsilon production
+                    new_action = "reducir " + token + "  → ε"
+                else:
+                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+
                 if (i, "$") in action:
                     if new_action not in action[i, "$"]:
                         action[i, "$"].append(new_action)
@@ -90,7 +100,11 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
         for token, prod in C[i]:
             if token != start_token and prod.index('.') == len(prod) - 1:
                 for token_no_terminal_siguiente in follow_set[token]:
-                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                    if prod[0] == '.':  # epsilon production
+                        new_action = "reducir " +  token + "  → ε"
+                    else:
+                        new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+
                     if (i, token_no_terminal_siguiente) in action:
                         if new_action not in action[i, token_no_terminal_siguiente]:
                             action[i, token_no_terminal_siguiente].append(new_action)
@@ -124,7 +138,8 @@ def go_to_table(C, non_terminal_tokens, productions):
         for token in non_terminal_tokens | {"$"}:
             if (i, token) not in ir_a:
                 ir_a[i, token] = "ERROR"
-
+            else:
+                print("ir_a[", i, ", ", token, "]", ir_a[i, token])
     return ir_a
 
 
@@ -160,8 +175,6 @@ def simulate(accion, ir_a, input):
     while not (aceptado or error):
         s = int(stack[len(stack) - 1][0])
         if accion[s, n][0][:9] == "desplazar":
-            print("accion[s, n][0][:9] = ", accion[s, n][0][:9])
-            print("accion[s, n][0][10:] = ", accion[s, n][0][10:])
             stack.append((n, index))
             stack.append((accion[s, n][0][10:],))
 
@@ -183,7 +196,6 @@ def simulate(accion, ir_a, input):
             error = True
         elif accion[s, n][0][:7] == "reducir":
             production = accion[s, n][0][8:]
-            print("accion[s, n][0][8:] = ", accion[s, n][0][8:])
             partes = production.split("→")
             right_part = []
             for i in range(len(partes[1].strip().split())):
