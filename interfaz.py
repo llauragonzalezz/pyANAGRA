@@ -5,7 +5,8 @@ import sys
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QPixmap, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
-    QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog
+    QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, \
+    QLineEdit
 
 import LL1
 import SLR
@@ -66,6 +67,11 @@ class VentanaInputGramatica(QMainWindow):
         elif self.type == "SLR1":
             tabla = SLR.simulate(ventana.action_table, ventana.go_to_table, texto + " $")
             nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+
+        elif self.type == "LALR":
+            print()
+        elif self.type == "LR":
+            print()
         nueva_ventana.show()
 
 
@@ -118,23 +124,64 @@ class VentanaInput(QMainWindow):
         self.close()
 
 
+class FindWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setGeometry(0, 0, 200, 100)
+        center_window(self)
+
+        self.setWindowTitle('Buscar')
+        central_widget = QWidget(self)
+        layout = QVBoxLayout(central_widget)
+
+        self.label = QLabel("Buscar:")
+        self.text_input = QLineEdit()
+        layout.addWidget(self.label)
+        layout.addWidget(self.text_input)
+
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+        self.setCentralWidget(central_widget)
+
+    def accept(self):
+        search_word = self.text_input.text()
+        text = ventana.text_grammar.toPlainText()
+        if search_word in text:
+            options = QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively
+            cursor = QTextCursor(self.text_grammar.document())
+            selections = []
+
+            while not cursor.isNull():
+                cursor = self.text_grammar.document().find(search_word, cursor, options)
+                if not cursor.isNull():
+                    sel = QTextEdit.ExtraSelection()
+                    sel.format.setBackground(QColor("green"))  # Cambiar el color de fondo a verde
+                    sel.cursor = cursor
+                    selections.append(sel)
+
+            self.text_grammar.setExtraSelections(selections)
+
+        else:
+            QMessageBox.information(self, 'Mensaje', f'La palabra "{search_word}" no se encontró en el texto.')
+
 class RemplaceWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setGeometry(0, 0, 450, 150)
+        self.setGeometry(0, 0, 200, 100)
         center_window(self)
 
         self.setWindowTitle('Remplazar')
         central_widget = QWidget(self)
         layout = QVBoxLayout(central_widget)
 
-        self.label1 = QLabel("Texto 1:")
-        self.text_input1 = QPlainTextEdit()
+        self.label1 = QLabel("Buscar:")
+        self.text_input1 = QLineEdit()
         layout.addWidget(self.label1)
         layout.addWidget(self.text_input1)
 
-        self.label2 = QLabel("Texto 2:")
-        self.text_input2 = QPlainTextEdit()
+        self.label2 = QLabel("Remplazar por:")
+        self.text_input2 = QLineEdit()
         layout.addWidget(self.label2)
         layout.addWidget(self.text_input2)
 
@@ -145,9 +192,9 @@ class RemplaceWindow(QMainWindow):
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
-    def accept(self):
-        old = self.text_input1.toPlainText()
-        new = self.text_input2.toPlainText()
+    def accept(self):       # TODO MIRAR SI SALIA ERROR AL BUSCAR CADENA VACIA
+        old = self.text_input1.text()
+        new = self.text_input2.text()
         text = ventana.text_grammar.toPlainText()
 
         if old in text:
@@ -163,13 +210,8 @@ class RemplaceWindow(QMainWindow):
             ventana.text_grammar.setExtraSelections(selections)
             self.close()
 
-        else:
-            self.close()
-            message_box = QMessageBox()
-            message_box.setWindowTitle("Mensaje")
-            message_box.setText(f'La palabra "{old}" no se encontró en el texto.')
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.exec_()
+        elif old:
+            QMessageBox.information(self, 'Mensaje', f'La palabra "{old}" no se encontró en el texto.')
 
 
 class MainWindow(QMainWindow):
@@ -214,39 +256,40 @@ class MainWindow(QMainWindow):
         grammar_menu.addAction(exit_action)
 
     def pestania_editar(self, gramatica=False):
-        editar_menu = QMenu("Editar", self)
-        self.menubar.addMenu(editar_menu)
+        edit_menu = QMenu("Editar", self)
+        self.menubar.addMenu(edit_menu)
 
         # Opciones de menú al menú editar
         cut_action = QAction("Cortar", self)
         cut_action.setShortcut(QKeySequence.Cut)
         cut_action.triggered.connect(self.cut)
-        editar_menu.addAction(cut_action)
+        edit_menu.addAction(cut_action)
 
         copy_action = QAction("Copiar", self)
         copy_action.setShortcut(QKeySequence.Copy)
         copy_action.triggered.connect(self.copy)
-        editar_menu.addAction(copy_action)
+        edit_menu.addAction(copy_action)
 
-        pegar_action = QAction("Pegar", self)
-        pegar_action.setShortcut(QKeySequence.Paste)
-        pegar_action.triggered.connect(self.paste)
-        editar_menu.addAction(pegar_action)
+        paste_action = QAction("Pegar", self)
+        paste_action.setShortcut(QKeySequence.Paste)
+        paste_action.triggered.connect(self.paste)
+        edit_menu.addAction(paste_action)
 
-        borrar_action = QAction("Borrar", self)
-        editar_menu.addAction(borrar_action)
+        delete_action = QAction("Borrar", self)
+        delete_action.triggered.connect(self.delete)
+        edit_menu.addAction(delete_action)
 
         seleccionar_todo_action = QAction("Seleccionar todo", self)
         seleccionar_todo_action.setShortcut(QKeySequence.SelectAll)
         seleccionar_todo_action.triggered.connect(self.select_all)
-        editar_menu.addAction(seleccionar_todo_action)
+        edit_menu.addAction(seleccionar_todo_action)
 
-        editar_menu.addSeparator()  # Línea de separación
+        edit_menu.addSeparator()  # Línea de separación
 
-        aceptar_gramatica_action = QAction("Aceptar gramática", self)
-        aceptar_gramatica_action.triggered.connect(self.accept_grammar)
-        aceptar_gramatica_action.setEnabled(not gramatica)  # Enable/Disable action
-        editar_menu.addAction(aceptar_gramatica_action)
+        accept_grammar_action = QAction("Aceptar gramática", self)
+        accept_grammar_action.triggered.connect(self.accept_grammar)
+        accept_grammar_action.setEnabled(not gramatica)  # Enable/Disable action
+        edit_menu.addAction(accept_grammar_action)
 
     def pestania_buscar(self):
         find_menu = QMenu("Buscar", self)
@@ -624,30 +667,8 @@ class MainWindow(QMainWindow):
         self.yacc_parse_grammar(text)
 
     def find(self):  # TODO
-        text = self.text_grammar.toPlainText()
-        search_word, ok = QInputDialog.getText(self, 'Buscar Palabra', 'Ingrese la palabra a buscar:')
-        if ok and search_word:
-            if search_word in text:
-                options = QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively
-                cursor = QTextCursor(self.text_grammar.document())
-                selections = []
-
-                while not cursor.isNull():
-                    cursor = self.text_grammar.document().find(search_word, cursor, options)
-                    if not cursor.isNull():
-                        sel = QTextEdit.ExtraSelection()
-                        sel.format.setBackground(QColor("green"))  # Cambiar el color de fondo a amarillo
-                        sel.cursor = cursor
-                        selections.append(sel)
-
-                self.text_grammar.setExtraSelections(selections)
-
-            else:
-                message_box = QMessageBox()
-                message_box.setWindowTitle("Mensaje")
-                message_box.setText(f'La palabra "{search_word}" no se encontró en el texto.')
-                message_box.setIcon(QMessageBox.Warning)
-                message_box.exec_()
+        find_window = FindWindow(self)
+        find_window.show()
 
     def remplace(self):  # TODO
         remplace_window = RemplaceWindow(self)
@@ -661,15 +682,15 @@ class MainWindow(QMainWindow):
 
     def copy(self):
         clipboard = qApp.clipboard()
-        text = self.text_grammar.textCursor().selectedText()  # Obtenemos el texto seleccionado
-        clipboard.setText(text)  # Lo guardamos en el portapapeles
+        text = self.text_grammar.textCursor().selectedText() # Obtenemos el texto seleccionado
+        clipboard.setText(text)                              # Lo guardamos en el portapapeles
 
     def paste(self):
         clipboard = qApp.clipboard()
-        text = clipboard.text(QClipboard.Clipboard)  # Obtenemos el texto del portapapeles
-        self.text_grammar.textCursor().insertText(text)  # Lo pegamos
+        text = clipboard.text(QClipboard.Clipboard)          # Obtenemos el texto del portapapeles
+        self.text_grammar.textCursor().insertText(text)      # Lo pegamos
 
-    def erase(self):
+    def delete(self):
         self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
 
     def select_all(self):
@@ -678,10 +699,11 @@ class MainWindow(QMainWindow):
         self.text_grammar.setTextCursor(cursor)
 
     def show_information(self):  # TODO
-        message_box = QMessageBox()
-        message_box.setWindowTitle('About...')
-        message_box.setText("ANAGRA 3.0: Herramienta para el estudio de gramaticas\n   libres de contexto y técnicas de analisis sintáctico \n\nRealizado por: Laura González Pizarro \nDirigido por: Joaquín Ezpeleta Mateo")
-        message_box.exec_()
+        message = "ANAGRA 3.0: Herramienta para el estudio de gramaticas\n  " \
+                  " libres de contexto y técnicas de analisis sintáctico \n\n" \
+                  "Realizado por: Laura González Pizarro \n" \
+                  "Dirigido por: Joaquín Ezpeleta Mateo"
+        QMessageBox.information(self, 'About...', message)
 
     def cambiar_fuente(self):
         font, ok = QFontDialog.getFont()
@@ -693,7 +715,7 @@ class MainWindow(QMainWindow):
         if color.isValid():
             self.text_grammar.setStyleSheet(f"color: {color.name()};")
 
-    def cambiar_tab(self):  # TODO
+    def cambiar_tab(self):  # TODO cambiar y ver qué hago
         spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
         if ok:
             print(spaces)
@@ -735,10 +757,8 @@ class MainWindow(QMainWindow):
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
         if self.start_token in productions:
-            message_box = QMessageBox()
-            message_box.setWindowTitle("ATENCIÓN!!")
-            message_box.setText("La gramática original y la transformada reconocen la palabra vacía")
-            message_box.exec_()
+            QMessageBox.information(self, "ATENCIÓN!!", "La gramática original y la transformada reconocen la palabra vacía")
+
 
     def eliminating_left_recursion(self):
         non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token,
@@ -782,7 +802,7 @@ class MainWindow(QMainWindow):
 
     def parse_LL1_grammar(self):
         self.table = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                          self.productions)
+                                         self.productions)
 
         # Enable options if possible
         conclicts_ll1 = LL1.is_ll1(self.table, self.terminal_tokens, self.non_terminal_tokens)
@@ -812,10 +832,14 @@ class MainWindow(QMainWindow):
         self.show_SLR_table_action.setEnabled(True)
         self.parse_SLR_input_action.setEnabled(is_slr1)
 
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, ventana, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens,
+                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
+                                   ventana, self)
 
     def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens,
+                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
+                                   ventana, self)
 
     def parse_LALR_grammar(self):
         print()
@@ -838,10 +862,12 @@ class MainWindow(QMainWindow):
         input_window.show()
 
     def parse_LALR_input(self):
-        print()
+        input_window = VentanaInputGramatica("LALR", self)
+        input_window.show()
 
     def parse_LR_input(self):
-        print()
+        input_window = VentanaInputGramatica("LR", self)
+        input_window.show()
 
     def parse_input(self):
         input_window = VentanaInput(self)
