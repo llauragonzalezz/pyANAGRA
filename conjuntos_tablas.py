@@ -130,6 +130,7 @@ class ExpandedGrammar(QMainWindow):
 
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
+        self.text_edit.setReadOnly(True)
 
         i = 2
         text = "1) " + self.start_token + " → " + self.productions[self.start_token][0][1] + "\n"
@@ -242,13 +243,13 @@ class GoToTable(QMainWindow):
 
 
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, accion, ir_a, edges, terminal_tokens, non_terminal_tokens, start_token, productions, parent=None):
+    def __init__(self, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, parent=None):
         super().__init__(parent)
         action_window = ActionTable(accion, terminal_tokens, self)
         action_window.show()
         go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
         go_to_window.show()
-        automaton_window = automaton.AutomatonWindow(edges, self)
+        automaton_window = automaton.AutomatonWindow(nodes, edges, window, self)
         automaton_window.show()
         extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, self)
         extended_grammar.show()

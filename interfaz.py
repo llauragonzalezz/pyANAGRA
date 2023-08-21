@@ -2,7 +2,7 @@ import copy
 import os
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QPixmap, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
     QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog
@@ -399,6 +399,24 @@ class MainWindow(QMainWindow):
         self.show_SLR_table_action.setEnabled(False)  # Enable/Disable action
         parse_menu.addAction(self.show_SLR_table_action)
 
+        parse_LALR_grammar_action = QAction("Analizar gramática LALR", self)
+        parse_LALR_grammar_action.triggered.connect(self.parse_LALR_grammar)
+        parse_menu.addAction(parse_LALR_grammar_action)
+
+        self.show_LALR_table_action = QAction("Mostrar tabla y automata LALR", self)
+        self.show_LALR_table_action.triggered.connect(self.show_LALR_table)
+        self.show_LALR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_menu.addAction(self.show_LALR_table_action)
+
+        parse_LR_grammar_action = QAction("Analizar gramática LR", self)
+        parse_LR_grammar_action.triggered.connect(self.parse_LR_grammar)
+        parse_menu.addAction(parse_LR_grammar_action)
+
+        self.show_LR_table_action = QAction("Mostrar tabla y automata LR", self)
+        self.show_LR_table_action.triggered.connect(self.show_LR_table)
+        self.show_LR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_menu.addAction(self.show_LR_table_action)
+
     def pestania_simular(self):
         simular_menu = QMenu("Simular", self)
         self.menubar.addMenu(simular_menu)
@@ -412,6 +430,16 @@ class MainWindow(QMainWindow):
         self.parse_SLR_input_action.triggered.connect(self.parse_SLR_input)
         self.parse_SLR_input_action.setEnabled(False)  # Enable/Disable action
         simular_menu.addAction(self.parse_SLR_input_action)
+
+        self.parse_LALR_input_action = QAction("Analizar entrada LALR", self)
+        self.parse_LALR_input_action.triggered.connect(self.parse_LALR_input)
+        self.parse_LALR_input_action.setEnabled(False)  # Enable/Disable action
+        simular_menu.addAction(self.parse_LALR_input_action)
+
+        self.parse_LR_input_action = QAction("Analizar entrada LR", self)
+        self.parse_LR_input_action.triggered.connect(self.parse_LR_input)
+        self.parse_LR_input_action.setEnabled(False)  # Enable/Disable action
+        simular_menu.addAction(self.parse_LR_input_action)
 
         simular_menu.addSeparator()
 
@@ -471,6 +499,9 @@ class MainWindow(QMainWindow):
             self.mode_label.setText(f"Modo: escritura")
 
         self.update_row_column()
+
+    #def closeEvent(self, event):
+    #    self.exit()
 
     def update_row_column(self):
         cursor = self.text_grammar.textCursor()
@@ -647,8 +678,10 @@ class MainWindow(QMainWindow):
         self.text_grammar.setTextCursor(cursor)
 
     def show_information(self):  # TODO
-        message = "ANAGRA 3.0: Herramienta para el estudio de gramaticas\n   libres de contexto y técnicas de analisis sintáctico \n\nRealizado por: Laura González Pizarro \nDirigido por: Joaquín Ezpeleta Mateo"
-        QMessageBox.information(self, 'About...', message)
+        message_box = QMessageBox()
+        message_box.setWindowTitle('About...')
+        message_box.setText("ANAGRA 3.0: Herramienta para el estudio de gramaticas\n   libres de contexto y técnicas de analisis sintáctico \n\nRealizado por: Laura González Pizarro \nDirigido por: Joaquín Ezpeleta Mateo")
+        message_box.exec_()
 
     def cambiar_fuente(self):
         font, ok = QFontDialog.getFont()
@@ -702,7 +735,7 @@ class MainWindow(QMainWindow):
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
         if self.start_token in productions:
-            message_box = QMessageBox()  # TODO ver que ponia en el mensaje original
+            message_box = QMessageBox()
             message_box.setWindowTitle("ATENCIÓN!!")
             message_box.setText("La gramática original y la transformada reconocen la palabra vacía")
             message_box.exec_()
@@ -779,10 +812,22 @@ class MainWindow(QMainWindow):
         self.show_SLR_table_action.setEnabled(True)
         self.parse_SLR_input_action.setEnabled(is_slr1)
 
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, ventana, self)
 
     def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados, self)
+
+    def parse_LALR_grammar(self):
+        print()
+
+    def show_LALR_table(self):
+        print()
+
+    def parse_LR_grammar(self):
+        print()
+
+    def show_LR_table(self):
+        print()
 
     def parse_LL1_input(self):
         ll1_input_window = VentanaInputGramatica("LL1", self)
@@ -791,6 +836,12 @@ class MainWindow(QMainWindow):
     def parse_SLR_input(self):
         input_window = VentanaInputGramatica("SLR1", self)
         input_window.show()
+
+    def parse_LALR_input(self):
+        print()
+
+    def parse_LR_input(self):
+        print()
 
     def parse_input(self):
         input_window = VentanaInput(self)

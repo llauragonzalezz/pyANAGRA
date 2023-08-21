@@ -11,17 +11,41 @@ from PyQt5.QtCore import (QEasingCurve, QLineF,
 from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QFont, QPalette
 from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
                              QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget, QMessageBox)
+                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget, QMessageBox,
+                             QLabel, QPlainTextEdit)
 
 import networkx as nx
 
+
+class NodeText(QMainWindow):
+    def __init__(self, name, text, parent=None):
+        super().__init__(parent)
+        self._name = name
+        self._text = text
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle(self._name)
+        self.setGeometry(0, 0, 200, 120)
+
+        # Center window to the middle of the screen
+        screen = QDesktopWidget().availableGeometry()
+        window_size = self.frameGeometry()
+        x = (screen.width() - window_size.width()) // 2
+        y = (screen.height() - window_size.height()) // 2
+        self.move(x, y)
+
+        self.text_edit = QPlainTextEdit(self)
+        self.setCentralWidget(self.text_edit)
+        self.text_edit.setReadOnly(True)
+        self.text_edit.setPlainText(self._text)
 
 
 class Node(QGraphicsObject):
 
     """A QGraphicsItem representing node in a graph"""
 
-    def __init__(self, name: str, parent=None):
+    def __init__(self, name: str, content, window, parent=None):
         """Node constructor
 
         Args:
@@ -29,6 +53,8 @@ class Node(QGraphicsObject):
         """
         super().__init__(parent)
         self._name = name
+        self._content = content
+        self._window = window
         self._edges = []
         self._color = "#00afb9"
         self._radius = 30
@@ -40,21 +66,19 @@ class Node(QGraphicsObject):
 
         self.setAcceptHoverEvents(True)
 
-    # def hoverEnterEvent(self, event):
-    #    self.setCursor(Qt.PointingHandCursor)
-
-    # def hoverLeaveEvent(self, event):
-    #    self.setCursor(Qt.ArrowCursor)
-
-    # def mousePressEvent(self, event):
-    #    if event.button() == Qt.LeftButton:
-    #        self.show_message_box()
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.show_message_box()
 
     def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle(f"Node Label: {self._name}")
-        msg_box.setText("hola")
-        msg_box.exec_()
+        text = ""
+        for token, prod in self._content:
+            text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + "\n"
+
+        node_text_window = NodeText(f"Node Label: {self._name}", text, self._window)
+        node_text_window.show()
+
+
 
     def boundingRect(self) -> QRectF:
         """Override from QGraphicsItem
@@ -252,7 +276,7 @@ class Edge(QGraphicsItem):
 
 
 class GraphView(QGraphicsView):
-    def __init__(self, graph: nx.DiGraph, edges, parent=None):
+    def __init__(self, graph: nx.DiGraph, nodes, edges, window, parent=None):
         """GraphView constructor
 
         This widget can display a directed graph
@@ -262,7 +286,9 @@ class GraphView(QGraphicsView):
         """
         super().__init__()
         self._graph = graph
+        self._nodes = nodes
         self._edges = edges
+        self._window = window
         self._scene = QGraphicsScene()
         self.setScene(self._scene)
 
@@ -321,7 +347,7 @@ class GraphView(QGraphicsView):
 
         # Add nodes
         for node in self._graph:
-            item = Node(node)
+            item = Node(node, self._nodes[int(node)], self._window)
             self.scene().addItem(item)
             self._nodes_map[node] = item
 
@@ -334,9 +360,11 @@ class GraphView(QGraphicsView):
 
 
 class AutomatonWindow(QMainWindow):
-    def __init__(self, edges, parent=None):
+    def __init__(self, nodes, edges, window, parent=None):
         super().__init__(parent)
+        self.nodes = nodes
         self.edges = edges
+        self._window = window
         self.initUI()
 
     def initUI(self):
@@ -346,7 +374,7 @@ class AutomatonWindow(QMainWindow):
         self.graph = nx.DiGraph()
         self.graph.add_edges_from(list(self.edges.keys()))
 
-        self.view = GraphView(self.graph, self.edges, self)
+        self.view = GraphView(self.graph, self.nodes, self.edges, self._window, self)
         self.setCentralWidget(self.view)
 
         screen = QDesktopWidget().availableGeometry()   # TODO VER DONDE LO PONGO
