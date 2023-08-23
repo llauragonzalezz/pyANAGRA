@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
     QLineEdit
 
 import LL1
+import LR
 import SLR
 import bisonlex
 import bisonparse
@@ -848,8 +849,22 @@ class MainWindow(QMainWindow):
         print()
 
     def parse_LR_grammar(self):
-        print()
+        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        self.conj_LR1 = LR.conj_LR1(self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.action_table = LR.action_table(self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.go_to_table = LR.go_to_table(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.edges = LR.create_automaton(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
 
+        # Enable options if possible
+        #conclicts_slr1 = SLR.is_slr1(self.table)
+        #is_slr1 = conclicts_slr1 == 0
+
+        #self.show_SLR_table_action.setEnabled(True)
+        #self.parse_SLR_input_action.setEnabled(is_slr1)
+
+        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR1, self.edges, self.terminal_tokens,
+                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
+                                   ventana, self)
     def show_LR_table(self):
         print()
 

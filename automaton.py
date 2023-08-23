@@ -72,9 +72,12 @@ class Node(QGraphicsObject):
 
     def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
         text = ""
-        for token, prod in self._content:
-            text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + "\n"
-
+        if len(self._content) == 2:
+            for token, prod in self._content:
+                text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + "\n"
+        else:
+            for token, prod, terminal in self._content:
+                text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + " ," + str(terminal) + "\n"
         node_text_window = NodeText(f"Node Label: {self._name}", text, self._window)
         node_text_window.show()
 
@@ -382,15 +385,3 @@ class AutomatonWindow(QMainWindow):
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
-
-
-
-if __name__ == "__main__":
-
-    app = QApplication(sys.argv)
-
-    # Create a networkx graph
-
-    widget = AutomatonWindow({('0', '2'): 'T', ('0', '3'): "'('", ('0', '1'): 'E', ('0', '4'): 'id', ('1', '5'): "'+'", ('3', '2'): 'T', ('3', '3'): "'('", ('3', '6'): 'E', ('3', '4'): 'id', ('5', '7'): 'T', ('5', '3'): "'('", ('5', '4'): 'id', ('6', '5'): "'+'", ('6', '8'): "')'"})
-    widget.show()
-    sys.exit(app.exec())

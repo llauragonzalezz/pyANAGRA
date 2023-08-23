@@ -15,7 +15,6 @@ def is_slr1(table):
 def extend_grammar(start_token, non_terminal_tokens, productions):
     start_token_extended = start_token + "*"
     productions[start_token_extended] = [['.', start_token]]
-
     return start_token_extended, {start_token_extended} | non_terminal_tokens, productions
 
 
@@ -198,9 +197,10 @@ def simulate(accion, ir_a, input):
             production = accion[s, n][0][8:]
             partes = production.split("→")
             right_part = []
-            for i in range(len(partes[1].strip().split())):
-                stack.pop()
-                right_part.append(stack.pop())
+            if partes[1].strip() != "ε":
+                for i in range(len(partes[1].strip().split())):
+                    stack.pop()
+                    right_part.append(stack.pop())
 
             s = int(stack[len(stack) - 1][0])
             stack.append((partes[0][0], index))
@@ -211,6 +211,4 @@ def simulate(accion, ir_a, input):
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
-    for entrada in simulation_table:
-        print(entrada)
     return simulation_table

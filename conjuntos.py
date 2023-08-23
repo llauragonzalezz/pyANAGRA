@@ -27,7 +27,6 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
 def calculate_first_set(terminal_tokens, non_terminal_tokens, productions):
     first_set = dict()
     for token in terminal_tokens | non_terminal_tokens:
-        print("Llamo a PRI(", token, ") con", {token})
         first_set[token] = calculate_first_set_token(token, {token}, terminal_tokens, non_terminal_tokens, productions)
     return first_set
 
