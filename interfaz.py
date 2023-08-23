@@ -72,7 +72,9 @@ class VentanaInputGramatica(QMainWindow):
         elif self.type == "LALR":
             print()
         elif self.type == "LR":
-            print()
+            tabla = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+
         nueva_ventana.show()
 
 
@@ -827,7 +829,7 @@ class MainWindow(QMainWindow):
         self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
         # Enable options if possible
-        conclicts_slr1 = SLR.is_slr1(self.table)
+        conclicts_slr1 = SLR.is_slr1(self.action_table)
         is_slr1 = conclicts_slr1 == 0
 
         self.show_SLR_table_action.setEnabled(True)
@@ -851,18 +853,18 @@ class MainWindow(QMainWindow):
     def parse_LR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         self.conj_LR1 = LR.conj_LR1(self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.action_table = LR.action_table(self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.go_to_table = LR.go_to_table(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.edges = LR.create_automaton(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.action_table_LR = LR.action_table(self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.go_to_table_LR = LR.go_to_table(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.edges_LR = LR.create_automaton(self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
 
         # Enable options if possible
-        #conclicts_slr1 = SLR.is_slr1(self.table)
-        #is_slr1 = conclicts_slr1 == 0
+        conclicts_lr = SLR.is_slr1(self.action_table_LR)
+        is_lr = conclicts_lr == 0
 
-        #self.show_SLR_table_action.setEnabled(True)
-        #self.parse_SLR_input_action.setEnabled(is_slr1)
+        self.show_LR_table_action.setEnabled(True)
+        self.parse_LR_input_action.setEnabled(is_lr)
 
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR1, self.edges, self.terminal_tokens,
+        conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR, self.terminal_tokens,
                                    self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
                                    ventana, self)
     def show_LR_table(self):

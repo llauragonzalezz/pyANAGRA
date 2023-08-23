@@ -211,4 +211,5 @@ def simulate(accion, ir_a, input):
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
+
     return simulation_table

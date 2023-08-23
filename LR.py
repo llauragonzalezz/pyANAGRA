@@ -2,7 +2,12 @@ import conjuntos as conj
 import operacionesTransformacion as op
 
 def is_lr(table):
-    return True
+    num_conflicts = 0
+    for keys in table:
+        if len(table[keys]) > 1:
+            num_conflicts += 1
+
+    return num_conflicts
 
 
 def extend_grammar(start_token, non_terminal_tokens, productions):
@@ -40,7 +45,7 @@ def clausura(I, terminal_tokens, non_terminal_tokens, productions):
                     first_set_token = set()
                     if prod.index('.') < len(prod) - 2:  # Pri(þ)
                         first_set_token = first_set[prod[prod.index('.') + 2]]
-                        if op.is_nullable(prod[prod.index('.') + 2], non_terminal_tokens, productions):  # þ -> eps => Pri(a)
+                        if prod[prod.index('.') + 2] in non_terminal_tokens and op.is_nullable(prod[prod.index('.') + 2], non_terminal_tokens, productions):  # þ -> eps => Pri(a)
                             first_set_token |= terminal
                     if prod.index('.') >= len(prod) - 2:  # Si no existe þ => Pri(a)
                         first_set_token = terminal
@@ -106,12 +111,21 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
                 sucesor_i_token_terminal = sucesor(C[i], terminal_token, terminal_tokens, non_terminal_tokens, productions)
                 if sucesor_i_token_terminal in C:
                     new_action = "desplazar " + str(C.index(sucesor_i_token_terminal))
-                    if (i, terminal_token) in action:
-                        if new_action not in action[i, terminal_token]:
-                            action[i, terminal_token].append(new_action)
-                    else:
+                    if (i, terminal_token) in action and new_action not in action[i, terminal_token]:
+                        action[i, terminal_token].append(new_action)
+                    elif (i, terminal_token) not in action:
                         action[i, terminal_token] = [new_action]
 
+            if prod.index('.') == len(prod) - 1:
+                if prod[0] == '.':   # epsilon production
+                    new_action = "reducir " + token + "  → ε"
+                else:
+                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+
+                if (i, "$") in action and new_action not in action[i, "$"]:
+                        action[i, "$"].append(new_action)
+                elif (i, "$") not in action:
+                    action[i, "$"] = [new_action]
 
         for token, prod, terminal in C[i]:
             if token != start_token and prod.index('.') == len(prod) - 1:
@@ -121,10 +135,9 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
                     new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
 
                 for t in terminal:
-                    if (i, t) in action:
-                        if new_action not in action[i, t]:
+                    if (i, t) in action and new_action not in action[i, t]:
                             action[i, t].append(new_action)
-                    else:
+                    elif (i, t) not in action:
                         action[i, t] = [new_action]
             elif token == start_token and prod.index('.') == len(prod) - 1:
                 action[i, "$"] = ["aceptar"]
