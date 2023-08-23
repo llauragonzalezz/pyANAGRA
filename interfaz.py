@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
     QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, \
     QLineEdit
 
+import LALR
 import LL1
 import LR
 import SLR
@@ -71,6 +72,7 @@ class VentanaInputGramatica(QMainWindow):
 
         elif self.type == "LALR":
             print()
+
         elif self.type == "LR":
             tabla = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
             nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
@@ -845,7 +847,25 @@ class MainWindow(QMainWindow):
                                    ventana, self)
 
     def parse_LALR_grammar(self):
-        print()
+        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        self.conj_LALR = LALR.conj_LR1(self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.action_table_LALR = LR.action_table(self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
+                                               self.non_terminal_tokens, self.producciones_ampliados)
+        self.go_to_table_LALR = LR.go_to_table(self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+                                             self.producciones_ampliados)
+        self.edges_LALR = LALR.create_automaton(self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+                                            self.producciones_ampliados)
+
+        # Enable options if possible
+        conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
+        is_lalr = conclicts_lalr == 0
+
+        self.show_LALR_table_action.setEnabled(True)
+        self.parse_LALR_input_action.setEnabled(is_lalr)
+
+        conj_tab.AnalysisTableSLR1(self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
 
     def show_LALR_table(self):
         print()

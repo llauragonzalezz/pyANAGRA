@@ -78,10 +78,9 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
                 sucesor_i_token_terminal = sucesor(C[i], terminal_token, non_terminal_tokens, productions)
                 if sucesor_i_token_terminal in C:
                     new_action = "desplazar " + str(C.index(sucesor_i_token_terminal))
-                    if (i, terminal_token) in action:
-                        if new_action not in action[i, terminal_token]:
-                            action[i, terminal_token].append(new_action)
-                    else:
+                    if (i, terminal_token) in action and new_action not in action[i, terminal_token]:
+                        action[i, terminal_token].append(new_action)
+                    elif (i, terminal_token) not in action:
                         action[i, terminal_token] = [new_action]
 
             if prod.index('.') == len(prod) - 1:
@@ -90,36 +89,32 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
                 else:
                     new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
 
-                if (i, "$") in action:
-                    if new_action not in action[i, "$"]:
-                        action[i, "$"].append(new_action)
-                else:
+                if (i, "$") in action and new_action not in action[i, "$"]:
+                    action[i, "$"].append(new_action)
+                elif (i, "$") not in action:
                     action[i, "$"] = [new_action]
 
         for token, prod in C[i]:
             if token != start_token and prod.index('.') == len(prod) - 1:
                 for token_no_terminal_siguiente in follow_set[token]:
                     if prod[0] == '.':  # epsilon production
-                        new_action = "reducir " +  token + "  → ε"
+                        new_action = "reducir " + token + "  → ε"
                     else:
                         new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
 
-                    if (i, token_no_terminal_siguiente) in action:
-                        if new_action not in action[i, token_no_terminal_siguiente]:
-                            action[i, token_no_terminal_siguiente].append(new_action)
-                    else:
+                    if (i, token_no_terminal_siguiente) in action and new_action not in action[i, token_no_terminal_siguiente]:
+                        action[i, token_no_terminal_siguiente].append(new_action)
+                    elif (i, token_no_terminal_siguiente) not in action:
                         action[i, token_no_terminal_siguiente] = [new_action]
 
         for I in C:
-            if (start_token, [start_token[:-1], '.']) in I: # TODO HABRIA QUE HACER LO DEL APPEND AQUI TAMBIEN O NO
+            if (start_token, [start_token[:-1], '.']) in I:
                 action[C.index(I), "$"] = ["aceptar"]
 
     for i in range(len(C)):
         for token in terminal_tokens | {"$"}:
             if (i, token) not in action:
                 action[i, token] = ["ERROR"]
-            else:
-                print("action[", i, " ,", token, "] =", action[i, token])
 
     return action
 
@@ -137,8 +132,7 @@ def go_to_table(C, non_terminal_tokens, productions):
         for token in non_terminal_tokens | {"$"}:
             if (i, token) not in ir_a:
                 ir_a[i, token] = "ERROR"
-            else:
-                print("ir_a[", i, ", ", token, "]", ir_a[i, token])
+
     return ir_a
 
 
