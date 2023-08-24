@@ -86,19 +86,17 @@ def sucesor(I, token, terminal_tokens, non_terminal_tokens, productions):
 
 def conj_LR1(start_token, terminal_tokens, non_terminal_tokens, productions):
     old = []
-    print([(start_token, prod, {'$'}) for prod in productions[start_token]])
     new = [clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], terminal_tokens, non_terminal_tokens, productions)]
-    while old != new:
+    while old != new: # poner booleano
         old = new
         for I in new:
             prods = {token for _, prod, _ in I for token in prod if token != '.'}
             for token in prods:
                 sucesor_token = sucesor(I, token, terminal_tokens, non_terminal_tokens, productions)
                 if sucesor_token != [] and sucesor_token not in new:
-                    new.append(sucesor_token)
+                    new.append(sucesor_token) # poner booleano a true
 
-    for entrada in new:
-        print(entrada)
+
     return new
 
 def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productions):

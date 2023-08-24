@@ -305,15 +305,6 @@ class GraphView(QGraphicsView):
         self._nx_layout = nx.kamada_kawai_layout # TODO preguntar si le gusta mas este o circular_layout
         self._load_graph()
         self.set_nx_layout()
-        # self._nx_layout = {
-        #    "circular": nx.circular_layout,
-        #    "planar": nx.planar_layout,
-        #    "random": nx.random_layout,
-        #    "shell_layout": nx.shell_layout,
-        #    "kamada_kawai_layout": nx.kamada_kawai_layout,
-        #    "spring_layout": nx.spring_layout,
-        #    "spiral_layout": nx.spiral_layout,
-        #}
 
     def set_nx_layout(self):
         """Set networkx layout and start animation

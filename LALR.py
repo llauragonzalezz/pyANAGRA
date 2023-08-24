@@ -21,6 +21,8 @@ def conj_LR1(start_token, terminal_tokens, non_terminal_tokens, productions):
             for j in range(len(I)):
                 new_conj[i].append((c[j][0], c[j][1], c[j][2] | I[j][2]))
 
+    for entrada in new_conj:
+        print(entrada)
     return new_conj
 
 def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
@@ -29,7 +31,7 @@ def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
         for token in terminal_tokens | non_terminal_tokens:
             sucesor_token = LR.sucesor(I, token, terminal_tokens, non_terminal_tokens, productions)
             aniadir = False
-            for i, c in enumerate(C):
+            for i, c in enumerate(C): # find c tq sucesor_token <= c
                 if len(c) == len(sucesor_token):
                     for j in range(len(sucesor_token)):
                         if c[j][0] != sucesor_token[j][0] or c[j][1] != sucesor_token[j][1]:

@@ -62,71 +62,25 @@ class VentanaInputGramatica(QMainWindow):
         texto = self.text_edit.toPlainText()
         self.close()
         if self.type == "LL1":
-            tabla = LL1.simulate(ventana.table, ventana.start_token, ventana.terminal_tokens, texto + " $")
+            tabla = LL1.simulate(ventana.table_LL1, ventana.start_token, ventana.terminal_tokens, texto + " $")
             nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens,
                                                   ventana.non_terminal_tokens, self)
 
         elif self.type == "SLR1":
-            tabla = SLR.simulate(ventana.action_table, ventana.go_to_table, texto + " $")
+            tabla = SLR.simulate(ventana.action_table_SLR, ventana.go_to_table_SLR, texto + " $")
             nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "LALR":
-            print()
+            tabla = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
+            for entrada in tabla:
+                print(entrada)
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "LR":
             tabla = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
             nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         nueva_ventana.show()
-
-
-class VentanaInput(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Input")
-        self.setGeometry(0, 0, 400, 200)
-        # Center window to the middle of the screen
-        center_window(self)
-
-        layout = QVBoxLayout()
-
-        label = QLabel("Input:")
-        layout.addWidget(label)
-
-        self.text_edit = QPlainTextEdit()
-        layout.addWidget(self.text_edit)
-
-        row_layout = QHBoxLayout()
-        self.checkbox_dibujar_arbol = QCheckBox("Dibujar árbol")
-        row_layout.addWidget(self.checkbox_dibujar_arbol)
-
-        label_gramatica = QLabel("Gramática:")
-        row_layout.addWidget(label_gramatica)
-
-        self.dropdown_gramatica = QComboBox()
-        self.dropdown_gramatica.addItems(["Opción 1", "Opción 2", "Opción 3"])
-        row_layout.addWidget(self.dropdown_gramatica)
-
-        layout.addLayout(row_layout)
-        boton_aceptar = QPushButton("Aceptar", self)
-        boton_aceptar.clicked.connect(self.accept)
-        layout.addWidget(boton_aceptar)
-
-        central_widget = QWidget()
-        central_widget.setLayout(layout)
-        self.setCentralWidget(central_widget)
-
-    def accept(self):
-        self.texto = self.text_edit.toPlainText()
-        self.dibujar_arbol = self.checkbox_dibujar_arbol.isChecked()
-        self.opcion_gramatica = self.dropdown_gramatica.currentText()
-        print("Texto ingresado:", self.texto)
-        print("Dibujar árbol:", self.dibujar_arbol)
-        print("Opción de Gramática seleccionada:", self.opcion_gramatica)
-        self.close()
 
 
 class FindWindow(QMainWindow):
@@ -218,6 +172,39 @@ class RemplaceWindow(QMainWindow):
         elif old:
             QMessageBox.information(self, 'Mensaje', f'La palabra "{old}" no se encontró en el texto.')
 
+class FirstSetSentenceWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setGeometry(0, 0, 300, 100)
+        center_window(self)
+
+        self.setWindowTitle('Conjunto PRIMERO forma frase')
+        central_widget = QWidget(self)
+        layout = QVBoxLayout(central_widget)
+
+        self.label1 = QLabel("Forma frase:")
+        self.text_input1 = QLineEdit()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.text_input1)
+
+        self.label2 = QLabel("Conjunto PRIMERO forma frase:")
+        self.text_input2 = QLineEdit()
+        self.text_input2.setReadOnly(True)  # Disable
+        layout.addWidget(self.label2)
+        layout.addWidget(self.text_input2)
+
+        self.ok_button = QPushButton("Calcular")
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+
+        # Establecer el widget principal y el
+        self.setCentralWidget(central_widget)
+
+    def accept(self):       # TODO MIRAR SI SALIA ERROR AL BUSCAR CADENA VACIA
+        first_set_sentence = conj.calculate_first_set_sentence(self.text_input1.text(), ventana.terminal_tokens,
+                                                               ventana.non_terminal_tokens, ventana.productions)
+        text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
+        self.text_input2.setText(text)
 
 class MainWindow(QMainWindow):
     def pestania_gramatica(self, gramatica=False):
@@ -381,7 +368,7 @@ class MainWindow(QMainWindow):
         follow_set_action = QAction("Calcular conjunto SIGUIENTE", self)
         follow_set_action.triggered.connect(self.calcular_conjunto_siguiente)
 
-        conjunto_primero_frase_action = QAction("Analisis", self)  # TODO: mirar que es
+        conjunto_primero_frase_action = QAction("Calcular conjunto PRIMERO de forma de frase", self)  # TODO: mirar que es
         conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
 
         # Agregar las opciones de menú al menú herramientas
@@ -489,12 +476,6 @@ class MainWindow(QMainWindow):
         self.parse_LR_input_action.setEnabled(False)  # Enable/Disable action
         simular_menu.addAction(self.parse_LR_input_action)
 
-        simular_menu.addSeparator()
-
-        self.parse_input_action = QAction("Analizar entrada", self)
-        self.parse_input_action.triggered.connect(self.parse_input)
-        self.parse_input_action.setEnabled(False)  # Enable/Disable action
-        simular_menu.addAction(self.parse_input_action)
 
     def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
         super().__init__(parent)
@@ -742,11 +723,9 @@ class MainWindow(QMainWindow):
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        self.table = conj.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                          self.productions)
-        table = {index: elem for index, elem in enumerate(self.table)}
-        simulation_window = conj_tab.SimulationTable(table, self)
-        simulation_window.show()
+        first_set_sentence_window = FirstSetSentenceWindow(self)
+        first_set_sentence_window.show()
+
 
     def left_factoring(self):
         non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(),
@@ -806,45 +785,45 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def parse_LL1_grammar(self):
-        self.table = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+        self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
                                          self.productions)
 
         # Enable options if possible
-        conclicts_ll1 = LL1.is_ll1(self.table, self.terminal_tokens, self.non_terminal_tokens)
+        conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
         is_ll1 = conclicts_ll1 == 0
         self.parse_LL1_input_action.setEnabled(is_ll1)
         self.parse_input_action.setEnabled(is_ll1)
         self.show_LL1_table_action.setEnabled(True)
 
-        analysis_table_window = conj_tab.AnalysisTableLL1(self.table, self)
+        analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
         analysis_table_window.show()
 
     def show_LL1_table(self):
-        analysis_table_window = conj_tab.AnalysisTableLL1(self.table, self)
+        analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.action_table = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.go_to_table = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.edges = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+        self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+        self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
         # Enable options if possible
-        conclicts_slr1 = SLR.is_slr1(self.action_table)
+        conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
         is_slr1 = conclicts_slr1 == 0
 
         self.show_SLR_table_action.setEnabled(True)
         self.parse_SLR_input_action.setEnabled(is_slr1)
 
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens,
-                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
-                                   ventana, self)
+        conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
 
     def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.action_table, self.go_to_table, self.conj_LR0, self.edges, self.terminal_tokens,
-                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
-                                   ventana, self)
+        conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
 
     def parse_LALR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
@@ -868,7 +847,9 @@ class MainWindow(QMainWindow):
                                    self.producciones_ampliados, ventana, self)
 
     def show_LALR_table(self):
-        print()
+        conj_tab.AnalysisTableSLR1(self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
 
     def parse_LR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
@@ -884,11 +865,14 @@ class MainWindow(QMainWindow):
         self.show_LR_table_action.setEnabled(True)
         self.parse_LR_input_action.setEnabled(is_lr)
 
-        conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR, self.terminal_tokens,
-                                   self.non_terminal_tokens, self.token_inicial_ampliado, self.producciones_ampliados,
-                                   ventana, self)
+        conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
+
     def show_LR_table(self):
-        print()
+        conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
+                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
+                                   self.producciones_ampliados, ventana, self)
 
     def parse_LL1_input(self):
         ll1_input_window = VentanaInputGramatica("LL1", self)
@@ -904,10 +888,6 @@ class MainWindow(QMainWindow):
 
     def parse_LR_input(self):
         input_window = VentanaInputGramatica("LR", self)
-        input_window.show()
-
-    def parse_input(self):
-        input_window = VentanaInput(self)
         input_window.show()
 
     def show_grammar(self):

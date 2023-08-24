@@ -167,7 +167,9 @@ def simulate(accion, ir_a, input):
             n += y + next(it)
     while not (aceptado or error):
         s = int(stack[len(stack) - 1][0])
+        print("s:", s)
         if accion[s, n][0][:9] == "desplazar":
+            print("desplazar")
             stack.append((n, index))
             stack.append((accion[s, n][0][10:],))
 
@@ -184,10 +186,13 @@ def simulate(accion, ir_a, input):
                     n += y + next(it)
 
         elif accion[s, n][0] == "aceptar":
+            print("aceptar")
             aceptado = True
         elif accion[s, n][0] == "ERROR":
+            print("error")
             error = True
         elif accion[s, n][0][:7] == "reducir":
+            print("reducir")
             production = accion[s, n][0][8:]
             partes = production.split("→")
             right_part = []
@@ -205,5 +210,6 @@ def simulate(accion, ir_a, input):
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
-
+    for entrada in simulation_table:
+        print(entrada)
     return simulation_table
