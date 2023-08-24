@@ -303,4 +303,3 @@ newident	: IDENTIFIER
 
 		;
 
-%%

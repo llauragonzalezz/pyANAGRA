@@ -12,13 +12,11 @@
 
 %start file
 %%
-file
-	: external_definition
+file : external_definition
 	| file external_definition
 	;
 
-primary_expr
-	: identifier
+primary_expr : identifier
 	| CONSTANT
 	| STRING_LITERAL
 	| '(' expr ')'
@@ -35,13 +33,11 @@ postfix_expr
 	| postfix_expr DEC_OP
 	;
 
-argument_expr_list
-	: assignment_expr
+argument_expr_list : assignment_expr
 	| argument_expr_list ',' assignment_expr
 	;
 
-unary_expr
-	: postfix_expr
+unary_expr : postfix_expr
 	| INC_OP unary_expr
 	| DEC_OP unary_expr
 	| unary_operator cast_expr
@@ -58,81 +54,67 @@ unary_operator
 	| '!'
 	;
 
-cast_expr
-	: unary_expr
+cast_expr : unary_expr
 	| '(' type_name ')' cast_expr
 	;
 
-multiplicative_expr
-	: cast_expr
+multiplicative_expr : cast_expr
 	| multiplicative_expr '*' cast_expr
 	| multiplicative_expr '/' cast_expr
 	| multiplicative_expr '%' cast_expr
 	;
 
-additive_expr
-	: multiplicative_expr
+additive_expr : multiplicative_expr
 	| additive_expr '+' multiplicative_expr
 	| additive_expr '-' multiplicative_expr
 	;
 
-shift_expr
-	: additive_expr
+shift_expr : additive_expr
 	| shift_expr LEFT_OP additive_expr
 	| shift_expr RIGHT_OP additive_expr
 	;
 
-relational_expr
-	: shift_expr
+relational_expr : shift_expr
 	| relational_expr '<' shift_expr
 	| relational_expr '>' shift_expr
 	| relational_expr LE_OP shift_expr
 	| relational_expr GE_OP shift_expr
 	;
 
-equality_expr
-	: relational_expr
+equality_expr : relational_expr
 	| equality_expr EQ_OP relational_expr
 	| equality_expr NE_OP relational_expr
 	;
 
-and_expr
-	: equality_expr
+and_expr : equality_expr
 	| and_expr '&' equality_expr
 	;
 
-exclusive_or_expr
-	: and_expr
+exclusive_or_expr : and_expr
 	| exclusive_or_expr '^' and_expr
 	;
 
-inclusive_or_expr
-	: exclusive_or_expr
+inclusive_or_expr : exclusive_or_expr
 	| inclusive_or_expr '|' exclusive_or_expr
 	;
 
-logical_and_expr
-	: inclusive_or_expr
+logical_and_expr : inclusive_or_expr
 	| logical_and_expr AND_OP inclusive_or_expr
 	;
 
-logical_or_expr
-	: logical_and_expr
+logical_or_expr : logical_and_expr
 	| logical_or_expr OR_OP logical_and_expr
 	;
 
-conditional_expr
-	: logical_or_expr
+conditional_expr : logical_or_expr
 	| logical_or_expr '?' logical_or_expr ':' conditional_expr
 	;
 
-assignment_expr
-	: conditional_expr
+assignment_expr : conditional_expr
 	| unary_expr assignment_operator assignment_expr
 	;
 
-assignment_operator
-	: '='
+assignment_operator : '='
 	| MUL_ASSIGN
 	| DIV_ASSIGN
 	| MOD_ASSIGN
@@ -145,47 +127,39 @@ assignment_operator
 	| OR_ASSIGN
 	;
 
-expr
-	: assignment_expr
+expr : assignment_expr
 	| expr ',' assignment_expr
 	;
 
-constant_expr
-	: conditional_expr
+constant_expr : conditional_expr
 	;
 
-declaration
-	: declaration_specifiers ';'
+declaration : declaration_specifiers ';'
 	| declaration_specifiers init_declarator_list ';'
 	;
 
-declaration_specifiers
-	: storage_class_specifier
+declaration_specifiers : storage_class_specifier
 	| storage_class_specifier declaration_specifiers
 	| type_specifier
 	| type_specifier declaration_specifiers
 	;
 
-init_declarator_list
-	: init_declarator
+init_declarator_list : init_declarator
 	| init_declarator_list ',' init_declarator
 	;
 
-init_declarator
-	: declarator
+init_declarator : declarator
 	| declarator '=' initializer
 	;
 
-storage_class_specifier
-	: TYPEDEF
+storage_class_specifier : TYPEDEF
 	| EXTERN
 	| STATIC
 	| AUTO
 	| REGISTER
 	;
 
-type_specifier
-	: CHAR
+type_specifier : CHAR
 	| SHORT
 	| INT
 	| LONG
@@ -201,60 +175,49 @@ type_specifier
 	| TYPE_NAME
 	;
 
-struct_or_union_specifier
-	: struct_or_union identifier '{' struct_declaration_list '}'
+struct_or_union_specifier : struct_or_union identifier '{' struct_declaration_list '}'
 	| struct_or_union '{' struct_declaration_list '}'
 	| struct_or_union identifier
 	;
 
-struct_or_union
-	: STRUCT
+struct_or_union : STRUCT
 	| UNION
 	;
 
-struct_declaration_list
-	: struct_declaration
+struct_declaration_list : struct_declaration
 	| struct_declaration_list struct_declaration
 	;
 
-struct_declaration
-	: type_specifier_list struct_declarator_list ';'
+struct_declaration : type_specifier_list struct_declarator_list ';'
 	;
 
-struct_declarator_list
-	: struct_declarator
+struct_declarator_list : struct_declarator
 	| struct_declarator_list ',' struct_declarator
 	;
 
-struct_declarator
-	: declarator
+struct_declarator : declarator
 	| ':' constant_expr
 	| declarator ':' constant_expr
 	;
 
-enum_specifier
-	: ENUM '{' enumerator_list '}'
+enum_specifier : ENUM '{' enumerator_list '}'
 	| ENUM identifier '{' enumerator_list '}'
 	| ENUM identifier
 	;
 
-enumerator_list
-	: enumerator
+enumerator_list : enumerator
 	| enumerator_list ',' enumerator
 	;
 
-enumerator
-	: identifier
+enumerator : identifier
 	| identifier '=' constant_expr
 	;
 
-declarator
-	: declarator2
+declarator : declarator2
 	| pointer declarator2
 	;
 
-declarator2
-	: identifier
+declarator2 : identifier
 	| '(' declarator ')'
 	| declarator2 '[' ']'
 	| declarator2 '[' constant_expr ']'
@@ -263,35 +226,29 @@ declarator2
 	| declarator2 '(' parameter_identifier_list ')'
 	;
 
-pointer
-	: '*'
+pointer : '*'
 	| '*' type_specifier_list
 	| '*' pointer
 	| '*' type_specifier_list pointer
 	;
 
-type_specifier_list
-	: type_specifier
+type_specifier_list : type_specifier
 	| type_specifier_list type_specifier
 	;
 
-parameter_identifier_list
-	: identifier_list
+parameter_identifier_list : identifier_list
 	| identifier_list ',' ELIPSIS
 	;
 
-identifier_list
-	: identifier
+identifier_list : identifier
 	| identifier_list ',' identifier
 	;
 
-parameter_type_list
-	: parameter_list
+parameter_type_list : parameter_list
 	| parameter_list ',' ELIPSIS
 	;
 
-parameter_list
-	: parameter_declaration
+parameter_list : parameter_declaration
 	| parameter_list ',' parameter_declaration
 	;
 
@@ -300,19 +257,16 @@ parameter_declaration
 	| type_name
 	;
 
-type_name
-	: type_specifier_list
+type_name : type_specifier_list
 	| type_specifier_list abstract_declarator
 	;
 
-abstract_declarator
-	: pointer
+abstract_declarator : pointer
 	| abstract_declarator2
 	| pointer abstract_declarator2
 	;
 
-abstract_declarator2
-	: '(' abstract_declarator ')'
+abstract_declarator2 : '(' abstract_declarator ')'
 	| '[' ']'
 	| '[' constant_expr ']'
 	| abstract_declarator2 '[' ']'
@@ -323,19 +277,16 @@ abstract_declarator2
 	| abstract_declarator2 '(' parameter_type_list ')'
 	;
 
-initializer
-	: assignment_expr
+initializer : assignment_expr
 	| '{' initializer_list '}'
 	| '{' initializer_list ',' '}'
 	;
 
-initializer_list
-	: initializer
+initializer_list : initializer
 	| initializer_list ',' initializer
 	;
 
-statement
-	: labeled_statement
+statement : labeled_statement
 	| compound_statement
 	| expression_statement
 	| selection_statement
@@ -343,42 +294,35 @@ statement
 	| jump_statement
 	;
 
-labeled_statement
-	: identifier ':' statement
+labeled_statement : identifier ':' statement
 	| CASE constant_expr ':' statement
 	| DEFAULT ':' statement
 	;
 
-compound_statement
-	: '{' '}'
+compound_statement : '{' '}'
 	| '{' statement_list '}'
 	| '{' declaration_list '}'
 	| '{' declaration_list statement_list '}'
 	;
 
-declaration_list
-	: declaration
+declaration_list : declaration
 	| declaration_list declaration
 	;
 
-statement_list
-	: statement
+statement_list : statement
 	| statement_list statement
 	;
 
-expression_statement
-	: ';'
+expression_statement : ';'
 	| expr ';'
 	;
 
-selection_statement
-	: IF '(' expr ')' statement
+selection_statement : IF '(' expr ')' statement
 	| IF '(' expr ')' statement ELSE statement
 	| SWITCH '(' expr ')' statement
 	;
 
-iteration_statement
-	: WHILE '(' expr ')' statement
+iteration_statement : WHILE '(' expr ')' statement
 	| DO statement WHILE '(' expr ')' ';'
 	| FOR '(' ';' ';' ')' statement
 	| FOR '(' ';' ';' expr ')' statement
@@ -390,8 +334,7 @@ iteration_statement
 	| FOR '(' expr ';' expr ';' expr ')' statement
 	;
 
-jump_statement
-	: GOTO identifier ';'
+jump_statement : GOTO identifier ';'
 	| CONTINUE ';'
 	| BREAK ';'
 	| RETURN ';'
@@ -399,23 +342,19 @@ jump_statement
 	;
 
 
-external_definition
-	: function_definition
+external_definition : function_definition
 	| declaration
 	;
 
-function_definition
-	: declarator function_body
+function_definition : declarator function_body
 	| declaration_specifiers declarator function_body
 	;
 
-function_body
-	: compound_statement
+function_body : compound_statement
 	| declaration_list compound_statement
 	;
 
-identifier
-	: IDENTIFIER
+identifier : IDENTIFIER
 	;
 
 

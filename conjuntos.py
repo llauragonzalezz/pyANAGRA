@@ -33,8 +33,17 @@ def calculate_first_set(terminal_tokens, non_terminal_tokens, productions):
         first_set[token] = calculate_first_set_token(token, {token}, terminal_tokens, non_terminal_tokens, productions)
     return first_set
 
-def calculate_first_set_sentence(sentence, terminal_tokens, non_terminal_tokens, productions):
-    elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', sentence)
+
+def calculate_first_set_sentence_fs(elements, first_set, terminal_tokens, non_terminal_tokens, productions):
+    first_set_sentence = set()
+    for element in elements:
+        first_set_sentence |= first_set[element]
+        if None not in first_set[element]:
+            break
+    return first_set_sentence
+
+
+def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens, productions):
     first_set = calculate_first_set(terminal_tokens, non_terminal_tokens, productions)
     first_set_sentence = set()
     for element in elements:
@@ -43,7 +52,6 @@ def calculate_first_set_sentence(sentence, terminal_tokens, non_terminal_tokens,
         if None not in first_set[element]:
             break
     return first_set_sentence
-
 
 def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions):
     siguiente_viejo = dict()

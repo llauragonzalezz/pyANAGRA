@@ -41,12 +41,12 @@ def sucesor(I, token, non_terminal_tokens, productions):
         pos_dot = prod.index('.')
         if pos_dot < len(prod) - 1 and prod[pos_dot + 1] == token:
             S.append((token_prod, prod[:pos_dot] + [prod[pos_dot + 1]] + ['.'] + prod[pos_dot+2:]))
-            if prod.index('.') < len(prod) - 2 and prod[prod.index('.')+2] in non_terminal_tokens:
-                for prod_token in productions[prod[prod.index('.') + 2]]:
-                    if prod_token is None:
-                        S.append((prod[prod.index('.') + 2], ['.']))
-                    else:
-                        S.append((prod[prod.index('.') + 2], ['.'] + prod_token))
+            #if prod.index('.') < len(prod) - 2 and prod[prod.index('.')+2] in non_terminal_tokens:
+            #    for prod_token in productions[prod[prod.index('.') + 2]]:
+            #        if prod_token is None:
+            #            S.append((prod[prod.index('.') + 2], ['.']))
+            #        else:
+            #            S.append((prod[prod.index('.') + 2], ['.'] + prod_token))
 
 
     return clausura(S.copy(), non_terminal_tokens, productions)
@@ -56,13 +56,14 @@ def conj_LR0(start_token, non_terminal_tokens, productions):
     old = []
     new = [clausura([(start_token, prod) for prod in productions[start_token]], non_terminal_tokens, productions)]
     while old != new:
-        old = new
+        old = new.copy()
         for I in new:
             prods = {token for _, prod in I for token in prod if token != '.'}
             for token in prods:
                 sucesor_token = sucesor(I, token, non_terminal_tokens, productions)
                 if sucesor_token != [] and sucesor_token not in new:
                     new.append(sucesor_token)
+                    print(sucesor_token)
 
     return new
 

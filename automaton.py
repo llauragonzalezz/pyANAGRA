@@ -72,7 +72,7 @@ class Node(QGraphicsObject):
 
     def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
         text = ""
-        if len(self._content) == 2:
+        if len(self._content[0]) == 2:
             for token, prod in self._content:
                 text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + "\n"
         else:
