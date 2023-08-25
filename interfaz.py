@@ -828,10 +828,10 @@ class MainWindow(QMainWindow):
     def parse_LALR_grammar(self):
         first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        self.conj_LALR = LALR.conj_LR1_bis(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.action_table_LALR = LR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
+        self.conj_LALR = LALR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
                                                self.non_terminal_tokens, self.producciones_ampliados)
-        self.go_to_table_LALR = LR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+        self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
                                              self.producciones_ampliados)
         self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
                                             self.producciones_ampliados)

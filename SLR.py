@@ -169,6 +169,7 @@ def simulate(accion, ir_a, input):
     while not (aceptado or error):
         s = int(stack[len(stack) - 1][0])
         print("s:", s)
+        print("n:", n)
         if accion[s, n][0][:9] == "desplazar":
             print("desplazar")
             stack.append((n, index))
