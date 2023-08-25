@@ -815,6 +815,7 @@ class MainWindow(QMainWindow):
         self.show_SLR_table_action.setEnabled(True)
         self.parse_SLR_input_action.setEnabled(is_slr1)
 
+        print(self.conj_LR0, self.edges_SLR)
         conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
                                    self.producciones_ampliados, ventana, self)

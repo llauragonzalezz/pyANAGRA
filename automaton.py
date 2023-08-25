@@ -223,6 +223,36 @@ class Edge(QGraphicsItem):
         painter.drawLine(line)
         painter.drawPolygon(arrow_head)
 
+    def _draw_self_arrow(self, painter: QPainter):
+        """Draw arrow arc to itself
+
+        Args:
+            painter (QPainter)
+        """
+        painter.setBrush(QBrush(QColor(self._color)))
+
+        rect = QRectF(self._line.p1().x() - 60, self._line.p1().y() - 10, 60, 60)
+        painter.drawArc(rect, 19 * -220, 17 * 225)
+
+        angle = math.pi
+        dest_arrow_p1 = (rect.topLeft() + rect.topRight())/2 - QPointF(
+            math.sin(angle - math.pi / 3) * self._arrow_size,
+            math.cos(angle - math.pi / 3) * self._arrow_size - 2,
+        )
+
+        dest_arrow_p2 = (rect.topLeft() + rect.topRight())/2 - QPointF(
+            math.sin(angle - math.pi + math.pi / 3) * self._arrow_size,
+            math.cos(angle - math.pi + math.pi / 3) * self._arrow_size - 2,
+        )
+
+        arrow_head = QPolygonF()
+        arrow_head.clear()
+        arrow_head.append(dest_arrow_p1)
+        arrow_head.append(dest_arrow_p2)
+        arrow_head.append((rect.topLeft() + rect.topRight())/2 - QPointF(0, -2))
+        painter.drawPolygon(arrow_head)
+
+
     def _arrow_target(self) -> QPointF:
         """Calculate the position of the arrow taking into account the size of the destination node
 
@@ -241,6 +271,7 @@ class Edge(QGraphicsItem):
 
         return target
 
+
     def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget=None):
         """Override from QGraphicsItem
 
@@ -253,7 +284,6 @@ class Edge(QGraphicsItem):
 
         if self._source and self._dest:
             painter.setRenderHints(QPainter.Antialiasing)
-
             painter.setPen(
                 QPen(
                     QColor(self._color),
@@ -263,8 +293,11 @@ class Edge(QGraphicsItem):
                     Qt.RoundJoin,
                 )
             )
-            painter.drawLine(self._line)
-            self._draw_arrow(painter, self._line.p1(), self._arrow_target())
+
+            if self._source != self._dest:
+                self._draw_arrow(painter, self._line.p1(), self._arrow_target())
+            else:
+                self._draw_self_arrow(painter)
 
             if self._label:
                 if self.double_arrow:
@@ -282,7 +315,6 @@ class Edge(QGraphicsItem):
                 painter.setFont(QFont(painter.font().family(), 15))
                 painter.drawText(label_point, self._label)
 
-            self._arrow_target()
 
 
 class GraphView(QGraphicsView):
@@ -385,3 +417,14 @@ class AutomatonWindow(QMainWindow):
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
+
+if __name__ == "__main__":
+
+    app = QApplication(sys.argv)
+
+    # Create a networkx graph
+
+    widget = AutomatonWindow([[('E*', ['.', 'E']), ('E', ['.', 'E', "'+'", 'T']), ('E', ['.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ["'('", '.', 'E', "')'"]), ('E', ['.', 'E', "'+'", 'T']), ('E', ['.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ['id', '.'])], [('E', ['T', '.'])], [('E*', ['E', '.']), ('E', ['E', '.', "'+'", 'T'])], [('T', ["'('", 'E', '.', "')'"]), ('E', ['E', '.', "'+'", 'T'])], [('E', ['E', "'+'", '.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ["'('", 'E', "')'", '.'])], [('E', ['E', "'+'", 'T', '.'])]], {('0', '3'): 'T', ('0', '4'): 'E', ('0', '1'): "'('", ('0', '2'): 'id', ('1', '3'): 'T', ('1', '5'): 'E', ('1', '1'): "'('", ('1', '2'): 'id', ('4', '6'): "'+'", ('5', '7'): "')'", ('5', '6'): "'+'", ('6', '8'): 'T', ('6', '1'): "'('", ('6', '2'): 'id'}, None)
+
+    widget.show()
+    sys.exit(app.exec())
