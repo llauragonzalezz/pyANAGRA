@@ -223,6 +223,23 @@ class Edge(QGraphicsItem):
         painter.drawLine(line)
         painter.drawPolygon(arrow_head)
 
+        if self._label:
+            if self.double_arrow:
+                label_point = QPointF(
+                    (2 * self._line.p1().x() + self._line.p2().x()) / 3,
+                    (2 * self._line.p1().y() + self._line.p2().y()) / 3
+                )
+            else:
+                label_point = QPointF(
+                    (self._line.p1().x() + self._line.p2().x()) / 2,
+                    (self._line.p1().y() + self._line.p2().y()) / 2
+                )
+
+            painter.setPen(QPen(QColor("#9c9c9c")))
+            painter.setFont(QFont(painter.font().family(), 15))
+            painter.drawText(label_point, self._label)
+
+
     def _draw_self_arrow(self, painter: QPainter):
         """Draw arrow arc to itself
 
@@ -249,8 +266,14 @@ class Edge(QGraphicsItem):
         arrow_head.clear()
         arrow_head.append(dest_arrow_p1)
         arrow_head.append(dest_arrow_p2)
-        arrow_head.append((rect.topLeft() + rect.topRight())/2 - QPointF(0, -2))
+        arrow_head.append((rect.topLeft() + rect.topRight())/2 + QPointF(0, 2))
         painter.drawPolygon(arrow_head)
+
+        if self._label:
+            label_point = (rect.topLeft() + rect.bottomLeft()) / 2 + QPointF(-20, 0) # Position to write text
+            painter.setPen(QPen(QColor("#9c9c9c")))
+            painter.setFont(QFont(painter.font().family(), 15))
+            painter.drawText(label_point, self._label)
 
 
     def _arrow_target(self) -> QPointF:
@@ -299,23 +322,6 @@ class Edge(QGraphicsItem):
             else:
                 self._draw_self_arrow(painter)
 
-            if self._label:
-                if self.double_arrow:
-                    label_point = QPointF(
-                        (2 * self._line.p1().x() + self._line.p2().x()) / 3,
-                        (2 * self._line.p1().y() + self._line.p2().y()) / 3
-                    )
-                else:
-                    label_point = QPointF(
-                        (self._line.p1().x() + self._line.p2().x()) / 2,
-                        (self._line.p1().y() + self._line.p2().y()) / 2
-                    )
-
-                painter.setPen(QPen(QColor("#9c9c9c")))
-                painter.setFont(QFont(painter.font().family(), 15))
-                painter.drawText(label_point, self._label)
-
-
 
 class GraphView(QGraphicsView):
     def __init__(self, graph: nx.DiGraph, nodes, edges, window, parent=None):
@@ -326,7 +332,7 @@ class GraphView(QGraphicsView):
         Args:
             graph (nx.DiGraph): a networkx directed graph
         """
-        super().__init__()
+        super().__init__(parent)
         self._graph = graph
         self._nodes = nodes
         self._edges = edges
