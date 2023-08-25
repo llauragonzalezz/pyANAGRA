@@ -190,7 +190,7 @@ def simulate(accion, ir_a, input):
             print("aceptar")
             aceptado = True
         elif accion[s, n][0] == "ERROR":
-            print("error")
+            print("error") # PRINT LANZAR EXCEPCION
             error = True
         elif accion[s, n][0][:7] == "reducir":
             print("reducir")

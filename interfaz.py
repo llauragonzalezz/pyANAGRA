@@ -73,8 +73,6 @@ class VentanaInputGramatica(QMainWindow):
 
         elif self.type == "LALR":
             tabla = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
-            for entrada in tabla:
-                print(entrada)
             nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "LR":
@@ -654,11 +652,11 @@ class MainWindow(QMainWindow):
         text = self.text_grammar.toPlainText()
         self.yacc_parse_grammar(text)
 
-    def find(self):  # TODO
+    def find(self):
         find_window = FindWindow(self)
         find_window.show()
 
-    def remplace(self):  # TODO
+    def remplace(self):
         remplace_window = RemplaceWindow(self)
         remplace_window.show()
 
@@ -788,13 +786,12 @@ class MainWindow(QMainWindow):
 
     def parse_LL1_grammar(self):
         self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                         self.productions)
+                                             self.productions)
 
         # Enable options if possible
         conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
         is_ll1 = conclicts_ll1 == 0
         self.parse_LL1_input_action.setEnabled(is_ll1)
-        self.parse_input_action.setEnabled(is_ll1)
         self.show_LL1_table_action.setEnabled(True)
 
         analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
@@ -806,11 +803,8 @@ class MainWindow(QMainWindow):
 
     def parse_SLR_grammar(self):
         self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        print("1")
         self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        print("1")
         self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        print("1")
         self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
         self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 

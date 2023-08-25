@@ -16,22 +16,6 @@ def extend_grammar(start_token, non_terminal_tokens, productions):
 
     return start_token_extended, {start_token_extended} | non_terminal_tokens, productions
 
-    #C = conj_LR_1(start_token_extended, terminal_tokens | {'$'}, non_terminal_tokens, productions)
-    #action_table(C, start_token, terminal_tokens | {'$'}, non_terminal_tokens, productions)
-    #go_to_table(C, terminal_tokens | {'$'}, non_terminal_tokens, productions)
-    #I = clausura([(start_token_extended, ['.', start_token], {'$'})], terminal_tokens | {'$'}, non_terminal_tokens, productions)
-    #uno = sucesor(I.copy(), terminal_tokens, "S", non_terminal_tokens, productions)
-    #dos = sucesor(I.copy(), terminal_tokens, "C", non_terminal_tokens, productions)
-    #tres = sucesor(I.copy(), terminal_tokens, "c", non_terminal_tokens, productions)
-    #cuatro = sucesor(I.copy(), terminal_tokens, "d", non_terminal_tokens, productions)
-    #cinco = sucesor(dos.copy(), terminal_tokens, "C", non_terminal_tokens, productions)
-    #seis = sucesor(dos.copy(), terminal_tokens, "c", non_terminal_tokens, productions)
-    #seis_bis = sucesor(seis.copy(), terminal_tokens, "c", non_terminal_tokens, productions)
-    #siete = sucesor(dos.copy(), terminal_tokens, "d", non_terminal_tokens, productions)
-    #siete_bis = sucesor(seis.copy(), terminal_tokens, "d", non_terminal_tokens, productions)
-    #ocho = sucesor(tres.copy(), terminal_tokens, "C", non_terminal_tokens, productions)
-    #nueve = sucesor(seis.copy(), terminal_tokens, "C", non_terminal_tokens, productions)
-
 def clausura(I, first_set, terminal_tokens, non_terminal_tokens, productions):
     nuevo = I
     bool_new = True
@@ -74,16 +58,13 @@ def sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productio
         if pos_dot < len(prod) - 1 and prod[pos_dot + 1] == token:
             S.append((token_prod, prod[:pos_dot] + [prod[pos_dot + 1]] + ['.'] + prod[pos_dot + 2:], terminal))
 
-
     return clausura(S, first_set, terminal_tokens, non_terminal_tokens, productions)
 
 def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
     new = [clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], first_set, terminal_tokens, non_terminal_tokens, productions)]
-    print(len(new[0]))
     conjunto_I = []
     diccionario = dict()
     bool_new = True
-    i=0
     while bool_new:
         bool_new = False
         for I in new:
@@ -99,9 +80,7 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
                 if sucesor_token != [] and sucesor_token not in new:
                     new.append(sucesor_token)
                     bool_new = True
-                    print(len(new))
-            print("i:", i)
-            i+=1
+
     return new
 
 def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens, productions):

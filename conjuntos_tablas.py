@@ -86,7 +86,7 @@ class AnalysisTableLL1(QMainWindow):
         row_height = table.rowHeight(0)
         for row, col in self.dicc.keys():
             item_text = ""
-            if self.dicc[(row, col)]:
+            if self.dicc[(row, col)] != ["error"]:
                 for i, prod in enumerate(self.dicc[(row, col)]):
                     if prod is None:
                         item_text += str(row) + "  → ε"
@@ -96,17 +96,17 @@ class AnalysisTableLL1(QMainWindow):
                     if i < len(self.dicc[(row, col)]) - 1:
                         item_text += "\n"
 
-            item = QTableWidgetItem(item_text)
+                item = QTableWidgetItem(item_text)
 
-            if len(self.dicc[(row, col)]) > 1:
-                # Adapt margins
-                if table.rowHeight(non_terminals.index(row)) < len(self.dicc[(row, col)] * row_height):
-                    table.setRowHeight(non_terminals.index(row), len(self.dicc[(row, col)]) * row_height)
+                if len(self.dicc[(row, col)]) > 1:
+                    # Adapt margins
+                    if table.rowHeight(non_terminals.index(row)) < len(self.dicc[(row, col)] * row_height):
+                        table.setRowHeight(non_terminals.index(row), len(self.dicc[(row, col)]) * row_height)
 
-                item.setBackground(QColor("red"))   # LL1 conflict
+                    item.setBackground(QColor("red"))   # LL1 conflict
 
-            item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-            table.setItem(non_terminals.index(row), terminals.index(col), item)
+                item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+                table.setItem(non_terminals.index(row), terminals.index(col), item)
 
         self.setCentralWidget(table)
         self.resize(table.horizontalHeader().length() + 20,

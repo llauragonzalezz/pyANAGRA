@@ -47,7 +47,6 @@ def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens,
     first_set = calculate_first_set(terminal_tokens, non_terminal_tokens, productions)
     first_set_sentence = set()
     for element in elements:
-        print("element:", element)
         first_set_sentence |= first_set[element]
         if None not in first_set[element]:
             break

@@ -70,7 +70,7 @@ class Node(QGraphicsObject):
         if event.button() == Qt.LeftButton:
             self.show_message_box()
 
-    def show_message_box(self): # TODO CAMBIAR A UNA VENTANA QUE TENGA LA INFO PARA QUE SEA ASINCRONO :)
+    def show_message_box(self):
         text = ""
         if len(self._content[0]) == 2:
             for token, prod in self._content:
@@ -141,7 +141,7 @@ class Node(QGraphicsObject):
 
 
 class Edge(QGraphicsItem):
-    def __init__(self, source: Node, dest: Node, label = "", parent: QGraphicsItem = None):
+    def __init__(self, source: Node, dest: Node, label, double_arrow=False, parent: QGraphicsItem = None):
         """Edge constructor
 
         Args:
@@ -152,6 +152,7 @@ class Edge(QGraphicsItem):
         self._source = source
         self._dest = dest
         self._label = label
+        self.double_arrow = double_arrow
 
         self._tickness = 2
         self._color = QColor("#00afb9").darker()
@@ -266,14 +267,20 @@ class Edge(QGraphicsItem):
             self._draw_arrow(painter, self._line.p1(), self._arrow_target())
 
             if self._label:
-                middle_point = QPointF(
-                    (self._line.p1().x() + self._line.p2().x()) / 2,
-                    (self._line.p1().y() + self._line.p2().y()) / 2
-                )
+                if self.double_arrow:
+                    label_point = QPointF(
+                        (2 * self._line.p1().x() + self._line.p2().x()) / 3,
+                        (2 * self._line.p1().y() + self._line.p2().y()) / 3
+                    )
+                else:
+                    label_point = QPointF(
+                        (self._line.p1().x() + self._line.p2().x()) / 2,
+                        (self._line.p1().y() + self._line.p2().y()) / 2
+                    )
 
                 painter.setPen(QPen(QColor("#9c9c9c")))
-                painter.setFont(QFont(painter.font().family(), 15)) # TODO, cambiamo el tamaño de letra?
-                painter.drawText(middle_point, self._label)
+                painter.setFont(QFont(painter.font().family(), 15))
+                painter.drawText(label_point, self._label)
 
             self._arrow_target()
 
@@ -302,7 +309,7 @@ class GraphView(QGraphicsView):
         self._nodes_map = {}
 
         # List of networkx layout function
-        self._nx_layout = nx.kamada_kawai_layout # TODO preguntar si le gusta mas este o circular_layout
+        self._nx_layout = nx.kamada_kawai_layout
         self._load_graph()
         self.set_nx_layout()
 
@@ -350,8 +357,10 @@ class GraphView(QGraphicsView):
             source = self._nodes_map[a]
             dest = self._nodes_map[b]
             label = self._edges[a, b]
-            self.scene().addItem(Edge(source, dest, label))
-
+            if (b, a) in self._graph.edges:
+                self.scene().addItem(Edge(source, dest, label, True))
+            else:
+                self.scene().addItem(Edge(source, dest, label))
 
 class AutomatonWindow(QMainWindow):
     def __init__(self, nodes, edges, window, parent=None):

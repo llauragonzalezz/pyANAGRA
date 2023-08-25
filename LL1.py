@@ -12,7 +12,6 @@ def is_ll1(table, terminals, non_terminals):
     return num_conflicts
 
 
-
 def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, productions):
     follow_set = conj.calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions)
     table = dict()
@@ -23,23 +22,12 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
 
     for token in non_terminal_tokens:
         for production in productions[token]:
-            first_set_token = set()
             if production is not None:
-                epsilon = True
-                for t in production:
-                    first_set = conj.calculate_first_set_token(t, set(t), terminal_tokens, non_terminal_tokens, productions)
-                    first_set_token |= first_set.difference({None})
-                    if None not in first_set:
-                        epsilon = False
-                        break
-
-                if epsilon:
-                    first_set_token |= {None}
+                first_set_token = conj.calculate_first_set_sentence(production, terminal_tokens, non_terminal_tokens, productions)
             else:
                 first_set_token = {None}
 
             for elemento in first_set_token & terminal_tokens:
-                #print("table[", token, ",", elemento, "] = ", production)
                 table[token, elemento].append(production)
 
             if None in first_set_token:
@@ -50,9 +38,8 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
 
     for non_terminal_token in non_terminal_tokens:
         for token_terminal in terminal_tokens | {"$"}:
-            if table[non_terminal_token, token_terminal] == dict():
-                table[non_terminal_token, token_terminal] = "error"  # TODO: que pongo
-                # error
+            if table[non_terminal_token, token_terminal] == []:
+                table[non_terminal_token, token_terminal] = ["error"]  
 
     return table
 
@@ -95,11 +82,11 @@ def simulate(table, start_token, terminals, input):
                 print("error sintactico")
         else:
             # TODO TRY CATCH POR SI KeyError A LA HORA DE ACCEDER A LA TABLA
-            if table[x[0], sig_tok] != "error":
+            if table[x[0], sig_tok][0] != "error":
                 # disparamos produccion
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original
                 salida = []
-                if table[x[0], sig_tok][0] is not None:
+                if table[x[0], sig_tok][0] != None:
                     for token in table[x[0], sig_tok][0]:
                         salida.append((token, iterador))
                         iterador += 1
