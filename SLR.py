@@ -168,8 +168,6 @@ def simulate(accion, ir_a, input):
             n += y + next(it)
     while not (aceptado or error):
         s = int(stack[len(stack) - 1][0])
-        print("s:", s)
-        print("n:", n)
         if accion[s, n][0][:9] == "desplazar":
             print("desplazar")
             stack.append((n, index))
@@ -193,6 +191,7 @@ def simulate(accion, ir_a, input):
         elif accion[s, n][0] == "ERROR":
             print("error") # PRINT LANZAR EXCEPCION
             error = True
+            #raise SyntaxError(f'Syntax error at {p.value!r}')
         elif accion[s, n][0][:7] == "reducir":
             print("reducir")
             production = accion[s, n][0][8:]
@@ -206,12 +205,10 @@ def simulate(accion, ir_a, input):
             s = int(stack[len(stack) - 1][0])
             stack.append((partes[0][0], index))
             stack.append((ir_a[s, partes[0][0]],))
-            left_part = (partes[0][0], index)
+            left_part = (partes[0].strip(), index)
 
             it_copia, it = itertools.tee(it)
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
-    for entrada in simulation_table:
-        print(entrada)
     return simulation_table

@@ -115,8 +115,8 @@ def go_to_table(first_set, C, terminal_tokens, non_terminal_tokens, productions)
             aniadir = False
             for j, c in enumerate(C):  # find c tq sucesor_token <= c
                 if len(c) == len(sucesor_token):
-                    for j in range(len(sucesor_token)):
-                        if c[j][0] != sucesor_token[j][0] or c[j][1] != sucesor_token[j][1]:
+                    for k in range(len(sucesor_token)):
+                        if c[k][0] != sucesor_token[k][0] or c[k][1] != sucesor_token[k][1]:
                             break
                     else:
                         aniadir = True

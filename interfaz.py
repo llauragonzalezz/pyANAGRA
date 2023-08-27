@@ -147,10 +147,9 @@ class RemplaceWindow(QMainWindow):
         self.ok_button.clicked.connect(self.accept)
         layout.addWidget(self.ok_button)
 
-        # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
-    def accept(self):       # TODO MIRAR SI SALIA ERROR AL BUSCAR CADENA VACIA
+    def accept(self):
         old = self.text_input1.text()
         new = self.text_input2.text()
         text = ventana.text_grammar.toPlainText()
@@ -199,14 +198,71 @@ class FirstSetSentenceWindow(QMainWindow):
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
-    def accept(self):       # TODO MIRAR SI SALIA ERROR AL BUSCAR CADENA VACIA
+    def accept(self):
         elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
         first_set_sentence = conj.calculate_first_set_sentence(elements, ventana.terminal_tokens,
                                                                ventana.non_terminal_tokens, ventana.productions)
         text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
         self.text_input2.setText(text)
 
+
 class MainWindow(QMainWindow):
+
+    def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
+        super().__init__(parent)
+
+        if terminal_tokens is None:
+            terminal_tokens = set()
+        if non_terminal_tokens is None:
+            non_terminal_tokens = set()
+        if productions is None:
+            productions = dict()
+
+        self.start_token = start_token
+        self.terminal_tokens = terminal_tokens
+        self.non_terminal_tokens = non_terminal_tokens
+        self.productions = productions
+
+        self.table = dict()
+        self.file = False
+
+        self.table_LL1 = {}
+        self.conj_LR0 = self.action_table_SLR = self.go_to_table_SLR = self.edges_SLR = {}
+        self.conj_LALR = self.action_table_LALR = self.go_to_table_LALR = self.edges_LALR = {}
+        self.conj_LR1 = self.action_table_LR = self.go_to_table_LR = self.edges_LR = {}
+
+        self.setWindowTitle("Anagra")
+        self.setGeometry(0, 0, 800, 600)
+        # Center window to the middle of the screen
+        center_window(self)
+
+        self.menubar = QMenuBar(self)
+        self.setMenuBar(self.menubar)
+
+        self.text_grammar = QPlainTextEdit(self)
+        self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
+        self.setCentralWidget(self.text_grammar)
+
+        # Barra modo, linea y columna del cursor
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        self.mode_label = QLabel()
+        self.row_label = QLabel()
+        self.column_label = QLabel()
+
+        self.status_bar.addWidget(self.mode_label)
+        self.status_bar.addPermanentWidget(self.row_label)
+        self.status_bar.addPermanentWidget(self.column_label)
+
+        if self.start_token != "":
+            self.menu_gramaticas()
+            self.show_compact_grammar()
+        else:
+            self.menu_inicial()
+
+        self.update_row_column()
+
     def pestania_gramatica(self, gramatica=False):
         grammar_menu = QMenu("Gramática", self)
         self.menubar.addMenu(grammar_menu)
@@ -420,37 +476,18 @@ class MainWindow(QMainWindow):
         parse_LL1_grammar_action.triggered.connect(self.parse_LL1_grammar)
         parse_menu.addAction(parse_LL1_grammar_action)
 
-        self.show_LL1_table_action = QAction("Mostrar tabla LL(1)", self)
-        self.show_LL1_table_action.triggered.connect(self.show_LL1_table)
-        self.show_LL1_table_action.setEnabled(False)  # Enable/Disable action
-        parse_menu.addAction(self.show_LL1_table_action)
-
         parse_SLR_grammar_action = QAction("Analizar gramática SLR(1)", self)
         parse_SLR_grammar_action.triggered.connect(self.parse_SLR_grammar)
         parse_menu.addAction(parse_SLR_grammar_action)
-
-        self.show_SLR_table_action = QAction("Mostrar tabla y automata SLR(1)", self)
-        self.show_SLR_table_action.triggered.connect(self.show_SLR_table)
-        self.show_SLR_table_action.setEnabled(False)  # Enable/Disable action
-        parse_menu.addAction(self.show_SLR_table_action)
 
         parse_LALR_grammar_action = QAction("Analizar gramática LALR", self)
         parse_LALR_grammar_action.triggered.connect(self.parse_LALR_grammar)
         parse_menu.addAction(parse_LALR_grammar_action)
 
-        self.show_LALR_table_action = QAction("Mostrar tabla y automata LALR", self)
-        self.show_LALR_table_action.triggered.connect(self.show_LALR_table)
-        self.show_LALR_table_action.setEnabled(False)  # Enable/Disable action
-        parse_menu.addAction(self.show_LALR_table_action)
-
         parse_LR_grammar_action = QAction("Analizar gramática LR", self)
         parse_LR_grammar_action.triggered.connect(self.parse_LR_grammar)
         parse_menu.addAction(parse_LR_grammar_action)
 
-        self.show_LR_table_action = QAction("Mostrar tabla y automata LR", self)
-        self.show_LR_table_action.triggered.connect(self.show_LR_table)
-        self.show_LR_table_action.setEnabled(False)  # Enable/Disable action
-        parse_menu.addAction(self.show_LR_table_action)
 
     def pestania_simular(self):
         simular_menu = QMenu("Simular", self)
@@ -477,60 +514,35 @@ class MainWindow(QMainWindow):
         simular_menu.addAction(self.parse_LR_input_action)
 
 
-    def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
-        super().__init__(parent)
+    def menu_inicial(self):
+        self.pestania_gramatica()
+        self.pestania_editar()
+        self.pestania_buscar()
+        self.pestania_texto()
+        self.pestania_ayuda()
 
-        if terminal_tokens is None:
-            terminal_tokens = set()
-        if non_terminal_tokens is None:
-            non_terminal_tokens = set()
-        if productions is None:
-            productions = dict()
+        self.text_grammar.setReadOnly(False)  # Activamos modo escritura
+        self.mode_label.setText(f"Modo: escritura")
 
-        self.start_token = start_token
-        self.terminal_tokens = terminal_tokens
-        self.non_terminal_tokens = non_terminal_tokens
-        self.productions = productions
+    def menu_gramaticas(self):
+        self.menubar.clear()
+        self.pestania_gramatica(True)
+        self.pestania_buscar()
+        self.pestania_texto(True)
 
-        self.table = dict()
-        self.file = False
+        self.pestania_herramientas()
+        self.pestania_transformaciones()
+        self.pestania_parse()
+        self.pestania_simular()
+        self.pestania_ayuda()
 
-        self.setWindowTitle("Anagra")
-        self.setGeometry(0, 0, 800, 600)
-        # Center window to the middle of the screen
-        center_window(self)
+        self.text_grammar.setReadOnly(True)  # Activamos modo lectura
+        self.mode_label.setText(f"Modo: lectura")
 
-        self.menubar = QMenuBar(self)
-        self.setMenuBar(self.menubar)
 
-        self.text_grammar = QPlainTextEdit(self)
-        self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
-        self.setCentralWidget(self.text_grammar)
-
-        # Barra modo, linea y columna del cursor
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-
-        self.mode_label = QLabel()
-        self.row_label = QLabel()
-        self.column_label = QLabel()
-
-        self.status_bar.addWidget(self.mode_label)
-        self.status_bar.addPermanentWidget(self.row_label)
-        self.status_bar.addPermanentWidget(self.column_label)
-
-        if self.start_token != "":
-            self.menu_gramaticas()
-            self.show_compact_grammar()
-        else:
-            self.menu_inicial()
-            self.text_grammar.setReadOnly(False)  # Activamos modo lectura
-            self.mode_label.setText(f"Modo: escritura")
-
-        self.update_row_column()
-
-    #def closeEvent(self, event):
+    #def closeEvent(self, event): # FIXME
     #    self.exit()
+
 
     def update_row_column(self):
         cursor = self.text_grammar.textCursor()
@@ -587,13 +599,17 @@ class MainWindow(QMainWindow):
         self.non_terminal_tokens = set()
         self.productions = dict()
         self.table = dict()
-        self.file = False
+
+        self.table_LL1 = {}
+        self.conj_LR0 = self.action_table_SLR = self.go_to_table_SLR = self.edges_SLR = {}
+        self.conj_LALR = self.action_table_LALR = self.go_to_table_LALR = self.edges_LALR = {}
+        self.conj_LR1 = self.action_table_LR = self.go_to_table_LR = self.edges_LR = {}
 
         self.menubar.clear()
         self.menu_inicial()
 
     def save_file(self):
-        if self.file:
+        if self.file:  # Check if using file as input
             file = self.file
         else:
             file = QFileDialog.getSaveFileName(self, 'Guardar fichero')[0]
@@ -623,30 +639,6 @@ class MainWindow(QMainWindow):
         if result == QMessageBox.Yes:
             QApplication.quit()
 
-    def menu_inicial(self):
-        self.pestania_gramatica()
-        self.pestania_editar()
-        self.pestania_buscar()
-        self.pestania_texto()
-        self.pestania_ayuda()
-
-        self.text_grammar.setReadOnly(False)  # Activamos modo escritura
-        self.mode_label.setText(f"Modo: escritura")
-
-    def menu_gramaticas(self):
-        self.menubar.clear()
-        self.pestania_gramatica(True)
-        self.pestania_buscar()
-        self.pestania_texto(True)
-
-        self.pestania_herramientas()
-        self.pestania_transformaciones()
-        self.pestania_parse()
-        self.pestania_simular()
-        self.pestania_ayuda()
-
-        self.text_grammar.setReadOnly(True)  # Activamos modo lectura
-        self.mode_label.setText(f"Modo: lectura")
 
     def accept_grammar(self):
         text = self.text_grammar.toPlainText()
@@ -662,22 +654,22 @@ class MainWindow(QMainWindow):
 
     def cut(self):
         clipboard = qApp.clipboard()
-        texto = self.text_grammar.textCursor().selectedText()  # Obtenemos el texto seleccionado
-        clipboard.setText(texto)  # Lo guardamos en el clipboard
-        self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
+        texto = self.text_grammar.textCursor().selectedText()
+        clipboard.setText(texto)                                # Save text in clipboard
+        self.text_grammar.textCursor().removeSelectedText()     # Erease selected text
 
     def copy(self):
         clipboard = qApp.clipboard()
-        text = self.text_grammar.textCursor().selectedText() # Obtenemos el texto seleccionado
-        clipboard.setText(text)                              # Lo guardamos en el portapapeles
+        text = self.text_grammar.textCursor().selectedText()
+        clipboard.setText(text)                                 # Save selected text in clipboard
 
     def paste(self):
         clipboard = qApp.clipboard()
-        text = clipboard.text(QClipboard.Clipboard)          # Obtenemos el texto del portapapeles
-        self.text_grammar.textCursor().insertText(text)      # Lo pegamos
+        text = clipboard.text(QClipboard.Clipboard)
+        self.text_grammar.textCursor().insertText(text)         # Paste copied text
 
     def delete(self):
-        self.text_grammar.textCursor().removeSelectedText()  # Borramos el texto seleccionado
+        self.text_grammar.textCursor().removeSelectedText()     # Erease selected text
 
     def select_all(self):
         cursor = self.text_grammar.textCursor()
@@ -707,7 +699,6 @@ class MainWindow(QMainWindow):
             print(spaces)
 
     def cambiar_idioma(self):
-        # Mostramos una ventana de mensaje con un pequeño texto
         QMessageBox.information(self, "Cambio idioma",
                                 "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
@@ -726,7 +717,6 @@ class MainWindow(QMainWindow):
         first_set_sentence_window = FirstSetSentenceWindow(self)
         first_set_sentence_window.show()
 
-
     def left_factoring(self):
         non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(),
                                                                       copy.deepcopy(self.productions))
@@ -740,7 +730,7 @@ class MainWindow(QMainWindow):
                                                                                 copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
-        if self.start_token in productions:
+        if self.start_token in productions:     # todo no se que habia que comprobar
             QMessageBox.information(self, "ATENCIÓN!!", "La gramática original y la transformada reconocen la palabra vacía")
 
 
@@ -785,93 +775,75 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def parse_LL1_grammar(self):
-        self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                             self.productions)
+        if not self.table_LL1:
+            print("hola")
+            self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
+                                                 self.productions)
 
-        # Enable options if possible
-        conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
-        is_ll1 = conclicts_ll1 == 0
-        self.parse_LL1_input_action.setEnabled(is_ll1)
-        self.show_LL1_table_action.setEnabled(True)
+            # Enable options if possible
+            conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
+            is_ll1 = conclicts_ll1 == 0
+            self.parse_LL1_input_action.setEnabled(is_ll1)
 
-        analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
-        analysis_table_window.show()
-
-    def show_LL1_table(self):
         analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
-        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-        self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        if not (self.conj_LR0 and self.action_table_SLR and self.go_to_table_SLR and self.edges_SLR):
+            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+            self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+            self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+            self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
-        # Enable options if possible
-        conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
-        is_slr1 = conclicts_slr1 == 0
+            # Enable options if possible
+            conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
+            is_slr1 = conclicts_slr1 == 0
 
-        self.show_SLR_table_action.setEnabled(True)
-        self.parse_SLR_input_action.setEnabled(is_slr1)
+            self.parse_SLR_input_action.setEnabled(is_slr1)
 
-        print(self.conj_LR0, self.edges_SLR)
         conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
                                    self.producciones_ampliados, ventana, self)
 
-    def show_SLR_table(self):
-        conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
 
     def parse_LALR_grammar(self):
-        first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        self.conj_LALR = LALR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
-                                               self.non_terminal_tokens, self.producciones_ampliados)
-        self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
-                                             self.producciones_ampliados)
-        self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
-                                            self.producciones_ampliados)
+        if not (self.conj_LALR and self.action_table_LALR and self.go_to_table_LALR and self.edges_LALR):
+            first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
+            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            self.conj_LALR = LALR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+            self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
+                                                   self.non_terminal_tokens, self.producciones_ampliados)
+            self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+                                                 self.producciones_ampliados)
+            self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+                                                self.producciones_ampliados)
 
-        # Enable options if possible
-        conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
-        is_lalr = conclicts_lalr == 0
+            # Enable options if possible
+            conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
+            is_lalr = conclicts_lalr == 0
 
-        self.show_LALR_table_action.setEnabled(True)
-        self.parse_LALR_input_action.setEnabled(is_lalr)
+            self.parse_LALR_input_action.setEnabled(is_lalr)
 
-        conj_tab.AnalysisTableSLR1(self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
-
-    def show_LALR_table(self):
         conj_tab.AnalysisTableSLR1(self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
                                    self.producciones_ampliados, ventana, self)
 
     def parse_LR_grammar(self):
-        first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-        self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        self.conj_LR1 = LR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-        self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+        if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
+            first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
+            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            self.conj_LR1 = LR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
 
-        # Enable options if possible
-        conclicts_lr = SLR.is_slr1(self.action_table_LR)
-        is_lr = conclicts_lr == 0
+            # Enable options if possible
+            conclicts_lr = SLR.is_slr1(self.action_table_LR)
+            is_lr = conclicts_lr == 0
 
-        self.show_LR_table_action.setEnabled(True)
-        self.parse_LR_input_action.setEnabled(is_lr)
+            self.parse_LR_input_action.setEnabled(is_lr)
 
-        conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
-
-    def show_LR_table(self):
         conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
                                    self.producciones_ampliados, ventana, self)

@@ -1,3 +1,5 @@
+from math import log10
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
@@ -52,9 +54,6 @@ class FollowSet(QMainWindow):
 
         self.text_follow_set = QPlainTextEdit(self)
         self.setCentralWidget(self.text_follow_set)
-        #font = self.text_edit.font()
-        #font.setPointSize(14)
-        #self.text_edit.setFont(font)
         self.text_follow_set.setReadOnly(True)
 
         text = ""
@@ -64,16 +63,16 @@ class FollowSet(QMainWindow):
 
 
 class AnalysisTableLL1(QMainWindow):
-    def __init__(self, dicc, parent=None):
+    def __init__(self, analysis_table, parent=None):
         super().__init__(parent)
-        self.dicc = dicc
+        self.analysis_table = analysis_table
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Tabla analisis")
 
-        non_terminals = sorted(set(k[0] for k in self.dicc.keys()))
-        terminals = sorted(set(k[1] for k in self.dicc.keys()))
+        non_terminals = sorted(set(k[0] for k in self.analysis_table.keys()))
+        terminals = sorted(set(k[1] for k in self.analysis_table.keys()))
 
         table = QTableWidget()
         table.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
@@ -84,24 +83,24 @@ class AnalysisTableLL1(QMainWindow):
         table.setHorizontalHeaderLabels(terminals)
 
         row_height = table.rowHeight(0)
-        for row, col in self.dicc.keys():
+        for row, col in self.analysis_table.keys():
             item_text = ""
-            if self.dicc[(row, col)] != ["error"]:
-                for i, prod in enumerate(self.dicc[(row, col)]):
+            if self.analysis_table[(row, col)] != ["error"]:
+                for i, prod in enumerate(self.analysis_table[(row, col)]):
                     if prod is None:
                         item_text += str(row) + "  → ε"
                     else:
                         item_text += "{} → {}".format(row, "  ".join([str(x) for x in prod]))
 
-                    if i < len(self.dicc[(row, col)]) - 1:
+                    if i < len(self.analysis_table[(row, col)]) - 1:
                         item_text += "\n"
 
                 item = QTableWidgetItem(item_text)
 
-                if len(self.dicc[(row, col)]) > 1:
+                if len(self.analysis_table[(row, col)]) > 1:
                     # Adapt margins
-                    if table.rowHeight(non_terminals.index(row)) < len(self.dicc[(row, col)] * row_height):
-                        table.setRowHeight(non_terminals.index(row), len(self.dicc[(row, col)]) * row_height)
+                    if table.rowHeight(non_terminals.index(row)) < len(self.analysis_table[(row, col)] * row_height):
+                        table.setRowHeight(non_terminals.index(row), len(self.analysis_table[(row, col)]) * row_height)
 
                     item.setBackground(QColor("red"))   # LL1 conflict
 
@@ -132,34 +131,116 @@ class ExpandedGrammar(QMainWindow):
         self.setCentralWidget(self.text_edit)
         self.text_edit.setReadOnly(True)
 
-        i = 2
-        text = "1) " + self.start_token + " → " + self.productions[self.start_token][0][1] + "\n"
-        for token in self.non_terminal_tokens:
-            for production in self.productions[token]:
-                if production is None:
-                    text += str(i) + ") " + token + "  → ε" + "\n"
-                else:
-                    text += str(i) + ") " + "{} → {}".format(token, "  ".join(str(x) for x in production)) + "\n"
-                i += 1
+        i = 1
+        text = "0) " + self.start_token + " → " + self.productions[self.start_token][0][1] + "\n"
+        for token in self.productions.keys():
+            if token != self.start_token:
+                for production in self.productions[token]:
+                    if production is None:
+                        text += str(i) + ") " + token + "  → ε" + "\n"
+                    else:
+                        text += str(i) + ") " + "{} → {}".format(token, "  ".join(str(x) for x in production)) + "\n"
+                    i += 1
 
         self.text_edit.setPlainText(text)
 
 
 class AutomatonText(QMainWindow):
-    def __init__(self, start_token, productions, parent=None):
+    def __init__(self, nodes, edges, start_token, productions, accion, ir_a, parent=None):
         super().__init__(parent)
-
+        self.nodes = nodes
+        self.edges = edges
+        self.start_token = start_token
+        self.productions = productions
+        self.accion = accion
+        self.ir_a = ir_a
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Gramática ampliada")
+        self.setWindowTitle("Automata escrito")
+        self.setGeometry(0, 0, 500, 500)
+
+        center_window(self)
+
+        self.text_edit = QPlainTextEdit(self)
+        self.setCentralWidget(self.text_edit)
+        self.text_edit.setReadOnly(True)
+
+        text = "Gramática\n\n"
+        i = 1
+        key_list = dict()
+        text += "    0 " + self.start_token + ": " + self.productions[self.start_token][0][1] + "\n\n"
+        for token in self.productions.keys():
+            if token != self.start_token:
+                key_list[token] = i
+                text += " " * (4 - int(log10(i))) + str(i) + " " + token + ": "
+                i += 1
+                spacing = " " * (len(token) + 2)
+                for index, prod in enumerate(self.productions[token]):
+                    if prod is not None:
+                        text += " ".join(str(x) for x in prod)
+                    if index != len(self.productions[token]) - 1:
+                        text += "\n" + " " * (4 - int(log10(i))) + str(i) + spacing + "| "
+                        i += 1
+                text += "\n\n"
+
+        #text += "Terminales con las reglas donde aparecen\n"
+
+        #text += "No terminales con las reglas donde aparecen\n"
+        # on left/ on right
+        edge_index = 0
+
+        edges_list = list(self.edges.keys())
+        print(edges_list)
+        # escribir los estados con las reglas
+        for i, node in enumerate(self.nodes):
+            text += "Estado " + str(i) + "\n\n"
+            text_reduce = ""
+
+            for prod in node:
+                if prod[0] == self.start_token:
+                    index = 0
+                    text += "    " + str(index) + " " + self.start_token + ": " + " ".join([char if char != '.' else '•' for char in prod[1]]) + "\n"
+                else:
+                    if prod[1] != ['.']:
+                        index = key_list[prod[0]] + self.productions[prod[0]].index([char for char in prod[1] if char != '.'])
+                        text += " " * (4 - int(log10(index))) + str(index) + " " + prod[0] + ": " + " ".join([char if char != '.' else '•' for char in prod[1]]) + "\n"
+                    else:
+                        index = key_list[prod[0]] + self.productions[prod[0]].index(None)
+                        text += " " * (4 - int(log10(index))) + str(index) + " " + prod[0] + ": •" + "\n"
+                print(prod[1], prod[1].index('.'), len(prod[1]))
+                if prod[1].index('.') == len(prod[1]) - 1:
+                    text_reduce += "     reduce usando la regla " + str(index) + " (" + prod[0] + ")" + "\n"
+
+            text += "\n"
+
+            text_go_to = ""
+            while edge_index < len(edges_list) and edges_list[edge_index][0] == str(i):
+                if self.edges[str(i), edges_list[edge_index][1]] in self.productions:
+                    text_go_to += "    " + self.edges[str(i), edges_list[edge_index][1]] + " ir al estado " + edges_list[edge_index][1] + "\n"
+                else:
+                    text += "    " + self.edges[str(i), edges_list[edge_index][1]] + " desplazar e ir al estado " + edges_list[edge_index][1] + "\n"
+                edge_index += 1
+
+            text += text_reduce + "\n" + text_go_to + "\n"
+        # Estado 1
+        # 213 identifier: IDENTIFIER •
+        # $default  reduce usando la regla 213 (identifier)
+
+        self.text_edit.setPlainText(text)
 
 
 class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
-    def __init__(self, accion, terminal_tokens, parent=None):
+    def __init__(self, accion, terminal_tokens, productions, parent=None):
         super().__init__(parent)
         self.tabla_accion = accion
         self.terminal_tokens = list(terminal_tokens | {"$"})
+        self.productions = productions
+        self.productions_index = dict()
+        i = 1
+        for token in productions.keys():
+            self.productions_index[token] = i
+            i += len(productions[token])
         self.initUI()
 
     def initUI(self):
@@ -183,6 +264,14 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
                     item_text += "acep"
                 elif prod[:7] == "reducir":
                     item_text += "r " + prod[8:]
+                    #parts = prod[8:].split("→")
+                    #if parts[1].strip() != "ε":
+                    #    item_text += "r" + str(self.productions_index[parts[0].strip()] +
+                    #             self.productions[parts[0].strip()].index(parts[1].strip().split()))
+                    #else:
+                    #    item_text += "r" + str(self.productions_index[parts[0].strip()] +
+                #                           self.productions[parts[0].strip()].index(None))
+
                 if i < len(self.tabla_accion[row, col]) - 1:
                     item_text += "\n"
 
@@ -245,10 +334,12 @@ class GoToTable(QMainWindow):
 class AnalysisTableSLR1(QMainWindow):
     def __init__(self, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, parent=None):
         super().__init__(parent)
-        action_window = ActionTable(accion, terminal_tokens, self)
+        action_window = ActionTable(accion, terminal_tokens, productions, self)
         action_window.show()
         go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
         go_to_window.show()
+        automaton_text_window = AutomatonText(nodes, edges, start_token, productions, accion, ir_a, self)
+        automaton_text_window.show()
         automaton_window = automaton.AutomatonWindow(nodes, edges, window, self)
         automaton_window.show()
         extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, self)
