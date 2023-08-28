@@ -1,5 +1,3 @@
-import re
-
 
 def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_terminal_tokens, productions):
     first_set = set()

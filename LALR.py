@@ -14,7 +14,7 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
                 if (I, token) not in conjunto_I:
                     conjunto_I.append((I, token))
                     diccionario[len(conjunto_I) - 1, token] = LR.sucesor(I, token, first_set, terminal_tokens,
-                                                                      non_terminal_tokens, productions)
+                                                                         non_terminal_tokens, productions)
                     sucesor_token = diccionario[len(conjunto_I) - 1, token]
                 else:
                     sucesor_token = diccionario[conjunto_I.index((I, token)), token]
@@ -36,13 +36,10 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
                         new[i] = []
                         for j in range(len(sucesor_token)):
                             if c[j][2] - sucesor_token[j][2] == c[j][2]:
-                                print(c[j][2], sucesor_token[j][2], c[j][2] | sucesor_token[j][2])
-
                                 new[i].append((c[j][0], c[j][1], c[j][2] | sucesor_token[j][2]))
                             else:
                                 new[i].append((c[j][0], c[j][1], c[j][2]))
-    for entrada in new:
-        print(entrada)
+
     return new
 
 def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens, productions):
@@ -101,8 +98,6 @@ def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens
         for token in terminal_tokens:
             if (i, token) not in action:
                 action[i, token] = ["ERROR"]
-            else:
-                print("action[", i, " ,", token, "] =", action[i, token])
 
     return action
 
@@ -129,8 +124,6 @@ def go_to_table(first_set, C, terminal_tokens, non_terminal_tokens, productions)
         for token in non_terminal_tokens | {"$"}:
             if (i, token) not in ir_a:
                 ir_a[i, token] = "ERROR"
-            else:
-                print("ir_a[", i, ", ", token, "]", ir_a[i, token])
 
     return ir_a
 

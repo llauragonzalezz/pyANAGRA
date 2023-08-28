@@ -3,11 +3,10 @@ import os
 import re
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QPixmap, QIcon
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
-    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, \
-    QPushButton, QWidget, QComboBox, QHBoxLayout, QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, \
-    QLineEdit
+    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
+    QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, QLineEdit
 
 import LALR
 import LL1
@@ -30,6 +29,26 @@ def center_window(window):
     y = (screen.height() - window_size.height()) // 2
     window.move(x, y)
 
+class InformationLog(QMainWindow):
+    def __init__(self, type, parent=None):
+        super().__init__(parent)
+        self.type = type
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle("Log")
+        self.setGeometry(0, 0, 400, 200)
+        # Center window to the middle of the screen
+        center_window(self)
+
+        self.text_edit = QPlainTextEdit(self)
+        self.text_edit.setReadOnly(True)
+
+        self.setCentralWidget(self.text_edit)
+
+
+    def add_information(self, text):
+        self.text_edit.appendPlainText(text)
 
 class VentanaInputGramatica(QMainWindow):
     def __init__(self, type, parent=None):
@@ -230,6 +249,7 @@ class MainWindow(QMainWindow):
         self.conj_LR0 = self.action_table_SLR = self.go_to_table_SLR = self.edges_SLR = {}
         self.conj_LALR = self.action_table_LALR = self.go_to_table_LALR = self.edges_LALR = {}
         self.conj_LR1 = self.action_table_LR = self.go_to_table_LR = self.edges_LR = {}
+        self.log_window = InformationLog(self)
 
         self.setWindowTitle("Anagra")
         self.setGeometry(0, 0, 800, 600)
@@ -275,7 +295,7 @@ class MainWindow(QMainWindow):
 
         open_action = QAction("Abrir", self)
         open_action.setShortcut(QKeySequence.Open)
-        open_action.setEnabled(not self.file)  # Enable/Disable action
+        open_action.setEnabled(not gramatica)  # Enable/Disable action
         open_action.triggered.connect(self.open_file)
         grammar_menu.addAction(open_action)
 
@@ -295,7 +315,6 @@ class MainWindow(QMainWindow):
         save_as_action.triggered.connect(self.save_file_as)
         grammar_menu.addAction(save_as_action)
 
-        # Agregar las opciones de menú al menú grmática
         grammar_menu.addSeparator()
 
         exit_action = QAction("Salir", self)
@@ -409,8 +428,12 @@ class MainWindow(QMainWindow):
         self.menubar.addMenu(help_menu)
 
         # Opciones de menú al menú ayuda
+        information_action = QAction("Información", self)
+        information_action.triggered.connect(self.show_log)  # TODO poner enlace al repositiorio git
+        help_menu.addAction(information_action)
+
         about_action = QAction("Sobre...", self)
-        about_action.triggered.connect(self.show_information) # poner enlace al repositiorio git
+        about_action.triggered.connect(self.show_information) # TODO poner enlace al repositiorio git
         help_menu.addAction(about_action)
 
     def pestania_herramientas(self):
@@ -555,6 +578,8 @@ class MainWindow(QMainWindow):
         self.text_grammar.setCurrentCharFormat(QTextCharFormat())
 
     def yacc_parse_grammar(self, text):
+        self.text_grammar.setPlainText(text)
+
         try:
             grammar = yacc.parse(text)
             self.start_token = grammar[0]
@@ -563,9 +588,10 @@ class MainWindow(QMainWindow):
             self.productions = grammar[3]
 
             self.menu_gramaticas()
-            self.text_grammar.setPlainText(text)
+            self.log_window.add_information("Gramatica analizada con exito.")
 
         except SyntaxError as e:
+            self.log_window.add_information("Gramatica analizada sin exito.")
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
@@ -574,6 +600,7 @@ class MainWindow(QMainWindow):
             error_message.exec_()
 
     def new_app(self):  # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
+        self.log_window.add_information("Abriendo nueva ventana")
         python_path = sys.executable
         os.system(python_path + " " + os.path.abspath(__file__) + " &")
 
@@ -585,6 +612,9 @@ class MainWindow(QMainWindow):
             # Obtenemos la ruta del archivo
             self.file = dialogo.selectedFiles()[0]
             text = open(self.file).read()
+            self.log_window.add_information("Abriendo el fichero " + self.file)
+            self.log_window.add_information("Fichero abierto")
+
             self.yacc_parse_grammar(text)
 
 
@@ -620,14 +650,16 @@ class MainWindow(QMainWindow):
         texto = self.text_grammar.toPlainText()
         file.write(texto)
         file.close()
+        self.log_window.add_information("Guardada la gramática en el fichero " + file)
 
     def save_file_as(self):
-        name_fich, _ = QFileDialog.getSaveFileName(self, 'Guardar fichero como')
-        if name_fich:
-            fichero = open(name_fich, 'w')
+        file, _ = QFileDialog.getSaveFileName(self, 'Guardar fichero como')
+        if file:
+            fichero = open(file, 'w')
             texto = self.text_grammar.toPlainText()
             fichero.write(texto)
             fichero.close()
+            self.log_window.add_information("Guardada la gramática en el fichero " + file)
 
     def exit(self):
         confirm_dialog = QMessageBox(self)
@@ -676,6 +708,10 @@ class MainWindow(QMainWindow):
         cursor.select(QTextCursor.Document)
         self.text_grammar.setTextCursor(cursor)
 
+    def show_log(self):  # TODO
+        self.log_window.show()
+
+
     def show_information(self):  # TODO
         message = "ANAGRA 3.0: Herramienta para el estudio de gramaticas\n  " \
                   " libres de contexto y técnicas de analisis sintáctico \n\n" \
@@ -703,11 +739,13 @@ class MainWindow(QMainWindow):
                                 "Los cambios se realizaran la siguiente vez que se inicie Anagra")
 
     def calcular_conjunto_primero(self):
+        self.log_window.add_information("Calculando el Conjunto PRIMERO...")
         first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
         first_set_window = conj_tab.FirstSet(first_set, self)
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
+        self.log_window.add_information("Calculando el Conjunto SIGUIENTE...")
         follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
                                                self.productions)
         follow_set_window = conj_tab.FollowSet(follow_set, self)
@@ -718,12 +756,16 @@ class MainWindow(QMainWindow):
         first_set_sentence_window.show()
 
     def left_factoring(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Factorizacion a izquierda")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(),
                                                                       copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def transformacion_no_derivables(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación de los NO terminales que no derivan nada.")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token,
                                                                                 self.terminal_tokens.copy(),
                                                                                 self.non_terminal_tokens.copy(),
@@ -735,6 +777,8 @@ class MainWindow(QMainWindow):
 
 
     def eliminating_left_recursion(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación de la recursividad a izquierda.")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token,
                                                                                  self.non_terminal_tokens.copy(),
                                                                                  copy.deepcopy(self.productions))
@@ -742,6 +786,8 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def transformacion_no_alcanzables(self):  # TODO COMPROBAR SI EL LENGUAGE ES VACIO O NO JIIJIJ
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación de los NO terminales no accesibles.")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token,
                                                                                              self.terminal_tokens.copy(),
                                                                                              self.non_terminal_tokens.copy(),
@@ -750,12 +796,16 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def eliminating_eps_prod(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación producciones epsilon")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens.copy(),
                                                           copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def eliminating_unit_prod(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación de Ciclos.")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens.copy(),
                                                             self.non_terminal_tokens.copy(),
                                                             copy.deepcopy(self.productions))
@@ -763,12 +813,16 @@ class MainWindow(QMainWindow):
         new_window.show()
 
     def chomsky_normal_form(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Forma normal de Chomsky")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens.copy(),
                                               self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def greibach_normal_form(self):
+        self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Forma normal de Greibach")
+        self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
         non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens.copy(),
                                                                     copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
@@ -776,13 +830,19 @@ class MainWindow(QMainWindow):
 
     def parse_LL1_grammar(self):
         if not self.table_LL1:
-            print("hola")
+            self.log_window.add_information("Analizando la gramática para ver si es de tipo LL(1).")
             self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
                                                  self.productions)
 
             # Enable options if possible
             conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
             is_ll1 = conclicts_ll1 == 0
+            if is_ll1:
+                self.log_window.add_information("CORRECTO: La gramática es de tipo LL(1).")
+            else:
+                self.log_window.add_information("ERROR: La gramática no es de tipo LL(1).")
+                self.log_window.add_information("Numero Celdas en Conflicto: " + str(conclicts_ll1))
+
             self.parse_LL1_input_action.setEnabled(is_ll1)
 
         analysis_table_window = conj_tab.AnalysisTableLL1(self.table_LL1, self)
@@ -790,6 +850,7 @@ class MainWindow(QMainWindow):
 
     def parse_SLR_grammar(self):
         if not (self.conj_LR0 and self.action_table_SLR and self.go_to_table_SLR and self.edges_SLR):
+            self.log_window.add_information("Analizando la gramática para ver si es de tipo SLR(1).")
             self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
             self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
             self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
@@ -799,38 +860,52 @@ class MainWindow(QMainWindow):
             # Enable options if possible
             conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
             is_slr1 = conclicts_slr1 == 0
+            if is_slr1:
+                self.log_window.add_information("CORRECTO: La gramática es de tipo SLR(1).")
+            else:
+                self.log_window.add_information("ERROR: La gramática no es de tipo SLR(1).")
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla ACCION: " + str(conclicts_slr1))
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla IR A:")
 
             self.parse_SLR_input_action.setEnabled(is_slr1)
 
         conj_tab.AnalysisTableSLR1(self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
+                                   self.producciones_ampliados, ventana, "SLR(1)", self)
 
 
     def parse_LALR_grammar(self):
         if not (self.conj_LALR and self.action_table_LALR and self.go_to_table_LALR and self.edges_LALR):
+            self.log_window.add_information("Analizando la gramática para ver si es de tipo LALR.")
             first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
             self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
             self.conj_LALR = LALR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
             self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
                                                    self.non_terminal_tokens, self.producciones_ampliados)
-            self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
-                                                 self.producciones_ampliados)
-            self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'}, self.non_terminal_tokens,
-                                                self.producciones_ampliados)
+            self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
+                                                     self.non_terminal_tokens, self.producciones_ampliados)
+            self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
+                                                    self.non_terminal_tokens, self.producciones_ampliados)
 
             # Enable options if possible
             conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
             is_lalr = conclicts_lalr == 0
+            if is_lalr:
+                self.log_window.add_information("CORRECTO: La gramática es de tipo LALR.")
+            else:
+                self.log_window.add_information("ERROR: La gramática no es de tipo LALR.")
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla ACCION: " + str(conclicts_lalr))
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla IR A:")
 
             self.parse_LALR_input_action.setEnabled(is_lalr)
 
         conj_tab.AnalysisTableSLR1(self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
+                                   self.producciones_ampliados, ventana, "LALR", self)
 
     def parse_LR_grammar(self):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
+            self.log_window.add_information("Analizando la gramática para ver si es de tipo LR(1).")
             first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
             self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
             self.conj_LR1 = LR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
@@ -841,26 +916,36 @@ class MainWindow(QMainWindow):
             # Enable options if possible
             conclicts_lr = SLR.is_slr1(self.action_table_LR)
             is_lr = conclicts_lr == 0
+            if is_lr:
+                self.log_window.add_information("CORRECTO: La gramática es de tipo LR(1).")
+            else:
+                self.log_window.add_information("ERROR: La gramática no es de tipo LR(1).")
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla ACCION: " + str(conclicts_lr))
+                self.log_window.add_information("Numero Celdas en Conflicto en la Tabla IR A:")
 
             self.parse_LR_input_action.setEnabled(is_lr)
 
         conj_tab.AnalysisTableSLR1(self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
                                    self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, self)
+                                   self.producciones_ampliados, ventana, "LR",self)
 
     def parse_LL1_input(self):
+        self.log_window.add_information("Simulando analizador sintáctico LL(1) asociado a la gramática.")
         ll1_input_window = VentanaInputGramatica("LL1", self)
         ll1_input_window.show()
 
     def parse_SLR_input(self):
+        self.log_window.add_information("Simulando analizador sintáctico SLR(1) asociado a la gramática.")
         input_window = VentanaInputGramatica("SLR1", self)
         input_window.show()
 
     def parse_LALR_input(self):
+        self.log_window.add_information("Simulando analizador sintáctico LALR asociado a la gramática.")
         input_window = VentanaInputGramatica("LALR", self)
         input_window.show()
 
     def parse_LR_input(self):
+        self.log_window.add_information("Simulando analizador sintáctico LR(1) asociado a la gramática.")
         input_window = VentanaInputGramatica("LR", self)
         input_window.show()
 

@@ -401,15 +401,16 @@ class GraphView(QGraphicsView):
                 self.scene().addItem(Edge(source, dest, label))
 
 class AutomatonWindow(QMainWindow):
-    def __init__(self, nodes, edges, window, parent=None):
+    def __init__(self, nodes, edges, window, type, parent=None):
         super().__init__(parent)
         self.nodes = nodes
         self.edges = edges
         self._window = window
+        self.type = type
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Automata gramática')
+        self.setWindowTitle('Automata gramática ' + self.type)
         self.setGeometry(0, 0, 650, 550)
 
         self.graph = nx.DiGraph()

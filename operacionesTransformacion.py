@@ -219,7 +219,7 @@ def reorganizacion_producciones(produccion, tokens_no_terminales, producciones, 
     return tokens_no_terminales, producciones, indice_chomsky
 
 
-def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones):
+def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones): #FIXME no funciono
     for token in tokens_terminales:
         nombre = "token_" + token
         producciones[nombre] = [token]
@@ -239,10 +239,12 @@ def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producci
 
 
 def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    tokens_no_terminales, producciones = eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones)
-    tokens_no_terminales, producciones = eliminacion_producciones_unitarias(tokens_no_terminales, producciones)
+    producciones = eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones)
+    producciones = eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, producciones)
     tokens_no_terminales, producciones, _ = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
     tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
+    for entrada in producciones.keys():
+        print("producciones[",entrada, "]:", producciones[entrada])
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
 
 

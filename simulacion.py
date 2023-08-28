@@ -1,4 +1,3 @@
-import sys
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
     QHBoxLayout, QDesktopWidget, QMessageBox
@@ -210,11 +209,9 @@ class VentanaSimulacionSLR(QMainWindow):
     def retroceder(self):
         # Tree window
         if self.table[self.iter][2] != ():
-            print("borro: ", self.table[self.iter][2][0][1])
             self.tree_window.delete_parent(self.table[self.iter][2][0][1])
 
         if self.table[self.iter][3] != ():
-            print("borro: ", self.table[self.iter][3][1])
             self.tree_window.delete_node(self.table[self.iter][3][1])
 
 

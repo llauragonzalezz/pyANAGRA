@@ -41,13 +41,6 @@ def sucesor(I, token, non_terminal_tokens, productions):
         pos_dot = prod.index('.')
         if pos_dot < len(prod) - 1 and prod[pos_dot + 1] == token:
             S.append((token_prod, prod[:pos_dot] + [prod[pos_dot + 1]] + ['.'] + prod[pos_dot+2:]))
-            #if prod.index('.') < len(prod) - 2 and prod[prod.index('.')+2] in non_terminal_tokens:
-            #    for prod_token in productions[prod[prod.index('.') + 2]]:
-            #        if prod_token is None:
-            #            S.append((prod[prod.index('.') + 2], ['.']))
-            #        else:
-            #            S.append((prod[prod.index('.') + 2], ['.'] + prod_token))
-
 
     return clausura(S.copy(), non_terminal_tokens, productions)
 
@@ -63,7 +56,6 @@ def conj_LR0(start_token, non_terminal_tokens, productions):
                 sucesor_token = sucesor(I, token, non_terminal_tokens, productions)
                 if sucesor_token != [] and sucesor_token not in new:
                     new.append(sucesor_token)
-                    print(sucesor_token)
 
     return new
 
@@ -122,7 +114,6 @@ def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productio
 
 def go_to_table(C, non_terminal_tokens, productions):
     ir_a = dict()
-    #conj_LR0(start_token, non_terminal_tokens, productions)
     for i in range(len(C)):
         for token_no_terminal in non_terminal_tokens:
             sucesor_token = sucesor(C[i], token_no_terminal, non_terminal_tokens, productions)
@@ -204,7 +195,7 @@ def simulate(accion, ir_a, input):
 
             s = int(stack[len(stack) - 1][0])
             stack.append((partes[0][0], index))
-            stack.append((ir_a[s, partes[0][0]],))
+            stack.append((ir_a[s, partes[0].strip()],))
             left_part = (partes[0].strip(), index)
 
             it_copia, it = itertools.tee(it)

@@ -69,7 +69,7 @@ class AnalysisTableLL1(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla analisis")
+        self.setWindowTitle("Tabla análisis LL(1)")
 
         non_terminals = sorted(set(k[0] for k in self.analysis_table.keys()))
         terminals = sorted(set(k[1] for k in self.analysis_table.keys()))
@@ -116,15 +116,16 @@ class AnalysisTableLL1(QMainWindow):
 
 
 class ExpandedGrammar(QMainWindow):
-    def __init__(self, start_token, non_terminal_tokens, productions, parent=None):
+    def __init__(self, start_token, non_terminal_tokens, productions, type, parent=None):
         super().__init__(parent)
         self.start_token = start_token
         self.non_terminal_tokens = non_terminal_tokens
         self.productions = productions
+        self.type = type
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Gramática ampliada")
+        self.setWindowTitle("Gramática ampliada " + self.type)
         self.setGeometry(0, 0, 300, 200)
 
         self.text_edit = QPlainTextEdit(self)
@@ -146,18 +147,17 @@ class ExpandedGrammar(QMainWindow):
 
 
 class AutomatonText(QMainWindow):
-    def __init__(self, nodes, edges, start_token, productions, accion, ir_a, parent=None):
+    def __init__(self, nodes, edges, start_token, productions, type, parent=None):
         super().__init__(parent)
         self.nodes = nodes
         self.edges = edges
         self.start_token = start_token
         self.productions = productions
-        self.accion = accion
-        self.ir_a = ir_a
+        self.type = type
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Automata escrito")
+        self.setWindowTitle("Automata escrito " + self.type)
         self.setGeometry(0, 0, 500, 500)
 
         center_window(self)
@@ -191,7 +191,6 @@ class AutomatonText(QMainWindow):
         edge_index = 0
 
         edges_list = list(self.edges.keys())
-        print(edges_list)
         # escribir los estados con las reglas
         for i, node in enumerate(self.nodes):
             text += "Estado " + str(i) + "\n\n"
@@ -208,9 +207,8 @@ class AutomatonText(QMainWindow):
                     else:
                         index = key_list[prod[0]] + self.productions[prod[0]].index(None)
                         text += " " * (4 - int(log10(index))) + str(index) + " " + prod[0] + ": •" + "\n"
-                print(prod[1], prod[1].index('.'), len(prod[1]))
                 if prod[1].index('.') == len(prod[1]) - 1:
-                    text_reduce += "     reduce usando la regla " + str(index) + " (" + prod[0] + ")" + "\n"
+                    text_reduce += "    reduce usando la regla " + str(index) + " (" + prod[0] + ")" + "\n"
 
             text += "\n"
 
@@ -222,7 +220,7 @@ class AutomatonText(QMainWindow):
                     text += "    " + self.edges[str(i), edges_list[edge_index][1]] + " desplazar e ir al estado " + edges_list[edge_index][1] + "\n"
                 edge_index += 1
 
-            text += text_reduce + "\n" + text_go_to + "\n"
+            text += "\n" + text_reduce + "\n" + text_go_to + "\n"
         # Estado 1
         # 213 identifier: IDENTIFIER •
         # $default  reduce usando la regla 213 (identifier)
@@ -231,11 +229,12 @@ class AutomatonText(QMainWindow):
 
 
 class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
-    def __init__(self, accion, terminal_tokens, productions, parent=None):
+    def __init__(self, accion, terminal_tokens, productions, type, parent=None):
         super().__init__(parent)
         self.tabla_accion = accion
         self.terminal_tokens = list(terminal_tokens | {"$"})
         self.productions = productions
+        self.type = type
         self.productions_index = dict()
         i = 1
         for token in productions.keys():
@@ -244,7 +243,7 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla acción")
+        self.setWindowTitle("Tabla acción " + self.type)
         rows = sum(1 for key in self.tabla_accion.keys() if key[1] == "$")
         table_action = QTableWidget()
         table_action.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
@@ -298,14 +297,15 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
 
 
 class GoToTable(QMainWindow):
-    def __init__(self, ir_a, non_terminal_tokens, parent=None):
+    def __init__(self, ir_a, non_terminal_tokens, type, parent=None):
         super().__init__(parent)
         self.ir_a = ir_a
-        self.non_terminals = list(non_terminal_tokens) # todo quitar el token inicial
+        self.non_terminals = list(non_terminal_tokens)
+        self.type = type
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla ir a")
+        self.setWindowTitle("Tabla ir a " + self.type)
         rows = sum(1 for key in self.ir_a.keys() if key[1] == "$")
         table_go_to = QTableWidget()
         table_go_to.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
@@ -332,17 +332,17 @@ class GoToTable(QMainWindow):
 
 
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, parent=None):
+    def __init__(self, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
         super().__init__(parent)
-        action_window = ActionTable(accion, terminal_tokens, productions, self)
+        action_window = ActionTable(accion, terminal_tokens, productions, type, self)
         action_window.show()
-        go_to_window = GoToTable(ir_a, non_terminal_tokens, self)
+        go_to_window = GoToTable(ir_a, non_terminal_tokens, type, self)
         go_to_window.show()
-        automaton_text_window = AutomatonText(nodes, edges, start_token, productions, accion, ir_a, self)
+        automaton_text_window = AutomatonText(nodes, edges, start_token, productions, type, self)
         automaton_text_window.show()
-        automaton_window = automaton.AutomatonWindow(nodes, edges, window, self)
+        automaton_window = automaton.AutomatonWindow(nodes, edges, window, type, self)
         automaton_window.show()
-        extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, self)
+        extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, type, self)
         extended_grammar.show()
 
 

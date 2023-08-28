@@ -1,5 +1,4 @@
 import conjuntos as conj
-import operacionesTransformacion as op
 
 def is_lr(table):
     num_conflicts = 0
@@ -129,8 +128,6 @@ def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens
         for token in terminal_tokens:
             if (i, token) not in action:
                 action[i, token] = ["ERROR"]
-            else:
-                print("action[", i, " ,", token, "] =", action[i, token])
 
     return action
 
@@ -147,8 +144,6 @@ def go_to_table(first_set, C, terminal_tokens, non_terminal_tokens, productions)
         for token in non_terminal_tokens | {"$"}:
             if (i, token) not in ir_a:
                 ir_a[i, token] = "ERROR"
-            else:
-                print("ir_a[", i, ", ", token, "]", ir_a[i, token])
 
     return ir_a
 
