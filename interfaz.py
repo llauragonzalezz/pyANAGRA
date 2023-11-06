@@ -1,9 +1,11 @@
 import copy
+import json
 import os
 import re
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument
+from PyQt5.QtCore import QTranslator
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
     QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, QLineEdit
@@ -82,21 +84,21 @@ class VentanaInputGramatica(QMainWindow):
         texto = self.text_edit.toPlainText()
         self.close()
         if self.type == "LL1":
-            tabla = LL1.simulate(ventana.table_LL1, ventana.start_token, ventana.terminal_tokens, texto + " $")
-            nueva_ventana = sim.VentanaSimulacion(tabla, ventana.start_token, ventana.terminal_tokens,
+            tabla, error = LL1.simulate(ventana.table_LL1, ventana.start_token, ventana.terminal_tokens, texto + " $")
+            nueva_ventana = sim.VentanaSimulacion(tabla, error, ventana.start_token, ventana.terminal_tokens,
                                                   ventana.non_terminal_tokens, self)
 
         elif self.type == "SLR1":
-            tabla = SLR.simulate(ventana.action_table_SLR, ventana.go_to_table_SLR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            tabla, error = SLR.simulate(ventana.action_table_SLR, ventana.go_to_table_SLR, texto + " $")
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "LALR":
-            tabla = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            tabla, error = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "LR":
-            tabla = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(tabla, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            tabla, error = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
+            nueva_ventana = sim.VentanaSimulacionSLR(tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         nueva_ventana.show()
 
@@ -262,6 +264,7 @@ class MainWindow(QMainWindow):
         self.text_grammar = QPlainTextEdit(self)
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
         self.setCentralWidget(self.text_grammar)
+        self.configuration()
 
         # Barra modo, linea y columna del cursor
         self.status_bar = QStatusBar()
@@ -283,11 +286,35 @@ class MainWindow(QMainWindow):
 
         self.update_row_column()
 
+    def configuration(self):
+        config_file = open('config.json')
+        data = json.load(config_file)
+
+        font_text_grammar = QFont()
+        font_text_grammar.setFamily(data["family"])
+        font_text_grammar.setPointSize(data["point_size"])
+        font_text_grammar.setBold(data["bold"])
+        font_text_grammar.setItalic(data["italic"])
+        font_text_grammar.setUnderline(data["underline"])
+        color = data["color"]
+        self.text_grammar.setFont(font_text_grammar)
+        self.text_grammar.setStyleSheet(f"color: {color};")
+        self.tabs = data["tabs"]
+        self.states = data["states"]
+        self.english = data["english"]
+
+        translator = QTranslator()
+        if data["english"]:
+            translator.load("english.qm")
+        else:
+            translator.load("castellano.qm")
+        app.installTranslator(translator)
+
     def pestania_gramatica(self, gramatica=False):
         grammar_menu = QMenu("Gramática", self)
         self.menubar.addMenu(grammar_menu)
 
-        # Options grammar menu
+        # Options for grammar menu
         new_action = QAction("Nuevo", self)
         new_action.setShortcut(QKeySequence.New)
         new_action.triggered.connect(self.new_app)
@@ -379,13 +406,13 @@ class MainWindow(QMainWindow):
 
         # Opciones de menú al menú text
         font_action = QAction("Fuente", self)
-        font_action.triggered.connect(self.cambiar_fuente)
+        font_action.triggered.connect(self.change_font)
 
         color_action = QAction("Color", self)
-        color_action.triggered.connect(self.cambiar_color)
+        color_action.triggered.connect(self.change_colour)
 
         tab_action = QAction("Tab", self)
-        tab_action.triggered.connect(self.cambiar_tab)
+        tab_action.triggered.connect(self.change_tab)
 
         extended_action = QAction("Extended", self)
         extended_action.triggered.connect(self.show_grammar)
@@ -397,15 +424,17 @@ class MainWindow(QMainWindow):
 
         idiomaSubmenu = QMenu("Idioma", self)
 
-        idiomaEnglish = QCheckBox("English", self)
-        idiomaEnglish.stateChanged.connect(self.cambiar_idioma)
+        self.english_checkbox = QCheckBox("English", self)
+        self.english_checkbox.setChecked(self.english)
+        self.english_checkbox.clicked.connect(lambda: self.cambiar_idioma(1))
         widgetEnglish = QWidgetAction(self)
-        widgetEnglish.setDefaultWidget(idiomaEnglish)
+        widgetEnglish.setDefaultWidget(self.english_checkbox)
 
-        idiomaCastellano = QCheckBox("Castellano", self)
-        idiomaCastellano.stateChanged.connect(self.cambiar_idioma)
+        self.spanish_checkbox = QCheckBox("Castellano", self)
+        self.spanish_checkbox.setChecked(not self.english)
+        self.spanish_checkbox.clicked.connect(lambda: self.cambiar_idioma(0))
         widgetCastellano = QWidgetAction(self)
-        widgetCastellano.setDefaultWidget(idiomaCastellano)
+        widgetCastellano.setDefaultWidget(self.spanish_checkbox)
 
         idiomaSubmenu.setContentsMargins(15, 0, 0, 0)
         idiomaSubmenu.addAction(widgetEnglish)
@@ -719,24 +748,49 @@ class MainWindow(QMainWindow):
                   "Dirigido por: Joaquín Ezpeleta Mateo"
         QMessageBox.information(self, 'About...', message)
 
-    def cambiar_fuente(self):
+    def change_font(self):
         font, ok = QFontDialog.getFont()
         if ok:
             self.text_grammar.setFont(font)
+            # FIXME CAMBIAR JSON
 
-    def cambiar_color(self):
+    def change_colour(self):
         color = QColorDialog.getColor()
         if color.isValid():
             self.text_grammar.setStyleSheet(f"color: {color.name()};")
+            # FIXME CAMBIAR JSON
 
-    def cambiar_tab(self):  # TODO cambiar y ver qué hago
+
+    def change_tab(self):  # TODO cambiar y ver qué hago
         spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
         if ok:
             print(spaces)
+            # FIXME CAMBIAR JSON
 
-    def cambiar_idioma(self):
-        QMessageBox.information(self, "Cambio idioma",
-                                "Los cambios se realizaran la siguiente vez que se inicie Anagra")
+
+    def cambiar_idioma(self, english):
+        if (not english and self.english_checkbox.isChecked()) or (english and self.spanish_checkbox.isChecked()):
+            confirm_dialog = QMessageBox(self)
+            confirm_dialog.setWindowTitle("Cambio idioma")
+            confirm_dialog.setText("Desea cambiar de idioma (los cambios se realizaran la siguiente vez que se inicie ANAGRA)")
+            confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+            result = confirm_dialog.exec_()
+            if result == QMessageBox.Yes:
+                if english:
+                    self.english_checkbox.setChecked(True)
+                    self.spanish_checkbox.setChecked(False)
+                else:
+                    self.english_checkbox.setChecked(False)
+                    self.spanish_checkbox.setChecked(True)
+            else:
+                if english:
+                    self.english_checkbox.setChecked(False)
+                else:
+                    self.spanish_checkbox.setChecked(False)
+        elif english:
+            self.english_checkbox.setChecked(True)
+        else:
+            self.spanish_checkbox.setChecked(True)
 
     def calcular_conjunto_primero(self):
         self.log_window.add_information("Calculando el Conjunto PRIMERO...")
@@ -798,7 +852,8 @@ class MainWindow(QMainWindow):
     def eliminating_eps_prod(self):
         self.log_window.add_information("APLICANDO TRANSFORMACIÓN: Eliminación producciones epsilon")
         self.log_window.add_information("TRANSFORMACION APLICADA. Abierta nueva ventana con la gramatica equivalente.")
-        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.non_terminal_tokens.copy(),
+        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.terminal_tokens,
+                                                          self.non_terminal_tokens.copy(),
                                                           copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()

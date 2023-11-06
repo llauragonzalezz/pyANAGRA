@@ -43,7 +43,9 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
 
     return table
 
-
+def sig_tok(it, accion):
+    n = next(it)
+    return n, not any(n == key[1] for key in accion.keys())
 def simulate(table, start_token, terminals, input):
     stack = [("$", 0), (start_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
@@ -63,6 +65,7 @@ def simulate(table, start_token, terminals, input):
 
     x = stack[len(stack)-1]
     while x[0] != "$":
+        print(x[0])
         if x[0] in terminals or x[0] == "$":
             if x[0] == sig_tok:
                 # Copiamos el iterador original
@@ -78,12 +81,11 @@ def simulate(table, start_token, terminals, input):
                     else:
                         sig_tok += y + next(it)
             else:
-                # errorSintactico
-                print("error sintactico")
+                return [("", input, ()), ("", input, ())], True
+
         else:
-            # TODO TRY CATCH POR SI KeyError A LA HORA DE ACCEDER A LA TABLA
             if table[x[0], sig_tok][0] != "error":
-                # disparamos produccion
+                # trigger production
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original
                 salida = []
                 if table[x[0], sig_tok][0] != None:
@@ -98,10 +100,9 @@ def simulate(table, start_token, terminals, input):
                 if salida is not None:
                     stack.extend(reversed(salida))
             else:
-                # errorSintactico
-                print("error sintactico")
+                return [("", input, ()), ("", input, ())], True
         x = stack[len(stack)-1]
 
     simulation_table.append((stack.copy(), "$", ()))
     # '(' 'x' ';' '(' 'x' ')' ')'
-    return simulation_table
+    return simulation_table, False

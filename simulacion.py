@@ -6,9 +6,10 @@ import tree
 
 
 class VentanaSimulacion(QMainWindow):
-    def __init__(self, table, start_token, terminals, non_terminals, parent=None):
+    def __init__(self, table, error, start_token, terminals, non_terminals, parent=None):
         super().__init__(parent)
         self.table = table
+        self.error = error
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
@@ -121,15 +122,21 @@ class VentanaSimulacion(QMainWindow):
 
             message_box = QMessageBox()
             message_box.setWindowTitle("Mensaje")
-            message_box.setText("La cadena es aceptada por la gramática")
+            if self.error:
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.setText("La cadena NO es aceptada por la gramática")
+            else:
+                message_box.setText("La cadena es aceptada por la gramática")
+
             message_box.exec_()
 
 
 
 class VentanaSimulacionSLR(QMainWindow):
-    def __init__(self, table, terminals, non_terminals, parent=None):
+    def __init__(self, table, error, terminals, non_terminals, parent=None):
         super().__init__(parent)
         self.table = table
+        self.error = error
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
@@ -250,7 +257,11 @@ class VentanaSimulacionSLR(QMainWindow):
 
             message_box = QMessageBox()
             message_box.setWindowTitle("Mensaje")
-            message_box.setText("La cadena es aceptada por la gramática")
+            if self.error:
+                message_box.setText("La cadena NO es aceptada por la gramática")
+            else:
+                message_box.setText("La cadena es aceptada por la gramática")
+
             message_box.exec_()
 
 

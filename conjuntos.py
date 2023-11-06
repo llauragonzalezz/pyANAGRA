@@ -12,13 +12,16 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
     for production in productions[token]:
         if production is not None:
             epsilon = True
-            for token_prod in production:
+            for index, token_prod in enumerate(production):
                 if token_prod not in recursive_tokens:
                     first_set_tok = calculate_first_set_token(token_prod, recursive_tokens | {token_prod}, terminal_tokens, non_terminal_tokens, productions)
                     first_set |= first_set_tok.difference({None})
                     if None not in first_set_tok:
                         epsilon = False
                         break
+                else:
+                    epsilon &= index == (len(production) - 1)
+                    break
             if epsilon:
                 first_set |= {None}
 
@@ -41,13 +44,26 @@ def calculate_first_set_sentence_fs(elements, first_set, terminal_tokens, non_te
     return first_set_sentence
 
 
-def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens, productions):
+def calculate_first_set_sentence(elements, token, terminal_tokens, non_terminal_tokens, productions):
     first_set = calculate_first_set(terminal_tokens, non_terminal_tokens, productions)
     first_set_sentence = set()
-    for element in elements:
-        first_set_sentence |= first_set[element]
+    epsilon = True
+    for index, element in enumerate(elements):
+        if element == token:
+            return first_set_sentence # TODO COMPROBAR
+
+        print(index, element, first_set[element])
+        first_set_sentence |= first_set[element].difference({None})
+        print(first_set[element])
         if None not in first_set[element]:
             break
+        else:
+            epsilon &= None in first_set[element]
+
+    if epsilon:
+        first_set_sentence.add(None)
+
+    print(first_set_sentence)
     return first_set_sentence
 
 def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions):

@@ -139,28 +139,26 @@ def create_automaton(C, terminal_tokens, non_terminal_tokens, productions):
     return edges
 
 
+def sig_tok(it, accion):
+    n = next(it)
+    return n, not any(n == key[1] for key in accion.keys())
+
+
 def simulate(accion, ir_a, input):
     aceptado = False
     error = False
     stack = [(0,)]
-    elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
+    elementos = input.strip().split()
     it = iter(elementos)
-    n = next(it)
+    n, error_tok = sig_tok(it, accion)
 
     index = 0
-    # simulation table: stack | entry text | output
-    simulation_table = []
+    simulation_table = [] # simulation table: stack | entry text | output
     simulation_table.append((stack.copy(), input, (), ()))
-    if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
-        y = next(it)
-        if y != "'":
-            n += y
-        else:
-            n += y + next(it)
-    while not (aceptado or error):
+
+    while not (aceptado or error or error_tok):
         s = int(stack[len(stack) - 1][0])
         if accion[s, n][0][:9] == "desplazar":
-            print("desplazar")
             stack.append((n, index))
             stack.append((accion[s, n][0][10:],))
 
@@ -168,23 +166,13 @@ def simulate(accion, ir_a, input):
             simulation_table.append((stack.copy(), "".join(it_copia), (), (n, index)))
             index += 1
 
-            n = next(it)
-            if n == "'":  # if sig_tok is character or string TODO poner tambien si es string "
-                y = next(it)
-                if y != "'":
-                    n += y
-                else:
-                    n += y + next(it)
+            n, error_tok = sig_tok(it, accion)
 
         elif accion[s, n][0] == "aceptar":
-            print("aceptar")
             aceptado = True
         elif accion[s, n][0] == "ERROR":
-            print("error") # PRINT LANZAR EXCEPCION
             error = True
-            #raise SyntaxError(f'Syntax error at {p.value!r}')
         elif accion[s, n][0][:7] == "reducir":
-            print("reducir")
             production = accion[s, n][0][8:]
             partes = production.split("→")
             right_part = []
@@ -194,7 +182,7 @@ def simulate(accion, ir_a, input):
                     right_part.append(stack.pop())
 
             s = int(stack[len(stack) - 1][0])
-            stack.append((partes[0][0], index))
+            stack.append((partes[0].strip(), index))
             stack.append((ir_a[s, partes[0].strip()],))
             left_part = (partes[0].strip(), index)
 
@@ -202,4 +190,7 @@ def simulate(accion, ir_a, input):
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
-    return simulation_table
+    if error_tok or len(simulation_table) == 1:
+        return [(stack.copy(), input, (), ()), (stack.copy(), input, (), ())], error or error_tok
+
+    return simulation_table, error or error_tok

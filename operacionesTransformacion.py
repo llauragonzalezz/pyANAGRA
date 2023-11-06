@@ -1,5 +1,7 @@
 import itertools
 
+import conjuntos
+
 
 def eliminacion_simbolos_inutiles(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     viejo = set()
@@ -122,34 +124,29 @@ def eliminar_recursividad_izquierda_directa(token, tokens_no_terminales, producc
 
 
 # Un token es nullable si y solo si este puede alcanzar una producción epsilon a partir de derivar sus producciones
-def is_nullable(token, tokens_no_terminales, producciones):
-    if None in producciones[token]:
+def is_nullable(token, terminal_tokens, non_terminal_tokens, productions):
+    print("TOKEN:", token)
+    if None in productions[token]:
         return True
 
-    viejo = set()
-    nuevo = set(token for produccion in producciones[token] if produccion is not None for token in produccion) | set(token)
-
-    while viejo != nuevo:
-        nuevos_token = nuevo.difference(viejo)
-        viejo = nuevo
-
-        for token1 in nuevos_token:
-            if token1 in tokens_no_terminales:
-                if None in producciones[token1]:
-                    return True
-                nuevo |= set(token1 for produccion in producciones[token1] for token1 in produccion)
-
+    for production in productions[token]:
+        if None in conjuntos.calculate_first_set_sentence(production, token, terminal_tokens, non_terminal_tokens, productions):
+            return True
 
     return False
 
-def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones):
+
+
+def eliminacion_producciones_epsilon(token_inicial, terminal_tokens, tokens_no_terminales, producciones):
     # Calculamos el conjunto de tokens nullables
-    nullable_tokens = {token for token in tokens_no_terminales if is_nullable(token, tokens_no_terminales, producciones)}
+    nullable_tokens = {token for token in tokens_no_terminales if is_nullable(token, terminal_tokens, tokens_no_terminales, producciones)}
+    print(nullable_tokens)
     for token in tokens_no_terminales:
         if token in nullable_tokens and None in producciones[token]:
             producciones[token].remove(None)  # quitamos la produccion epsilon
 
         for produccion in producciones[token]:
+            print("produccion: ", produccion)
             # Obtenemos los tokens nullables dentro de la producción
             nullable_tokens_produccion = set(produccion) & nullable_tokens
             indices_token_nullable = {produccion.index(null_token) for null_token in nullable_tokens_produccion}
@@ -158,6 +155,14 @@ def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, produc
             # Creamos todas las combinaciones posibles de los indices de tokenes nullables
             for i in range(1, len(indices_token_nullable) + 1):
                 combinaciones.extend(list(x) for x in itertools.combinations(indices_token_nullable, i))
+            print("combinaciones", combinaciones)
+
+            if len(nullable_tokens_produccion) == len(produccion):
+                print("tengo que eliminar:", range(len(produccion)))
+                print([*range(len(produccion))])
+                combinaciones.remove([*range(len(produccion))])
+                print("combinaciones", combinaciones)
+
 
             # Añadimos al token todas las combinaciones posibles de las apariciones de los tokens nullables de la producción
             for lista in combinaciones:
@@ -165,8 +170,14 @@ def eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, produc
                 # Añadimos todas las producciones (no epsilon) que no esten en las producciones del token
                 # El único token que puede tener una producción epsilon es el token inicial en el caso de que la cadena
                 # vácia pertenezca al lenguaje
-                if (nueva_produccion != [] or (nueva_produccion == [] and token == token_inicial)) and nueva_produccion not in producciones[token]:
+                if nueva_produccion not in producciones[token]:
+                    print("añado:", nueva_produccion)
                     producciones[token].append(nueva_produccion)
+
+    for token in tokens_no_terminales:
+        print("\n\n ", token, ":")
+        for produccion in producciones[token]:
+            print(produccion)
 
     return producciones
 
@@ -229,20 +240,44 @@ def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producci
         for produccion in producciones[token]:
             for index, token in enumerate(produccion):
                 if token in tokens_no_terminales:
-                    produccion.remplace(token, "token_"+token)
-            if len(produccion) > 2:
-                indice_chomsky_aux = indice_chomsky
-                tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky)
-                produccion = produccion[0] + ["Chom_" + indice_chomsky_aux]
+                    produccion.replace(token, "token_"+token)
+            #if len(produccion) > 2:
+            #    indice_chomsky_aux = indice_chomsky
+           #     tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky)
+           #     produccion = produccion[0] + ["Chom_" + indice_chomsky_aux]
 
     return tokens_no_terminales, producciones
 
 
 def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    producciones = eliminacion_producciones_epsilon(token_inicial, tokens_no_terminales, producciones)
+    print("añadimos un nuevo estado inicial:")
+    #new_start_token = token_inicial+"0"
+    #tokens_no_terminales.add(new_start_token)
+    #producciones[new_start_token] = [[token_inicial]]
+    for token in tokens_no_terminales:
+        print(token)
+        for prod in producciones[token]:
+            print("\t", prod)
+
+    print("eliminamos las producciones epsilon")
+    producciones = eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+
+    for token in tokens_no_terminales:
+        print(token)
+        for prod in producciones[token]:
+            print("\t", prod)
+
+
+    print("Eleminamos las producciones unitarias:")
     producciones = eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, producciones)
-    tokens_no_terminales, producciones, _ = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
-    tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
+
+    for token in tokens_no_terminales:
+        print(token)
+        for prod in producciones[token]:
+            print("\t", prod)
+
+    #tokens_no_terminales, producciones, _ = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
+    #tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
     for entrada in producciones.keys():
         print("producciones[",entrada, "]:", producciones[entrada])
     return token_inicial, tokens_terminales, tokens_no_terminales, producciones
