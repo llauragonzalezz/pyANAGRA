@@ -288,27 +288,28 @@ class MainWindow(QMainWindow):
 
     def configuration(self):
         config_file = open('config.json')
-        data = json.load(config_file)
+        self.data = json.load(config_file)
 
         font_text_grammar = QFont()
-        font_text_grammar.setFamily(data["family"])
-        font_text_grammar.setPointSize(data["point_size"])
-        font_text_grammar.setBold(data["bold"])
-        font_text_grammar.setItalic(data["italic"])
-        font_text_grammar.setUnderline(data["underline"])
-        color = data["color"]
+        font_text_grammar.setFamily(self.data["family"])
+        font_text_grammar.setPointSize(self.data["point_size"])
+        font_text_grammar.setBold(self.data["bold"])
+        font_text_grammar.setItalic(self.data["italic"])
+        font_text_grammar.setUnderline(self.data["underline"])
+        color = self.data["color"]
         self.text_grammar.setFont(font_text_grammar)
         self.text_grammar.setStyleSheet(f"color: {color};")
-        self.tabs = data["tabs"]
-        self.states = data["states"]
-        self.english = data["english"]
+        self.tabs = self.data["tabs"]
+        self.states = self.data["states"]
+        self.english = self.data["english"]
 
-        translator = QTranslator()
-        if data["english"]:
-            translator.load("english.qm")
+        if self.data["english"]:
+            traduction_file = open('english.json')
         else:
-            translator.load("castellano.qm")
-        app.installTranslator(translator)
+            traduction_file = open('spanish.json')
+        self.traductions = json.load(traduction_file)
+
+        print(self.traductions["mensajeErrorFormaFrase"])
 
     def pestania_gramatica(self, gramatica=False):
         grammar_menu = QMenu("Gramática", self)
@@ -752,20 +753,31 @@ class MainWindow(QMainWindow):
         font, ok = QFontDialog.getFont()
         if ok:
             self.text_grammar.setFont(font)
+            self.data["family"] = font.family()
+            self.data["point_size"] = font.pointSize()
+            self.data["bold"] = font.bold()
+            self.data["italic"] = font.italic()
+            self.data["underline"] = font.underline()
+            with open('config.json', 'w') as archivo:
+                json.dump(self.data, archivo, indent=4)
             # FIXME CAMBIAR JSON
 
     def change_colour(self):
         color = QColorDialog.getColor()
         if color.isValid():
             self.text_grammar.setStyleSheet(f"color: {color.name()};")
-            # FIXME CAMBIAR JSON
+            self.data["color"] = color.name()
+            with open('config.json', 'w') as archivo:
+                json.dump(self.data, archivo, indent=4)
 
 
     def change_tab(self):  # TODO cambiar y ver qué hago
         spaces, ok = QInputDialog.getText(self, 'Tabulador', 'Espacios del tabulador:')
         if ok:
             print(spaces)
-            # FIXME CAMBIAR JSON
+            self.data["tabls"] = spaces
+            with open('config.json', 'w') as archivo:
+                json.dump(self.data, archivo, indent=4)
 
 
     def cambiar_idioma(self, english):
@@ -782,6 +794,11 @@ class MainWindow(QMainWindow):
                 else:
                     self.english_checkbox.setChecked(False)
                     self.spanish_checkbox.setChecked(True)
+
+                self.data["english"] = english
+                with open('config.json', 'w') as archivo:
+                    json.dump(self.data, archivo, indent=4)
+
             else:
                 if english:
                     self.english_checkbox.setChecked(False)
