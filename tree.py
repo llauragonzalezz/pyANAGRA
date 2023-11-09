@@ -283,13 +283,14 @@ class GraphView(QGraphicsView):
 
 
 class TreeWindow(QMainWindow):
-    def __init__(self, start_token=None, parent=None):
+    def __init__(self, traductions, start_token=None, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.start_token = start_token
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Simulación arbol de sintaxis')
+        self.setWindowTitle(self.traductions["tituloArbol"])
         self.setGeometry(0, 0, 850, 800)
         screen = QDesktopWidget().availableGeometry()
         window_size = self.frameGeometry()

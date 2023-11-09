@@ -15,22 +15,20 @@ def center_window(window):
 
 
 class FirstSet(QMainWindow):
-    def __init__(self, dicc, parent=None):
+    def __init__(self, traductions,dicc, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.dicc = dicc
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Conjunto primero")
+        self.setWindowTitle(self.traductions["tituloConjuntoPRI"])
         self.setGeometry(0, 0, 400, 300)
         # Center window to the middle of the screen
         center_window(self)
 
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
-        #font = self.text_edit.font()
-        #font.setPointSize(14) # TODO: PONER PARA CAMBIAR EL TAMAÑO DE LA LETRA?? Y FUENTE (?)
-        #self.text_edit.setFont(font)
         self.text_edit.setReadOnly(True)
 
         text = ""
@@ -41,13 +39,14 @@ class FirstSet(QMainWindow):
 
 
 class FollowSet(QMainWindow):
-    def __init__(self, dicc, parent=None):
+    def __init__(self, traductions, dicc, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.dicc = dicc
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Conjunto siguiente")
+        self.setWindowTitle(self.traductions["tituloConjuntoSIG"])
         self.setGeometry(0, 0, 400, 300)
         # Center window to the middle of the screen
         center_window(self)
@@ -63,13 +62,14 @@ class FollowSet(QMainWindow):
 
 
 class AnalysisTableLL1(QMainWindow):
-    def __init__(self, analysis_table, parent=None):
+    def __init__(self, traductions, analysis_table, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.analysis_table = analysis_table
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla análisis LL(1)")
+        self.setWindowTitle(self.traductions["tituloTablaLL1"])
 
         non_terminals = sorted(set(k[0] for k in self.analysis_table.keys()))
         terminals = sorted(set(k[1] for k in self.analysis_table.keys()))
@@ -116,8 +116,9 @@ class AnalysisTableLL1(QMainWindow):
 
 
 class ExpandedGrammar(QMainWindow):
-    def __init__(self, start_token, non_terminal_tokens, productions, type, parent=None):
+    def __init__(self, traductions, start_token, non_terminal_tokens, productions, type, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.start_token = start_token
         self.non_terminal_tokens = non_terminal_tokens
         self.productions = productions
@@ -125,7 +126,7 @@ class ExpandedGrammar(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Gramática ampliada " + self.type)
+        self.setWindowTitle(self.traductions["tituloAmpliada"] + self.type)
         self.setGeometry(0, 0, 300, 200)
 
         self.text_edit = QPlainTextEdit(self)
@@ -147,8 +148,9 @@ class ExpandedGrammar(QMainWindow):
 
 
 class AutomatonText(QMainWindow):
-    def __init__(self, nodes, edges, start_token, productions, type, parent=None):
+    def __init__(self, traductions, nodes, edges, start_token, productions, type, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.nodes = nodes
         self.edges = edges
         self.start_token = start_token
@@ -157,7 +159,7 @@ class AutomatonText(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Automata escrito " + self.type)
+        self.setWindowTitle(self.traductions["tituloEscrito"] + self.type)
         self.setGeometry(0, 0, 500, 500)
 
         center_window(self)
@@ -166,7 +168,7 @@ class AutomatonText(QMainWindow):
         self.setCentralWidget(self.text_edit)
         self.text_edit.setReadOnly(True)
 
-        text = "Gramática\n\n"
+        text = self.traductions["menuGramatica"] + "\n\n"
         i = 1
         key_list = dict()
         text += "    0 " + self.start_token + ": " + self.productions[self.start_token][0][1] + "\n\n"
@@ -193,7 +195,7 @@ class AutomatonText(QMainWindow):
         edges_list = list(self.edges.keys())
         # escribir los estados con las reglas
         for i, node in enumerate(self.nodes):
-            text += "Estado " + str(i) + "\n\n"
+            text += self.traductions["estado"] + str(i) + "\n\n"
             text_reduce = ""
 
             for prod in node:
@@ -208,29 +210,27 @@ class AutomatonText(QMainWindow):
                         index = key_list[prod[0]] + self.productions[prod[0]].index(None)
                         text += " " * (4 - int(log10(index))) + str(index) + " " + prod[0] + ": •" + "\n"
                 if prod[1].index('.') == len(prod[1]) - 1:
-                    text_reduce += "    reduce usando la regla " + str(index) + " (" + prod[0] + ")" + "\n"
+                    text_reduce += self.traductions["tituloReducir"] + str(index) + " (" + prod[0] + ")" + "\n"
 
             text += "\n"
 
             text_go_to = ""
             while edge_index < len(edges_list) and edges_list[edge_index][0] == str(i):
-                if self.edges[str(i), edges_list[edge_index][1]] in self.productions:
-                    text_go_to += "    " + self.edges[str(i), edges_list[edge_index][1]] + " ir al estado " + edges_list[edge_index][1] + "\n"
+                if self.edges[str(i), edges_list[edge_index][1]] in self.productions: # self.traductions["tituloReducir"]
+                    text_go_to += "    " + self.edges[str(i), edges_list[edge_index][1]] + self.traductions["tituloIrA"] + edges_list[edge_index][1] + "\n"
                 else:
-                    text += "    " + self.edges[str(i), edges_list[edge_index][1]] + " desplazar e ir al estado " + edges_list[edge_index][1] + "\n"
+                    text += "    " + self.edges[str(i), edges_list[edge_index][1]] + self.traductions["tituloDesplazarEIr"] + edges_list[edge_index][1] + "\n"
                 edge_index += 1
 
             text += "\n" + text_reduce + "\n" + text_go_to + "\n"
-        # Estado 1
-        # 213 identifier: IDENTIFIER •
-        # $default  reduce usando la regla 213 (identifier)
 
         self.text_edit.setPlainText(text)
 
 
 class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
-    def __init__(self, accion, terminal_tokens, productions, type, parent=None):
+    def __init__(self, traductions, accion, terminal_tokens, productions, type, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.tabla_accion = accion
         self.terminal_tokens = list(terminal_tokens | {"$"})
         self.productions = productions
@@ -243,7 +243,7 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla acción " + self.type)
+        self.setWindowTitle(self.traductions["etiqTablaAccion"] + self.type)
         rows = sum(1 for key in self.tabla_accion.keys() if key[1] == "$")
         table_action = QTableWidget()
         table_action.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
@@ -258,18 +258,11 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
             item_text = ""
             for i, prod in enumerate(self.tabla_accion[row, col]):
                 if prod[:9] == "desplazar":
-                    item_text += "d" + prod[10:]
+                    item_text += "d " + prod[10:]
                 elif prod == "aceptar":
                     item_text += "acep"
                 elif prod[:7] == "reducir":
                     item_text += "r " + prod[8:]
-                    #parts = prod[8:].split("→")
-                    #if parts[1].strip() != "ε":
-                    #    item_text += "r" + str(self.productions_index[parts[0].strip()] +
-                    #             self.productions[parts[0].strip()].index(parts[1].strip().split()))
-                    #else:
-                    #    item_text += "r" + str(self.productions_index[parts[0].strip()] +
-                #                           self.productions[parts[0].strip()].index(None))
 
                 if i < len(self.tabla_accion[row, col]) - 1:
                     item_text += "\n"
@@ -297,15 +290,16 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
 
 
 class GoToTable(QMainWindow):
-    def __init__(self, ir_a, non_terminal_tokens, type, parent=None):
+    def __init__(self, traductions, ir_a, non_terminal_tokens, type, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.ir_a = ir_a
         self.non_terminals = list(non_terminal_tokens)
         self.type = type
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Tabla ir a " + self.type)
+        self.setWindowTitle(self.traductions["etiqTablaIrA"] + self.type)
         rows = sum(1 for key in self.ir_a.keys() if key[1] == "$")
         table_go_to = QTableWidget()
         table_go_to.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
@@ -330,61 +324,18 @@ class GoToTable(QMainWindow):
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
 
-
+#todo cambiar nombre ya que lo usan lr y lalr tambien
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
+    def __init__(self, traductions, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
         super().__init__(parent)
-        action_window = ActionTable(accion, terminal_tokens, productions, type, self)
+        action_window = ActionTable(traductions, accion, terminal_tokens, productions, type, self)
         action_window.show()
-        go_to_window = GoToTable(ir_a, non_terminal_tokens, type, self)
+        go_to_window = GoToTable(traductions, ir_a, non_terminal_tokens, type, self)
         go_to_window.show()
-        automaton_text_window = AutomatonText(nodes, edges, start_token, productions, type, self)
+        automaton_text_window = AutomatonText(traductions, nodes, edges, start_token, productions, type, self)
         automaton_text_window.show()
-        automaton_window = automaton.AutomatonWindow(nodes, edges, window, type, self)
+        automaton_window = automaton.AutomatonWindow(traductions, nodes, edges, window, type, self)
         automaton_window.show()
-        extended_grammar = ExpandedGrammar(start_token, non_terminal_tokens, productions, type, self)
+        extended_grammar = ExpandedGrammar(traductions, start_token, non_terminal_tokens, productions, type, self)
         extended_grammar.show()
-
-
-class SimulationTable(QMainWindow):
-    def __init__(self, dicc, parent=None):
-        super().__init__(parent)
-        self.dicc = dicc
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle("Tabla simulacion")
-        # Center window to the middle of the screen
-        center_window(self)
-
-        table = QTableWidget(len(self.dicc), 3)
-        table.setHorizontalHeaderLabels(["Pila", "Entrada", "Producción usada(salida)"])
-
-        for i, tuple in enumerate(self.dicc.values()):
-            stack = tuple[0]
-            item = QTableWidgetItem("".join(stack))
-            table.setItem(i, 0, item)
-
-            input = tuple[1]
-            item = QTableWidgetItem(input)
-            table.setItem(i, 1, item)
-
-            if len(tuple) == 2:
-                item = QTableWidgetItem("")
-                table.setItem(i, 2, item)
-            else:
-                production = tuple[2]
-                if production:
-                    if production[1][0] is None:
-                        item = str(production[0]) + "  → ε"
-                    else:
-                        item = "{} → {}".format(production[0], "  ".join(str(x) for x in production[1][0]))
-                else:
-                    item = ""
-
-                table.setItem(i, 2, QTableWidgetItem(item))
-
-        self.setCentralWidget(table)
-        self.resize(table.horizontalHeader().length() + 20,
-                    table.verticalHeader().length() + 60)
 

@@ -401,8 +401,9 @@ class GraphView(QGraphicsView):
                 self.scene().addItem(Edge(source, dest, label))
 
 class AutomatonWindow(QMainWindow):
-    def __init__(self, nodes, edges, window, type, parent=None):
+    def __init__(self, traductions, nodes, edges, window, type, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.nodes = nodes
         self.edges = edges
         self._window = window
@@ -410,7 +411,7 @@ class AutomatonWindow(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle('Automata gramática ' + self.type)
+        self.setWindowTitle(self.traductions["tituloAutomataGramatica"] + self.type)
         self.setGeometry(0, 0, 650, 550)
 
         self.graph = nx.DiGraph()
@@ -424,14 +425,3 @@ class AutomatonWindow(QMainWindow):
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
-
-if __name__ == "__main__":
-
-    app = QApplication(sys.argv)
-
-    # Create a networkx graph
-
-    widget = AutomatonWindow([[('E*', ['.', 'E']), ('E', ['.', 'E', "'+'", 'T']), ('E', ['.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ["'('", '.', 'E', "')'"]), ('E', ['.', 'E', "'+'", 'T']), ('E', ['.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ['id', '.'])], [('E', ['T', '.'])], [('E*', ['E', '.']), ('E', ['E', '.', "'+'", 'T'])], [('T', ["'('", 'E', '.', "')'"]), ('E', ['E', '.', "'+'", 'T'])], [('E', ['E', "'+'", '.', 'T']), ('T', ['.', "'('", 'E', "')'"]), ('T', ['.', 'id'])], [('T', ["'('", 'E', "')'", '.'])], [('E', ['E', "'+'", 'T', '.'])]], {('0', '3'): 'T', ('0', '4'): 'E', ('0', '1'): "'('", ('0', '2'): 'id', ('1', '3'): 'T', ('1', '5'): 'E', ('1', '1'): "'('", ('1', '2'): 'id', ('4', '6'): "'+'", ('5', '7'): "')'", ('5', '6'): "'+'", ('6', '8'): 'T', ('6', '1'): "'('", ('6', '2'): 'id'}, None)
-
-    widget.show()
-    sys.exit(app.exec())

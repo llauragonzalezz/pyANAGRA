@@ -229,58 +229,68 @@ def reorganizacion_producciones(produccion, tokens_no_terminales, producciones, 
         tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky+1)
     return tokens_no_terminales, producciones, indice_chomsky
 
-
-def agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones): #FIXME no funciono
+def eliminar_reglas_no_terminales(tokens_terminales, tokens_no_terminales, producciones):
     for token in tokens_terminales:
         nombre = "token_" + token
-        producciones[nombre] = [token]
+        producciones[nombre] = [[token]]
+        tokens_no_terminales.add(nombre)
 
-    indice_chomsky = 1
     for token in tokens_no_terminales:
         for produccion in producciones[token]:
-            for index, token in enumerate(produccion):
-                if token in tokens_no_terminales:
-                    produccion.replace(token, "token_"+token)
-            #if len(produccion) > 2:
-            #    indice_chomsky_aux = indice_chomsky
-           #     tokens_no_terminales, producciones, indice_chomsky = reorganizacion_producciones(produccion[1:], tokens_no_terminales, producciones, indice_chomsky)
-           #     produccion = produccion[0] + ["Chom_" + indice_chomsky_aux]
+            if produccion is not None and len(produccion) > 1:
+                for index, token_prod in enumerate(produccion):
+                    if token_prod in tokens_terminales:
+                        produccion[index] = "token_" + token_prod
 
     return tokens_no_terminales, producciones
 
 
-def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
-    print("añadimos un nuevo estado inicial:")
-    #new_start_token = token_inicial+"0"
-    #tokens_no_terminales.add(new_start_token)
-    #producciones[new_start_token] = [[token_inicial]]
+def agrupar_producciones_pares(tokens_no_terminales, producciones): #FIXME no funciono
+    chomsky_index = 1
+    nt_tokens = tokens_no_terminales.copy()
     for token in tokens_no_terminales:
+        for index, production in enumerate(producciones[token]):
+            print("produccion:", production)
+            if production is not None and len(production) > 2:
+                new_production = "Chom_"+str(chomsky_index)
+                print("new_production:", new_production)
+                chomsky_index += 1
+                nt_tokens.add(new_production)
+                print("cambio por :", [production[0], new_production])
+                producciones[token][index] = [production[0], new_production]
+                last_token = new_production
+                for token_prod in production[1:-2]:
+                    print("token_prod:", token_prod)
+                    new_production = "Chom_" + str(chomsky_index)
+                    chomsky_index += 1
+                    nt_tokens.add(new_production)
+                    print("añado:", [token_prod, new_production])
+                    producciones[last_token] = [[token_prod, new_production]]
+                    last_token = new_production
+                print("last token:", last_token)
+                print("añado al final:", [production[-2:]])
+                producciones[last_token] = [production[-2:]]
+
+    for token in nt_tokens:
         print(token)
         for prod in producciones[token]:
             print("\t", prod)
 
-    print("eliminamos las producciones epsilon")
+    return nt_tokens, producciones
+
+
+def forma_normal_chomsky(token_inicial, tokens_terminales, tokens_no_terminales, producciones):
     producciones = eliminacion_producciones_epsilon(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
 
-    for token in tokens_no_terminales:
-        print(token)
-        for prod in producciones[token]:
-            print("\t", prod)
-
-
-    print("Eleminamos las producciones unitarias:")
     producciones = eliminacion_producciones_unitarias(tokens_terminales, tokens_no_terminales, producciones)
 
-    for token in tokens_no_terminales:
-        print(token)
-        for prod in producciones[token]:
-            print("\t", prod)
+    tokens_no_terminales, producciones, _ = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
 
-    #tokens_no_terminales, producciones, _ = eliminar_recursividad_izquierda(token_inicial, tokens_no_terminales, producciones)
-    #tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_terminales, tokens_no_terminales, producciones)
-    for entrada in producciones.keys():
-        print("producciones[",entrada, "]:", producciones[entrada])
-    return token_inicial, tokens_terminales, tokens_no_terminales, producciones
+    tokens_no_terminales, producciones = eliminar_reglas_no_terminales(tokens_terminales, tokens_no_terminales, producciones)
+
+    tokens_no_terminales, producciones = agrupar_producciones_pares(tokens_no_terminales, producciones)
+
+    return tokens_no_terminales, producciones
 
 
 def factorizacion_izquierda(tokens_no_terminales, producciones):

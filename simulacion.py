@@ -6,14 +6,15 @@ import tree
 
 
 class VentanaSimulacion(QMainWindow):
-    def __init__(self, table, error, start_token, terminals, non_terminals, parent=None):
+    def __init__(self, traductions, table, error, start_token, terminals, non_terminals, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.table = table
         self.error = error
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
-        self.tree_window = tree.TreeWindow(start_token, self)
+        self.tree_window = tree.TreeWindow(traductions, start_token, self)
         self.tree_window.show()
         self.initUI()
 
@@ -25,7 +26,7 @@ class VentanaSimulacion(QMainWindow):
         y = screen.height() // 2 - window_size.height()
         self.move(x, y)
 
-        self.setWindowTitle('Ventana de simulación')
+        self.setWindowTitle(self.traductions["tituloVentanaSimulacion"])
         central_widget = QWidget(self)
         grid_layout = QGridLayout(central_widget)
 
@@ -44,11 +45,11 @@ class VentanaSimulacion(QMainWindow):
         self.text_input.setReadOnly(True)
         self.text_input.setPlainText(self.table[self.iter][1][:-1])  # Escribimos el fichero
 
-        # Crear las etiquetas y los QPlainTextEdit
-        label1 = QLabel("Secuencia de producciones")
-        label2 = QLabel("Pila")
-        label3 = QLabel("Entrada")
-        label4 = QLabel("Texto a analizar")
+        # Crear las etiquetas y los QPlainTextEdit self.traductions["tituloVentanaSimulacion"]
+        label1 = QLabel(self.traductions["etiqSeq"])
+        label2 = QLabel(self.traductions["etiqPila"])
+        label3 = QLabel(self.traductions["etiqEntrada"])
+        label4 = QLabel(self.traductions["etiqTextoAnalizar"])
 
         # Aling labels center
         label1.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
@@ -57,11 +58,11 @@ class VentanaSimulacion(QMainWindow):
         label4.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
 
         # Buttons
-        self.btn_retrocede = QPushButton("Retrocede")
+        self.btn_retrocede = QPushButton(self.traductions["etiqRetroceder"])
         self.btn_retrocede.clicked.connect(self.retroceder)
         self.btn_retrocede.setEnabled(False)
 
-        self.btn_avanza = QPushButton("Avanza")
+        self.btn_avanza = QPushButton(self.traductions["etiqAvanzar"])
         self.btn_avanza.clicked.connect(self.avanzar)
 
         # Crear un layout horizontal para los botones y agregarlos
@@ -121,26 +122,27 @@ class VentanaSimulacion(QMainWindow):
             self.btn_avanza.setEnabled(False)
 
             message_box = QMessageBox()
-            message_box.setWindowTitle("Mensaje")
+            message_box.setWindowTitle(self.traductions["mensaje"])
             if self.error:
                 message_box.setIcon(QMessageBox.Critical)
-                message_box.setText("La cadena NO es aceptada por la gramática")
+                message_box.setText(self.traductions["mensajeCadenaNoAceptada"])
             else:
-                message_box.setText("La cadena es aceptada por la gramática")
+                message_box.setText(self.traductions["mensajeCadenaAceptada"])
 
             message_box.exec_()
 
 
 
 class VentanaSimulacionSLR(QMainWindow):
-    def __init__(self, table, error, terminals, non_terminals, parent=None):
+    def __init__(self, traductions, table, error, terminals, non_terminals, parent=None):
         super().__init__(parent)
+        self.traductions = traductions
         self.table = table
         self.error = error
         self.terminals = terminals
         self.non_terminals = non_terminals
         self.iter = 0
-        self.tree_window = tree.TreeWindow(parent=self)
+        self.tree_window = tree.TreeWindow(traductions=traductions, parent=self)
         self.tree_window.show()
         self.initUI()
 
@@ -152,7 +154,7 @@ class VentanaSimulacionSLR(QMainWindow):
         y = screen.height() // 2 - window_size.height()
         self.move(x, y)
 
-        self.setWindowTitle('Ventana de simulación')
+        self.setWindowTitle(self.traductions["tituloVentanaSimulacion"])
         central_widget = QWidget(self)
         grid_layout = QGridLayout(central_widget)
 
@@ -172,10 +174,10 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_input.setPlainText(self.table[self.iter][1][:-1])  # Escribimos el fichero
 
         # Crear las etiquetas y los QPlainTextEdit
-        label1 = QLabel("Secuencia de producciones")
-        label2 = QLabel("Pila")
-        label3 = QLabel("Entrada")
-        label4 = QLabel("Texto a analizar")
+        label1 = QLabel(self.traductions["etiqSeq"])
+        label2 = QLabel(self.traductions["etiqPila"])
+        label3 = QLabel(self.traductions["etiqEntrada"])
+        label4 = QLabel(self.traductions["etiqTextoAnalizar"])
 
         # Aling labels center
         label1.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
@@ -184,11 +186,11 @@ class VentanaSimulacionSLR(QMainWindow):
         label4.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
 
         # Buttons
-        self.btn_retrocede = QPushButton("Retrocede")
+        self.btn_retrocede = QPushButton(self.traductions["etiqRetroceder"])
         self.btn_retrocede.clicked.connect(self.retroceder)
         self.btn_retrocede.setEnabled(False)
 
-        self.btn_avanza = QPushButton("Avanza")
+        self.btn_avanza = QPushButton(self.traductions["etiqAvanzar"])
         self.btn_avanza.clicked.connect(self.avanzar)
 
         # Crear un layout horizontal para los botones y agregarlos
@@ -256,11 +258,12 @@ class VentanaSimulacionSLR(QMainWindow):
             self.btn_avanza.setEnabled(False)
 
             message_box = QMessageBox()
-            message_box.setWindowTitle("Mensaje")
+            message_box.setWindowTitle(self.traductions["mensaje"])
             if self.error:
-                message_box.setText("La cadena NO es aceptada por la gramática")
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.setText(self.traductions["mensajeCadenaNoAceptada"])
             else:
-                message_box.setText("La cadena es aceptada por la gramática")
+                message_box.setText(self.traductions["mensajeCadenaAceptada"])
 
             message_box.exec_()
 
