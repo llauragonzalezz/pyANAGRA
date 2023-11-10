@@ -52,18 +52,14 @@ def calculate_first_set_sentence(elements, token, terminal_tokens, non_terminal_
         if element == token:
             return first_set_sentence # TODO COMPROBAR
 
-        print(index, element, first_set[element])
         first_set_sentence |= first_set[element].difference({None})
-        print(first_set[element])
         if None not in first_set[element]:
+            epsilon = False
             break
-        else:
-            epsilon &= None in first_set[element]
 
     if epsilon:
         first_set_sentence.add(None)
 
-    print(first_set_sentence)
     return first_set_sentence
 
 def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions):

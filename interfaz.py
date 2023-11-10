@@ -4,7 +4,6 @@ import os
 import re
 import sys
 
-from PyQt5.QtCore import QTranslator
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
@@ -86,20 +85,23 @@ class VentanaInputGramatica(QMainWindow):
         self.close()
         if self.type == "LL1":
             tabla, error = LL1.simulate(ventana.table_LL1, ventana.start_token, ventana.terminal_tokens, texto + " $")
-            nueva_ventana = sim.VentanaSimulacion(self.traductions, tabla, error, ventana.start_token, ventana.terminal_tokens,
-                                                  ventana.non_terminal_tokens, self)
+            nueva_ventana = sim.VentanaSimulacion(self.traductions, tabla, error, ventana.start_token,
+                                                  ventana.terminal_tokens, ventana.non_terminal_tokens, self)
 
         elif self.type == "SLR1":
             tabla, error = SLR.simulate(ventana.action_table_SLR, ventana.go_to_table_SLR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
+                                                     ventana.non_terminal_tokens, self)
 
         elif self.type == "LALR":
             tabla, error = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
+                                                     ventana.non_terminal_tokens, self)
 
         elif self.type == "LR":
             tabla, error = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
+                                                     ventana.non_terminal_tokens, self)
 
         nueva_ventana.show()
 
@@ -497,24 +499,24 @@ class MainWindow(QMainWindow):
         transformations_menu.addAction(left_factoring_action)
 
         eliminacion_no_derivables_action = QAction(self.traductions["submenuNoDerivables"], self)
-        eliminacion_no_derivables_action.triggered.connect(self.transformacion_no_derivables)
+        eliminacion_no_derivables_action.triggered.connect(self.removal_underivable_non_terminals)
         transformations_menu.addAction(eliminacion_no_derivables_action)
 
-        eliminating_left_recursion_action = QAction(self.traductions["submenuRecursividadIzq"], self)
-        eliminating_left_recursion_action.triggered.connect(self.eliminating_left_recursion)
-        transformations_menu.addAction(eliminating_left_recursion_action)
+        removal_left_recursion_action = QAction(self.traductions["submenuRecursividadIzq"], self)
+        removal_left_recursion_action.triggered.connect(self.removal_left_recursion)
+        transformations_menu.addAction(removal_left_recursion_action)
 
         eliminacion_no_alcanzables_action = QAction(self.traductions["submenuNoAccesibles"], self)
         eliminacion_no_alcanzables_action.triggered.connect(self.transformacion_no_alcanzables)
         transformations_menu.addAction(eliminacion_no_alcanzables_action)
 
-        eliminating_eps_prod_action = QAction(self.traductions["submenuAnulables"], self)
-        eliminating_eps_prod_action.triggered.connect(self.eliminating_eps_prod)
-        transformations_menu.addAction(eliminating_eps_prod_action)
+        removal_eps_prod_action = QAction(self.traductions["submenuAnulables"], self)
+        removal_eps_prod_action.triggered.connect(self.removal_eps_prod)
+        transformations_menu.addAction(removal_eps_prod_action)
 
-        eliminating_unit_prod_action = QAction(self.traductions["submenuCiclos"], self)
-        eliminating_unit_prod_action.triggered.connect(self.eliminating_unit_prod)
-        transformations_menu.addAction(eliminating_unit_prod_action)
+        removal_unit_prod_action = QAction(self.traductions["submenuCiclos"], self)
+        removal_unit_prod_action.triggered.connect(self.removal_unit_prod)
+        transformations_menu.addAction(removal_unit_prod_action)
 
         chomsky_normal_form_action = QAction(self.traductions["submenuFNChomsky"], self)
         chomsky_normal_form_action.triggered.connect(self.chomsky_normal_form)
@@ -826,74 +828,72 @@ class MainWindow(QMainWindow):
     def left_factoring(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFactorizacionIzq"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.factorizacion_izquierda(self.non_terminal_tokens.copy(),
-                                                                      copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.left_factoring(self.non_terminal_tokens.copy(),
+                                                             copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def transformacion_no_derivables(self):
+    def removal_underivable_non_terminals(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoDerivables"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.eliminacion_simolos_no_termibales(self.start_token,
+        non_terminal_tokens, productions = ot.removal_underivable_non_terminals(self.start_token,
                                                                                 self.terminal_tokens.copy(),
                                                                                 self.non_terminal_tokens.copy(),
                                                                                 copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
-        if self.start_token in productions:     # todo no se que habia que comprobar
-            QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada reconocen la palabra vacía")
+        if productions[self.start_token] == [[]]:     # fixme comentario
+            QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada generan el lenguaje vacio")
 
 
-    def eliminating_left_recursion(self):
+    def removal_left_recursion(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuRecursividadIzq"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions, _ = ot.eliminar_recursividad_izquierda(self.start_token,
-                                                                                 self.non_terminal_tokens.copy(),
-                                                                                 copy.deepcopy(self.productions))
+        non_terminal_tokens, productions, _ = ot.removal_left_recursion(self.start_token,
+                                                                        self.non_terminal_tokens.copy(),
+                                                                        copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def transformacion_no_alcanzables(self):  # TODO COMPROBAR SI EL LENGUAGE ES VACIO O NO JIIJIJ
+    def transformacion_no_alcanzables(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoAccesibles"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        terminal_tokens, non_terminal_tokens, productions = ot.eliminacion_simbolos_inutiles(self.start_token,
+        terminal_tokens, non_terminal_tokens, productions = ot.removal_unreachable_terminals(self.start_token,
                                                                                              self.terminal_tokens.copy(),
                                                                                              self.non_terminal_tokens.copy(),
                                                                                              copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def eliminating_eps_prod(self):
+    def removal_eps_prod(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuAnulables"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        productions = ot.eliminacion_producciones_epsilon(self.start_token, self.terminal_tokens,
-                                                          self.non_terminal_tokens.copy(),
-                                                          copy.deepcopy(self.productions))
+        productions = ot.removal_epsilon_productions(self.terminal_tokens, self.non_terminal_tokens.copy(),
+                                                      copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
-    def eliminating_unit_prod(self):
+    def removal_unit_prod(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuCiclos"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        productions = ot.eliminacion_producciones_unitarias(self.terminal_tokens.copy(),
-                                                            self.non_terminal_tokens.copy(),
-                                                            copy.deepcopy(self.productions))
+        productions = ot.removal_cycles(self.terminal_tokens.copy(), self.non_terminal_tokens.copy(),
+                                        copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
         new_window.show()
 
     def chomsky_normal_form(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFNChomsky"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.forma_normal_chomsky(self.start_token, self.terminal_tokens.copy(),
-                                              self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.chomsky_normal_form(self.start_token, self.terminal_tokens.copy(),
+                                                                  self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
     def greibach_normal_form(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFNGreibach"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.forma_normal_greibach(self.start_token, self.non_terminal_tokens.copy(),
-                                                                    copy.deepcopy(self.productions))
+        non_terminal_tokens, productions = ot.greibach_normal_form(self.start_token, self.non_terminal_tokens.copy(),
+                                                                   copy.deepcopy(self.productions))
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
