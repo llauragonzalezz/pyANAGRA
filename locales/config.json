@@ -1,0 +1,12 @@
+{
+    "default": 1,
+    "family": "Noto Sans",
+    "point_size": 10,
+    "bold": true,
+    "italic": false,
+    "underline": false,
+    "color": "#ffffff",
+    "tabs": 2,
+    "states": 30,
+    "english": 0
+}

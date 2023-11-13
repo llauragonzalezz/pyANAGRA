@@ -974,9 +974,9 @@ class MainWindow(QMainWindow):
 
             self.parse_SLR_input_action.setEnabled(is_slr1)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.action_table_SLR, self.go_to_table_SLR, self.conj_LR0, self.edges_SLR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, "SLR(1)", self)
+        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
+                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "SLR(1)", self)
 
 
     def parse_LALR_grammar(self):
@@ -1003,9 +1003,9 @@ class MainWindow(QMainWindow):
 
             self.parse_LALR_input_action.setEnabled(is_lalr)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.action_table_LALR, self.go_to_table_LALR, self.conj_LALR, self.edges_LALR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, "LALR", self)
+        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
+                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "LALR", self)
 
     def parse_LR_grammar(self):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
@@ -1028,9 +1028,9 @@ class MainWindow(QMainWindow):
 
             self.parse_LR_input_action.setEnabled(is_lr)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.action_table_LR, self.go_to_table_LR, self.conj_LR1, self.edges_LR,
-                                   self.terminal_tokens, self.non_terminal_tokens, self.token_inicial_ampliado,
-                                   self.producciones_ampliados, ventana, "LR",self)
+        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
+                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "LR", self)
 
     def parse_LL1_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLL1"])

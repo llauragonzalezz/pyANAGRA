@@ -326,7 +326,7 @@ class GoToTable(QMainWindow):
 
 #todo cambiar nombre ya que lo usan lr y lalr tambien
 class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, traductions, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
+    def __init__(self, traductions, max_lenght, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
         super().__init__(parent)
         action_window = ActionTable(traductions, accion, terminal_tokens, productions, type, self)
         action_window.show()
@@ -334,8 +334,9 @@ class AnalysisTableSLR1(QMainWindow):
         go_to_window.show()
         automaton_text_window = AutomatonText(traductions, nodes, edges, start_token, productions, type, self)
         automaton_text_window.show()
-        automaton_window = automaton.AutomatonWindow(traductions, nodes, edges, window, type, self)
-        automaton_window.show()
+        if len(nodes) <= max_lenght:
+            automaton_window = automaton.AutomatonWindow(traductions, nodes, edges, window, type, self)
+            automaton_window.show()
         extended_grammar = ExpandedGrammar(traductions, start_token, non_terminal_tokens, productions, type, self)
         extended_grammar.show()
 
