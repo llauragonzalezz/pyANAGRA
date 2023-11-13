@@ -332,7 +332,10 @@ def greibach_normal_form(start_token, non_terminal_tokens, productions):
                 productions_to_remove.append(production)
                 # Sustituimos en la producción el primer token por todas las productions que tiene
                 for production_to_remplace in productions[production[0]]:
-                    new_productions[token].append(production_to_remplace + production[1:])
+                    if production_to_remplace is None:
+                        new_productions[token].append(production[1:])
+                    else:
+                        new_productions[token].append(production_to_remplace + production[1:])
 
         for production in productions_to_remove:
             new_productions[token].remove(production)

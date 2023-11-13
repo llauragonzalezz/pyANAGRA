@@ -83,7 +83,7 @@ t_TYPE = r'%type'
 t_TOKEN = r'%token'
 t_EUNG = r'%%'
 t_UNION = r'%union'
-t_TOKENID = r'[a-zA-Z_][a-zA-Z_0-9]*'
+t_TOKENID = r'[a-zA-Z][a-zA-Z_0-9]*'
 t_LITERAL = r'''(?P<quote>['"]).*?(?P=quote)'''
 
 
@@ -104,8 +104,8 @@ t_ignore_comment = r'//.*'
 
 # Error handler for illegal characters
 def t_error(t):
-    raise SyntaxError(f'Illegal character {t.value[0]!r}')
-    # print(f'Illegal character {t.value[0]!r}')
+    raise SyntaxError(f'Illegal character {t.value[0]!r} at line {t.lineno!r} and column {t.lexpos[0]!r}')
+    # print(f'Illegal character {t.value[0]!r}') LINENO POS
     # print(t.value)
     # t.lexer.skip(1)
 

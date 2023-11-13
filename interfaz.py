@@ -4,7 +4,8 @@ import os
 import re
 import sys
 
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
     QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, QLineEdit
@@ -269,6 +270,7 @@ class MainWindow(QMainWindow):
         self.text_grammar = QPlainTextEdit(self)
         self.text_grammar.cursorPositionChanged.connect(self.update_row_column)
         self.setCentralWidget(self.text_grammar)
+        self.changes = 0
         self.configuration()
 
         # Barra modo, linea y columna del cursor
@@ -292,26 +294,28 @@ class MainWindow(QMainWindow):
         self.update_row_column()
 
     def configuration(self):
-        config_file = open('config.json')
+        config_file = open('locales/config.json')
         self.data = json.load(config_file)
 
-        font_text_grammar = QFont()
-        font_text_grammar.setFamily(self.data["family"])
-        font_text_grammar.setPointSize(self.data["point_size"])
-        font_text_grammar.setBold(self.data["bold"])
-        font_text_grammar.setItalic(self.data["italic"])
-        font_text_grammar.setUnderline(self.data["underline"])
-        color = self.data["color"]
-        self.text_grammar.setFont(font_text_grammar)
-        self.text_grammar.setStyleSheet(f"color: {color};")
+        if not self.data["default"]:
+            font_text_grammar = QFont()
+            font_text_grammar.setFamily(self.data["family"])
+            font_text_grammar.setPointSize(self.data["point_size"])
+            font_text_grammar.setBold(self.data["bold"])
+            font_text_grammar.setItalic(self.data["italic"])
+            font_text_grammar.setUnderline(self.data["underline"])
+            color = self.data["color"]
+            self.text_grammar.setFont(font_text_grammar)
+            self.text_grammar.setStyleSheet(f"color: {color};")
+
         self.tabs = self.data["tabs"]
         self.states = self.data["states"]
         self.english = self.data["english"]
 
         if self.data["english"]:
-            traduction_file = open('english.json')
+            traduction_file = open('locales/english.json')
         else:
-            traduction_file = open('spanish.json')
+            traduction_file = open('locales/spanish.json')
         self.traductions = json.load(traduction_file)
 
 
@@ -598,7 +602,7 @@ class MainWindow(QMainWindow):
         self.mode_label.setText(self.traductions["lectura"])
 
 
-    #def closeEvent(self, event): # FIXME
+    #def closeEvent(self, event): # FIXME descomentame por favor
     #    self.exit()
 
 
@@ -606,8 +610,8 @@ class MainWindow(QMainWindow):
         cursor = self.text_grammar.textCursor()
         row = cursor.blockNumber() + 1
         col = cursor.columnNumber() + 1
-        self.row_label.setText(self.traductions["linea"] + str(row))
-        self.column_label.setText(self.traductions["columna"] + str(col))
+        self.row_label.setText(self.traductions["linea"] + ": " + str(row))
+        self.column_label.setText(self.traductions["columna"] + ": " + str(col))
         # Remove highlight from extraSelections
         self.text_grammar.setExtraSelections([])
         self.text_grammar.setCurrentCharFormat(QTextCharFormat())
@@ -696,14 +700,15 @@ class MainWindow(QMainWindow):
             self.log_window.add_information(self.traductions["mensajeGuardado"] + file)
 
     def exit(self):
-        confirm_dialog = QMessageBox(self)
-        confirm_dialog.setWindowTitle(self.traductions["mensajeSalida1"])
-        confirm_dialog.setText(self.traductions["mensajeSalida1"] + self.traductions["mensajeSalida2"] )
-        confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+        if self.changes or not self.text_grammar.isReadOnly():
+            confirm_dialog = QMessageBox(self)
+            confirm_dialog.setWindowTitle(self.traductions["mensajeSalida1"])
+            confirm_dialog.setText(self.traductions["mensajeSalida1"] + self.traductions["mensajeSalida2"] )
+            confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
 
-        result = confirm_dialog.exec_()
-        if result == QMessageBox.Yes:
-            QApplication.quit()
+            result = confirm_dialog.exec_()
+            if result == QMessageBox.Yes:
+                QApplication.quit()
 
 
     def accept_grammar(self):
@@ -747,33 +752,63 @@ class MainWindow(QMainWindow):
 
 
     def show_information(self):  # TODO
+        mensaje = QMessageBox()
+        mensaje.setWindowTitle(self.traductions["tituloCambioIdioma"]) # fixme cual pongo
+
+        label_izquierda = QLabel(mensaje)
+        pixmap_izquierda = QPixmap("uz.png").scaled(150, 150, aspectRatioMode=Qt.KeepAspectRatio)
+        mensaje.setIconPixmap(pixmap_izquierda)
+
+        label_derecha = QLabel(mensaje)
+        pixmap_derecha = QPixmap("uz.png").scaled(150, 150, aspectRatioMode=Qt.KeepAspectRatio)
+        label_derecha.setPixmap(pixmap_derecha)
+
         message = self.traductions["mensajeAcercaDe1"] + "\n  " + \
                   self.traductions["mensajeAcercaDe2"] + "\n\n" + \
                   self.traductions["mensajeAcercaDe3"] + "\n" + \
                   self.traductions["mensajeAcercaDe4"]
-        QMessageBox.information(self, 'About...', message)
+        mensaje.setText(message)
+
+        # Agregar widgets directamente al contenedor principal del QMessageBox
+        mensaje.layout().addWidget(label_izquierda, 0, 0, alignment=Qt.AlignLeft)
+        mensaje.layout().addWidget(label_derecha, 1, 0, alignment=Qt.AlignLeft)
+
+        mensaje.exec_()
+
 
     def change_font(self):
         font, ok = QFontDialog.getFont()
         if ok:
             self.text_grammar.setFont(font)
-            self.family = font.family()
-            self.point_size = font.pointSize()
-            self.bold = font.bold()
-            self.italic = font.italic()
-            self.underline = font.underline()
+            self.changes = True
+            self.data["default"] = False
+            self.data["family"] = font.family()
+            self.data["point_size"] = font.pointSize()
+            self.data["bold"] = font.bold()
+            self.data["italic"] = font.italic()
+            self.data["underline"] = font.underline()
+
 
     def change_colour(self):
         color = QColorDialog.getColor()
         if color.isValid():
+            self.changes = True
             self.text_grammar.setStyleSheet(f"color: {color.name()};")
+            self.data["default"] = False
             self.data["color"] = color.name()
 
     def change_tab(self):  # TODO cambiar y ver qué hago
         spaces, ok = QInputDialog.getText(self, self.traductions["submenuTabulador"], self.traductions["mensajeTabulador"])
         if ok:
-            print(spaces)
-            self.data["tabls"] = spaces
+            if spaces.isdigit() and int(spaces) > 0:
+                self.tabs = int(spaces)
+                self.changes = True
+                self.data["tabs"] = spaces
+            else: # mensaje de error
+                error_message = QMessageBox()
+                error_message.setIcon(QMessageBox.Critical)
+                error_message.setWindowTitle("Error")
+                error_message.setText("error ") # FIXME poner mensaje de error
 
 
     def cambiar_idioma(self, english):
@@ -791,6 +826,7 @@ class MainWindow(QMainWindow):
                     self.english_checkbox.setChecked(False)
                     self.spanish_checkbox.setChecked(True)
 
+                self.changes = True
                 self.data["english"] = english
 
             else:
@@ -804,8 +840,9 @@ class MainWindow(QMainWindow):
             self.spanish_checkbox.setChecked(True)
 
     def save_configuration(self):
-        with open('config.json', 'w') as archivo:
-            json.dump(self.data, archivo, indent=4)
+        if self.changes:
+            with open('locales/config.json', 'w') as archivo:
+                json.dump(self.data, archivo, indent=4)
 
 
     def calcular_conjunto_primero(self):
@@ -843,7 +880,7 @@ class MainWindow(QMainWindow):
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
         if productions[self.start_token] == [[]]:     # fixme comentario
-            QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada generan el lenguaje vacio")
+            QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada generan el lenguaje vacío")
 
 
     def removal_left_recursion(self):
@@ -1016,32 +1053,50 @@ class MainWindow(QMainWindow):
         input_window.show()
 
     def show_grammar(self):
-        text = f"%start {self.start_token}\n%%\n\n"
+        pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
+        text = f"%start {self.start_token}\n"
+        non_character_terminal_tokens = set()
+        for token in self.terminal_tokens:
+            if not pattern.fullmatch(token):
+                non_character_terminal_tokens.add(token)
+
+        if non_character_terminal_tokens:
+            text += "%token " + " ".join(non_character_terminal_tokens) + "\n"
+
+        text += f"%%\n\n"
+
         for token, prods_token in self.productions.items():
             text += token + ": "
-            spacing = " " * (len(token) + 2) # por aqui tiene que ir el tabulador
+            spacing = "\t" * self.tabs
             for index, prod in enumerate(prods_token):
                 if prod is not None:
-                    for token_prod in prod:
-                        text += token_prod + "  "
+                    text += "  ".join(prod)
                 if index != len(self.productions[token]) - 1:
                     text += "\n" + spacing + "| "
             text += "\n;\n\n"
-        text += "%%"
         self.text_grammar.setPlainText(text)
 
     def show_compact_grammar(self):
-        text = f"%start {self.start_token}\n%%\n"
+        pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
+        text = f"%start {self.start_token}\n"
+        non_character_terminal_tokens = set()
+        for token in self.terminal_tokens:
+            if not pattern.fullmatch(token):
+                non_character_terminal_tokens.add(token)
+
+        if non_character_terminal_tokens:
+            text += "%token " + " ".join(non_character_terminal_tokens) + "\n"
+
+        text += f"%%\n\n"
         for token, prods_token in self.productions.items():
             text += token + ": "
             for index, prod in enumerate(prods_token):
                 if prod is not None:
-                    for token_prod in prod:
-                        text += token_prod + "  "
+                    text += "  ".join(prod)
                 if index != len(self.productions[token]) - 1:
                     text += "| "
             text += ";\n"
-        text += "%%"
+
         self.text_grammar.setPlainText(text)
 
 

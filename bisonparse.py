@@ -17,6 +17,7 @@ tokens_terminales = set()
 tokens_no_terminales = set()
 producciones = dict()
 
+tokens_aux = set()
 
 def p_prec(p):
     ''' prec : PREC TOKENID
@@ -114,7 +115,7 @@ def p_produccion(p):
     ''' produccion    : TOKENID ':' listaExpresiones ';' '''
     p[0] = (p[1], p[3])
 
-    if p[1] in producciones :
+    if p[1] in producciones:
         for prod in p[3]:
             if prod not in producciones[p[1]]:
                 producciones[p[1]].append(prod)
@@ -128,10 +129,11 @@ def p_produccion(p):
     for produccion in p[3]:
         if produccion is not None:
             for token in produccion:
-                if pattern.fullmatch(token) :           # es un terminal
+                tokens_aux.add(token)
+                if pattern.fullmatch(token):           # es un char o string
                     tokens_terminales.add(token)
-                elif (not pattern.fullmatch(token)) and token not in tokens_terminales:  # es un no terminal
-                    tokens_no_terminales.add(token)
+                #elif (not pattern.fullmatch(token)) and token not in tokens_terminales:  # es un no terminal
+                #    tokens_no_terminales.add(token)
 
 
 def p_listaProducciones(p):
@@ -153,10 +155,15 @@ def p_reglas(p):
 def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
+
+    if tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales) != set():
+        print("token ilegales: ", tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales))
+
     p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
 
 
-def p_error(p):
-    raise SyntaxError(f'Syntax error at {p.value!r}')
+def p_error(p): #fixme
+    raise SyntaxError(f'Syntax error at {p}')
+
 
 yacc.yacc()

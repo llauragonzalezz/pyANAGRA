@@ -65,7 +65,6 @@ def simulate(table, start_token, terminals, input):
 
     x = stack[len(stack)-1]
     while x[0] != "$":
-        print(x[0])
         if x[0] in terminals or x[0] == "$":
             if x[0] == sig_tok:
                 # Copiamos el iterador original
