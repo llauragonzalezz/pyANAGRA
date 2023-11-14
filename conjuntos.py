@@ -93,6 +93,22 @@ def calculate_first_set(terminal_tokens, non_terminal_tokens, productions):
 
 
 def calculate_first_set_sentence_fs(elements, first_set):
+    """
+        Calculates the 'first' set of a given sentence form in the context of a grammar.
+
+        Parameters
+        ----------
+        elements: set
+            A set containing the tokens of the sentence form.
+
+        first_set : dict
+            A dictionary containing the 'first' of the grammar.
+
+        Returns
+        -------
+        set
+            A set containing the 'first' set of the given sentence form.
+        """
     first_set_sentence = set()
     epsilon = True
     # Iterate over elements of a given sentence form
