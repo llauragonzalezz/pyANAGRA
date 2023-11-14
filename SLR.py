@@ -1,5 +1,9 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import itertools
-import re
 import conjuntos
 
 
@@ -60,9 +64,9 @@ def conj_LR0(start_token, non_terminal_tokens, productions):
     return new
 
 
-def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productions):
+def action_table(C, start_token, terminal_tokens, non_terminal_tokens, productions, follow_set):
     action = dict()
-    follow_set = conjuntos.calculate_follow_set(start_token, terminal_tokens, non_terminal_tokens, productions)
+    #follow_set = conjuntos.calculate_follow_set(start_token[:-1], terminal_tokens, non_terminal_tokens, productions)
 
     for i in range(len(C)):
         for token, prod in C[i]:

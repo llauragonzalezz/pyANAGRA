@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import copy
 import json
 import os
@@ -82,29 +87,29 @@ class VentanaInputGramatica(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def accept(self):
-        texto = self.text_edit.toPlainText()
+        text = self.text_edit.toPlainText()
         self.close()
         if self.type == "LL1":
-            tabla, error = LL1.simulate(ventana.table_LL1, ventana.start_token, ventana.terminal_tokens, texto + " $")
-            nueva_ventana = sim.VentanaSimulacion(self.traductions, tabla, error, ventana.start_token,
-                                                  ventana.terminal_tokens, ventana.non_terminal_tokens, self)
+            table, error = LL1.simulate(main_window.table_LL1, main_window.start_token, main_window.terminal_tokens, text + " $")
+            new_window = sim.VentanaSimulacion(self.traductions, table, error, main_window.start_token,
+                                               main_window.terminal_tokens, main_window.non_terminal_tokens, self)
 
         elif self.type == "SLR1":
-            tabla, error = SLR.simulate(ventana.action_table_SLR, ventana.go_to_table_SLR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
-                                                     ventana.non_terminal_tokens, self)
+            table, error = SLR.simulate(main_window.action_table_SLR, main_window.go_to_table_SLR, text + " $")
+            new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, main_window.terminal_tokens,
+                                                  main_window.non_terminal_tokens, self)
 
         elif self.type == "LALR":
-            tabla, error = SLR.simulate(ventana.action_table_LALR, ventana.go_to_table_LALR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
-                                                     ventana.non_terminal_tokens, self)
+            table, error = SLR.simulate(main_window.action_table_LALR, main_window.go_to_table_LALR, text + " $")
+            new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, main_window.terminal_tokens,
+                                                  main_window.non_terminal_tokens, self)
 
         elif self.type == "LR":
-            tabla, error = SLR.simulate(ventana.action_table_LR, ventana.go_to_table_LR, texto + " $")
-            nueva_ventana = sim.VentanaSimulacionSLR(self.traductions, tabla, error, ventana.terminal_tokens,
-                                                     ventana.non_terminal_tokens, self)
+            table, error = SLR.simulate(main_window.action_table_LR, main_window.go_to_table_LR, text + " $")
+            new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, main_window.terminal_tokens,
+                                                  main_window.non_terminal_tokens, self)
 
-        nueva_ventana.show()
+        new_window.show()
 
 
 class FindWindow(QMainWindow):
@@ -130,7 +135,7 @@ class FindWindow(QMainWindow):
 
     def accept(self):
         search_word = self.text_input.text()
-        text = ventana.text_grammar.toPlainText()
+        text = main_window.text_grammar.toPlainText()
         if search_word in text:
             options = QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively
             cursor = QTextCursor(self.text_grammar.document())
@@ -179,19 +184,19 @@ class RemplaceWindow(QMainWindow):
     def accept(self):
         old = self.text_input1.text()
         new = self.text_input2.text()
-        text = ventana.text_grammar.toPlainText()
+        text = main_window.text_grammar.toPlainText()
 
         if old in text:
             options = QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively
-            cursor = QTextCursor(ventana.text_grammar.document())
+            cursor = QTextCursor(main_window.text_grammar.document())
             selections = []
 
             while not cursor.isNull():
-                cursor = ventana.text_grammar.document().find(old, cursor, options)
+                cursor = main_window.text_grammar.document().find(old, cursor, options)
                 if not cursor.isNull():
                     cursor.insertText(new)
 
-            ventana.text_grammar.setExtraSelections(selections)
+            main_window.text_grammar.setExtraSelections(selections)
             self.close()
 
         elif old: # fixme igual que en buscar
@@ -225,16 +230,39 @@ class FirstSetSentenceWindow(QMainWindow):
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
-    def accept(self):
+    def accept(self): #
         elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
-        first_set_sentence = conj.calculate_first_set_sentence(elements, ventana.terminal_tokens,
-                                                               ventana.non_terminal_tokens, ventana.productions)
-        text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
-        self.text_input2.setText(text)
+        if set(elements).difference(main_window.non_terminal_tokens).difference(main_window.terminal_tokens) != set():
+            print("errorcito mor")
+        else:
+            first_set_sentence = conj.calculate_first_set_sentence(elements, main_window.terminal_tokens,
+                                                                   main_window.non_terminal_tokens, main_window.productions)
+            text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
+            self.text_input2.setText(text)
 
 
 class MainWindow(QMainWindow):
+    """
+       A class used to represent an Animal
 
+       ...
+
+       Attributes
+       ----------
+       says_str : str
+           a formatted string to print out what the animal says
+       name : str
+           the name of the animal
+       sound : str
+           the sound that the animal makes
+       num_legs : int
+           the number of legs the animal has (default 4)
+
+       Methods
+       -------
+       says(sound=None)
+           Prints the animals name and what sound it makes
+       """
     def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
         super().__init__(parent)
 
@@ -319,119 +347,128 @@ class MainWindow(QMainWindow):
         self.traductions = json.load(traduction_file)
 
 
-    def pestania_gramatica(self, gramatica=False):
-        grammar_menu = QMenu(self.traductions["menuGramatica"], self)
-        self.menubar.addMenu(grammar_menu)
+    def grammar_menu(self, edit_mode=False):
+        grammar_qmenu = QMenu(self.traductions["menuGramatica"], self)
+        self.menubar.addMenu(grammar_qmenu)
 
         # Options for grammar menu
         new_action = QAction(self.traductions["submenuNuevo"], self)
         new_action.setShortcut(QKeySequence.New)
         new_action.triggered.connect(self.new_app)
-        grammar_menu.addAction(new_action)
+        grammar_qmenu.addAction(new_action)
 
         open_action = QAction(self.traductions["submenuAbrir"], self)
         open_action.setShortcut(QKeySequence.Open)
-        open_action.setEnabled(not gramatica)  # Enable/Disable action
+        open_action.setEnabled(not edit_mode)  # Enable/Disable action
         open_action.triggered.connect(self.open_file)
-        grammar_menu.addAction(open_action)
+        grammar_qmenu.addAction(open_action)
 
         edit_action = QAction(self.traductions["submenuEditar"], self)
-        edit_action.setEnabled(gramatica)  # Enable/Disable action
+        edit_action.setEnabled(edit_mode)  # Enable/Disable action
         edit_action.triggered.connect(self.edit_file)
-        grammar_menu.addAction(edit_action)
+        grammar_qmenu.addAction(edit_action)
 
         save_action = QAction(self.traductions["submenuGuardar"], self)
         save_action.setShortcut(QKeySequence.Save)
-        save_action.setEnabled(gramatica)  # Enable/Disable action
+        save_action.setEnabled(edit_mode)  # Enable/Disable action
         save_action.triggered.connect(self.save_file)
-        grammar_menu.addAction(save_action)
+        grammar_qmenu.addAction(save_action)
 
         save_as_action = QAction(self.traductions["submenuGuardarComo"], self)
         save_as_action.setShortcut(QKeySequence.SaveAs)
         save_as_action.triggered.connect(self.save_file_as)
-        grammar_menu.addAction(save_as_action)
+        grammar_qmenu.addAction(save_as_action)
 
-        grammar_menu.addSeparator()
+        grammar_qmenu.addSeparator()
 
         exit_action = QAction(self.traductions["submenuSalir"], self)
         exit_action.setShortcut(QKeySequence.Quit)
         exit_action.triggered.connect(self.exit)
-        grammar_menu.addAction(exit_action)
+        grammar_qmenu.addAction(exit_action)
 
-    def pestania_editar(self, gramatica=False):
-        edit_menu = QMenu(self.traductions["menuEdicion"], self)
-        self.menubar.addMenu(edit_menu)
+    def edit_menu(self, edit_mode=False):
+        edit_qmenu = QMenu(self.traductions["menuEdicion"], self)
+        self.menubar.addMenu(edit_qmenu)
 
         # Opciones de menú al menú editar
         cut_action = QAction(self.traductions["submenuCortar"], self)
         cut_action.setShortcut(QKeySequence.Cut)
         cut_action.triggered.connect(self.cut)
-        edit_menu.addAction(cut_action)
+        edit_qmenu.addAction(cut_action)
 
         copy_action = QAction(self.traductions["submenuCopiar"], self)
         copy_action.setShortcut(QKeySequence.Copy)
         copy_action.triggered.connect(self.copy)
-        edit_menu.addAction(copy_action)
+        edit_qmenu.addAction(copy_action)
 
         paste_action = QAction(self.traductions["submenuPegar"], self)
         paste_action.setShortcut(QKeySequence.Paste)
         paste_action.triggered.connect(self.paste)
-        edit_menu.addAction(paste_action)
+        edit_qmenu.addAction(paste_action)
 
         delete_action = QAction(self.traductions["submenuBorrar"], self)
         delete_action.triggered.connect(self.delete)
-        edit_menu.addAction(delete_action)
+        edit_qmenu.addAction(delete_action)
 
         seleccionar_todo_action = QAction(self.traductions["submenuSeleccionarTodo"], self)
         seleccionar_todo_action.setShortcut(QKeySequence.SelectAll)
         seleccionar_todo_action.triggered.connect(self.select_all)
-        edit_menu.addAction(seleccionar_todo_action)
+        edit_qmenu.addAction(seleccionar_todo_action)
 
-        edit_menu.addSeparator()  # Línea de separación
+        edit_qmenu.addSeparator()  # Línea de separación
 
         accept_grammar_action = QAction(self.traductions["submenuAceptarGramatica"], self)
         accept_grammar_action.triggered.connect(self.accept_grammar)
-        accept_grammar_action.setEnabled(not gramatica)  # Enable/Disable action
-        edit_menu.addAction(accept_grammar_action)
+        accept_grammar_action.setEnabled(not edit_mode)  # Enable/Disable action
+        edit_qmenu.addAction(accept_grammar_action)
 
-    def pestania_buscar(self):
-        find_menu = QMenu(self.traductions["menuBuscar"], self)
-        self.menubar.addMenu(find_menu)
+    def find_menu(self):
+        find_qmenu = QMenu(self.traductions["menuBuscar"], self)
+        self.menubar.addMenu(find_qmenu)
 
         # Options Find menu
         find_action = QAction(self.traductions["menuBuscar"], self)
         find_action.setShortcut(QKeySequence.Find)
         find_action.triggered.connect(self.find)
-        find_menu.addAction(find_action)
+        find_qmenu.addAction(find_action)
 
         remplace_action = QAction(self.traductions["submenuReemplazar"], self)
         remplace_action.setShortcut(QKeySequence.Replace)
         remplace_action.triggered.connect(self.remplace)
-        find_menu.addAction(remplace_action)
+        find_qmenu.addAction(remplace_action)
 
-    def pestania_texto(self, gramatica=False):
-        text_menu = QMenu(self.traductions["menuTexto"], self)
-        self.menubar.addMenu(text_menu)
+    def text_menu(self, gramatica=False):
+        text_qmenu = QMenu(self.traductions["menuTexto"], self)
+        self.menubar.addMenu(text_qmenu)
 
         # Opciones de menú al menú text
         font_action = QAction(self.traductions["submenuFuente"], self)
         font_action.triggered.connect(self.change_font)
+        text_qmenu.addAction(font_action)
 
         color_action = QAction(self.traductions["submenuColor"], self)
         color_action.triggered.connect(self.change_colour)
+        text_qmenu.addAction(color_action)
 
         tab_action = QAction(self.traductions["submenuTabulador"], self)
         tab_action.triggered.connect(self.change_tab)
+        text_qmenu.addAction(tab_action)
+
+        text_qmenu.addSeparator()  # Línea de separación
 
         extended_action = QAction(self.traductions["submenuExtendido"], self)
         extended_action.triggered.connect(self.show_grammar)
         extended_action.setEnabled(gramatica)  # Enable/Disable action
+        text_qmenu.addAction(extended_action)
 
         compact_action = QAction(self.traductions["submenuCompacto"], self)
         compact_action.triggered.connect(self.show_compact_grammar)
         compact_action.setEnabled(gramatica)  # Enable/Disable action
+        text_qmenu.addAction(compact_action)
 
-        idiomaSubmenu = QMenu(self.traductions["submenuIdioma"], self)
+        text_qmenu.addSeparator()  # Línea de separación
+
+        languaje_menu = QMenu(self.traductions["submenuIdioma"], self)
 
         self.english_checkbox = QCheckBox("English", self)
         self.english_checkbox.setChecked(self.english)
@@ -445,158 +482,148 @@ class MainWindow(QMainWindow):
         widgetCastellano = QWidgetAction(self)
         widgetCastellano.setDefaultWidget(self.spanish_checkbox)
 
-        idiomaSubmenu.setContentsMargins(15, 0, 0, 0)
-        idiomaSubmenu.addAction(widgetEnglish)
-        idiomaSubmenu.addAction(widgetCastellano)
-        guardarPreferenciasAction = QAction(self.traductions["submenuGuardarPreferenc"], self) # json
-        guardarPreferenciasAction.triggered.connect(self.save_configuration)
+        languaje_menu.setContentsMargins(15, 0, 0, 0)
+        languaje_menu.addAction(widgetEnglish)
+        languaje_menu.addAction(widgetCastellano)
+        text_qmenu.addMenu(languaje_menu)
 
-        # Agregar las opciones de menú al menú text
-        text_menu.addAction(font_action)
-        text_menu.addAction(color_action)
-        text_menu.addAction(tab_action)
-        text_menu.addSeparator()  # Línea de separación
-        text_menu.addAction(extended_action)
-        text_menu.addAction(compact_action)
-        text_menu.addSeparator()  # Línea de separación
-        text_menu.addMenu(idiomaSubmenu)
-        text_menu.addAction(guardarPreferenciasAction)
+        save_preferences_action = QAction(self.traductions["submenuGuardarPreferenc"], self) # json
+        save_preferences_action.triggered.connect(self.save_preferences)
+        text_qmenu.addAction(save_preferences_action)
 
-    def pestania_ayuda(self):
-        help_menu = QMenu(self.traductions["menuAyuda"], self)
-        self.menubar.addMenu(help_menu)
+    def help_menu(self):
+        help_qmenu = QMenu(self.traductions["menuAyuda"], self)
+        self.menubar.addMenu(help_qmenu)
 
         # Opciones de menú al menú ayuda
         information_action = QAction(self.traductions["submenuInformacion"], self)
         information_action.triggered.connect(self.show_log)
-        help_menu.addAction(information_action)
+        help_qmenu.addAction(information_action)
 
         about_action = QAction(self.traductions["submenuAcercaDe"], self)
         about_action.triggered.connect(self.show_information) # TODO poner enlace al repositiorio git
-        help_menu.addAction(about_action)
+        help_qmenu.addAction(about_action)
 
-    def pestania_herramientas(self):
-        tools_menu = QMenu(self.traductions["menuHerramientas"], self)
-        self.menubar.addMenu(tools_menu)
+    def tools_menu(self):
+        tools_qmenu = QMenu(self.traductions["menuHerramientas"], self)
+        self.menubar.addMenu(tools_qmenu)
 
         # Opciones de menú al menú herramientas
         first_set_action = QAction(self.traductions["submenuConjuntoPRI"], self)
         first_set_action.triggered.connect(self.calcular_conjunto_primero)
+        tools_qmenu.addAction(first_set_action)
 
         follow_set_action = QAction(self.traductions["submenuConjuntoSIG"], self)
         follow_set_action.triggered.connect(self.calcular_conjunto_siguiente)
+        tools_qmenu.addAction(follow_set_action)
 
-        conjunto_primero_frase_action = QAction(self.traductions["submenuPRIFormaFrase"], self)  # TODO: mirar que es
-        conjunto_primero_frase_action.triggered.connect(self.calcular_conjunto_primero_frase)
+        first_set_sentence_action = QAction(self.traductions["submenuPRIFormaFrase"], self)  # TODO: mirar que es
+        first_set_sentence_action.triggered.connect(self.calcular_conjunto_primero_frase)
+        tools_qmenu.addAction(first_set_sentence_action)
 
-        # Agregar las opciones de menú al menú herramientas
-        tools_menu.addAction(first_set_action)
-        tools_menu.addAction(follow_set_action)
-        tools_menu.addAction(conjunto_primero_frase_action)
-
-    def pestania_transformaciones(self):
-        transformations_menu = QMenu(self.traductions["menuTransformaciones"], self)
-        self.menubar.addMenu(transformations_menu)
+    def transformations_menu(self):
+        transformations_qmenu = QMenu(self.traductions["menuTransformaciones"], self)
+        self.menubar.addMenu(transformations_qmenu)
 
         left_factoring_action = QAction(self.traductions["submenuFactorizacionIzq"], self)
         left_factoring_action.triggered.connect(self.left_factoring)
-        transformations_menu.addAction(left_factoring_action)
+        transformations_qmenu.addAction(left_factoring_action)
 
-        eliminacion_no_derivables_action = QAction(self.traductions["submenuNoDerivables"], self)
-        eliminacion_no_derivables_action.triggered.connect(self.removal_underivable_non_terminals)
-        transformations_menu.addAction(eliminacion_no_derivables_action)
+        removal_underivable_non_terminals_action = QAction(self.traductions["submenuNoDerivables"], self)
+        removal_underivable_non_terminals_action.triggered.connect(self.removal_underivable_non_terminals)
+        transformations_qmenu.addAction(removal_underivable_non_terminals_action)
 
         removal_left_recursion_action = QAction(self.traductions["submenuRecursividadIzq"], self)
         removal_left_recursion_action.triggered.connect(self.removal_left_recursion)
-        transformations_menu.addAction(removal_left_recursion_action)
+        transformations_qmenu.addAction(removal_left_recursion_action)
 
-        eliminacion_no_alcanzables_action = QAction(self.traductions["submenuNoAccesibles"], self)
-        eliminacion_no_alcanzables_action.triggered.connect(self.transformacion_no_alcanzables)
-        transformations_menu.addAction(eliminacion_no_alcanzables_action)
+        removal_unreachable_terminals_action = QAction(self.traductions["submenuNoAccesibles"], self)
+        removal_unreachable_terminals_action.triggered.connect(self.removal_unreachable_terminals)
+        transformations_qmenu.addAction(removal_unreachable_terminals_action)
 
         removal_eps_prod_action = QAction(self.traductions["submenuAnulables"], self)
         removal_eps_prod_action.triggered.connect(self.removal_eps_prod)
-        transformations_menu.addAction(removal_eps_prod_action)
+        transformations_qmenu.addAction(removal_eps_prod_action)
 
         removal_unit_prod_action = QAction(self.traductions["submenuCiclos"], self)
         removal_unit_prod_action.triggered.connect(self.removal_unit_prod)
-        transformations_menu.addAction(removal_unit_prod_action)
+        transformations_qmenu.addAction(removal_unit_prod_action)
 
         chomsky_normal_form_action = QAction(self.traductions["submenuFNChomsky"], self)
         chomsky_normal_form_action.triggered.connect(self.chomsky_normal_form)
-        transformations_menu.addAction(chomsky_normal_form_action)
+        transformations_qmenu.addAction(chomsky_normal_form_action)
 
         greibach_normal_form_action = QAction(self.traductions["submenuFNGreibach"], self)
         greibach_normal_form_action.triggered.connect(self.greibach_normal_form)
-        transformations_menu.addAction(greibach_normal_form_action)
+        transformations_qmenu.addAction(greibach_normal_form_action)
 
-    def pestania_parse(self):
-        parse_menu = QMenu(self.traductions["menuAnalizar"], self)
-        self.menubar.addMenu(parse_menu)
+    def parse_menu(self):
+        parse_qmenu = QMenu(self.traductions["menuAnalizar"], self)
+        self.menubar.addMenu(parse_qmenu)
 
         parse_LL1_grammar_action = QAction(self.traductions["submenuAnalizarLL1"], self)
         parse_LL1_grammar_action.triggered.connect(self.parse_LL1_grammar)
-        parse_menu.addAction(parse_LL1_grammar_action)
+        parse_qmenu.addAction(parse_LL1_grammar_action)
 
         parse_SLR_grammar_action = QAction(self.traductions["submenuAnalizarSLR1"], self)
         parse_SLR_grammar_action.triggered.connect(self.parse_SLR_grammar)
-        parse_menu.addAction(parse_SLR_grammar_action)
+        parse_qmenu.addAction(parse_SLR_grammar_action)
 
         parse_LALR_grammar_action = QAction(self.traductions["submenuAnalizarLALR1"], self)
         parse_LALR_grammar_action.triggered.connect(self.parse_LALR_grammar)
-        parse_menu.addAction(parse_LALR_grammar_action)
+        parse_qmenu.addAction(parse_LALR_grammar_action)
 
         parse_LR_grammar_action = QAction(self.traductions["submenuAnalizarLR1"], self)
         parse_LR_grammar_action.triggered.connect(self.parse_LR_grammar)
-        parse_menu.addAction(parse_LR_grammar_action)
+        parse_qmenu.addAction(parse_LR_grammar_action)
 
 
-    def pestania_simular(self):
-        simular_menu = QMenu(self.traductions["menuSimular"], self)
-        self.menubar.addMenu(simular_menu)
+    def simulate_menu(self):
+        simulate_qmenu = QMenu(self.traductions["menuSimular"], self)
+        self.menubar.addMenu(simulate_qmenu)
 
         self.parse_LL1_input_action = QAction(self.traductions["submenuSimularLL1"], self)
         self.parse_LL1_input_action.triggered.connect(self.parse_LL1_input)
         self.parse_LL1_input_action.setEnabled(False)  # Enable/Disable action
-        simular_menu.addAction(self.parse_LL1_input_action)
+        simulate_qmenu.addAction(self.parse_LL1_input_action)
 
         self.parse_SLR_input_action = QAction(self.traductions["submenuSimularSLR1"], self)
         self.parse_SLR_input_action.triggered.connect(self.parse_SLR_input)
         self.parse_SLR_input_action.setEnabled(False)  # Enable/Disable action
-        simular_menu.addAction(self.parse_SLR_input_action)
+        simulate_qmenu.addAction(self.parse_SLR_input_action)
 
         self.parse_LALR_input_action = QAction(self.traductions["submenuSimularLALR1"], self)
         self.parse_LALR_input_action.triggered.connect(self.parse_LALR_input)
         self.parse_LALR_input_action.setEnabled(False)  # Enable/Disable action
-        simular_menu.addAction(self.parse_LALR_input_action)
+        simulate_qmenu.addAction(self.parse_LALR_input_action)
 
         self.parse_LR_input_action = QAction(self.traductions["submenuSimularLR1"], self)
         self.parse_LR_input_action.triggered.connect(self.parse_LR_input)
         self.parse_LR_input_action.setEnabled(False)  # Enable/Disable action
-        simular_menu.addAction(self.parse_LR_input_action)
+        simulate_qmenu.addAction(self.parse_LR_input_action)
 
 
     def menu_inicial(self):
-        self.pestania_gramatica()
-        self.pestania_editar()
-        self.pestania_buscar()
-        self.pestania_texto()
-        self.pestania_ayuda()
+        self.grammar_menu()
+        self.edit_menu()
+        self.find_menu()
+        self.text_menu()
+        self.help_menu()
 
         self.text_grammar.setReadOnly(False)  # Enable writting mode
         self.mode_label.setText(self.traductions["escritura"])
 
     def menu_gramaticas(self):
         self.menubar.clear()
-        self.pestania_gramatica(True)
-        self.pestania_buscar()
-        self.pestania_texto(True)
+        self.grammar_menu(True)
+        self.find_menu()
+        self.text_menu(True)
 
-        self.pestania_herramientas()
-        self.pestania_transformaciones()
-        self.pestania_parse()
-        self.pestania_simular()
-        self.pestania_ayuda()
+        self.tools_menu()
+        self.transformations_menu()
+        self.parse_menu()
+        self.simulate_menu()
+        self.help_menu()
 
         self.text_grammar.setReadOnly(True)  # Disable writting mode
         self.mode_label.setText(self.traductions["lectura"])
@@ -612,6 +639,7 @@ class MainWindow(QMainWindow):
         col = cursor.columnNumber() + 1
         self.row_label.setText(self.traductions["linea"] + ": " + str(row))
         self.column_label.setText(self.traductions["columna"] + ": " + str(col))
+
         # Remove highlight from extraSelections
         self.text_grammar.setExtraSelections([])
         self.text_grammar.setCurrentCharFormat(QTextCharFormat())
@@ -839,10 +867,10 @@ class MainWindow(QMainWindow):
         else:
             self.spanish_checkbox.setChecked(True)
 
-    def save_configuration(self):
+    def save_preferences(self):
         if self.changes:
-            with open('locales/config.json', 'w') as archivo:
-                json.dump(self.data, archivo, indent=4)
+            with open('locales/config.json', 'w') as file:
+                json.dump(self.data, file, indent=4)
 
 
     def calcular_conjunto_primero(self):
@@ -892,7 +920,7 @@ class MainWindow(QMainWindow):
         new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
         new_window.show()
 
-    def transformacion_no_alcanzables(self):
+    def removal_unreachable_terminals(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoAccesibles"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
         terminal_tokens, non_terminal_tokens, productions = ot.removal_unreachable_terminals(self.start_token,
@@ -957,10 +985,12 @@ class MainWindow(QMainWindow):
     def parse_SLR_grammar(self):
         if not (self.conj_LR0 and self.action_table_SLR and self.go_to_table_SLR and self.edges_SLR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoSLR1"])
-            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            self.conj_LR0 = SLR.conj_LR0(self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-            self.action_table_SLR = SLR.action_table(self.conj_LR0, self.token_inicial_ampliado, self.terminal_tokens, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
-            self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.tokens_no_terminales_ampliados, self.producciones_ampliados)
+            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+            self.conj_LR0 = SLR.conj_LR0(self.ext_initial_token, self.ext_non_terminals, self.ext_productions)
+            self.action_table_SLR = SLR.action_table(self.conj_LR0, self.ext_initial_token, self.terminal_tokens,
+                                                     self.ext_non_terminals, self.ext_productions, follow_set)
+            self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.ext_non_terminals, self.ext_productions)
             self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
 
             # Enable options if possible
@@ -976,21 +1006,22 @@ class MainWindow(QMainWindow):
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
                                    self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "SLR(1)", self)
+                                   self.ext_initial_token, self.ext_productions, main_window, "SLR(1)", self)
 
 
     def parse_LALR_grammar(self):
         if not (self.conj_LALR and self.action_table_LALR and self.go_to_table_LALR and self.edges_LALR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLALR1"])
             first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            self.conj_LALR = LALR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-            self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.token_inicial_ampliado, self.terminal_tokens | {'$'},
-                                                   self.non_terminal_tokens, self.producciones_ampliados)
+            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            self.conj_LALR = LALR.conj_LR1_original(first_set, self.ext_initial_token, self.terminal_tokens | {'$'},
+                                           self.non_terminal_tokens, self.ext_productions)
+            self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.ext_initial_token, self.terminal_tokens | {'$'},
+                                                       self.non_terminal_tokens, self.ext_productions)
             self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
-                                                     self.non_terminal_tokens, self.producciones_ampliados)
+                                                     self.non_terminal_tokens, self.ext_productions)
             self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
-                                                    self.non_terminal_tokens, self.producciones_ampliados)
+                                                    self.non_terminal_tokens, self.ext_productions)
 
             # Enable options if possible
             conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
@@ -1003,19 +1034,24 @@ class MainWindow(QMainWindow):
 
             self.parse_LALR_input_action.setEnabled(is_lalr)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
-                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "LALR", self)
+        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
+                                   self.conj_LALR, self.edges_LALR, self.terminal_tokens, self.non_terminal_tokens,
+                                   self.ext_initial_token, self.ext_productions, main_window, "LALR", self)
 
     def parse_LR_grammar(self):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLR1"])
             first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-            self.token_inicial_ampliado, self.tokens_no_terminales_ampliados, self.producciones_ampliados = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            self.conj_LR1 = LR.conj_LR1(first_set, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.token_inicial_ampliado, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
-            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.terminal_tokens | {'$'}, self.non_terminal_tokens, self.producciones_ampliados)
+            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
+            self.conj_LR1 = LR.conj_LR1(first_set, self.ext_initial_token, self.terminal_tokens | {'$'},
+                                        self.non_terminal_tokens, self.ext_productions)
+            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.ext_initial_token,
+                                                   self.terminal_tokens | {'$'}, self.non_terminal_tokens,
+                                                   self.ext_productions)
+            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.terminal_tokens | {'$'},
+                                                 self.non_terminal_tokens, self.ext_productions)
+            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.terminal_tokens | {'$'},
+                                                self.non_terminal_tokens, self.ext_productions)
 
             # Enable options if possible
             conclicts_lr = SLR.is_slr1(self.action_table_LR)
@@ -1028,9 +1064,9 @@ class MainWindow(QMainWindow):
 
             self.parse_LR_input_action.setEnabled(is_lr)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
-                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.token_inicial_ampliado, self.producciones_ampliados, ventana, "LR", self)
+        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
+                                   self.conj_LR1, self.edges_LR, self.terminal_tokens, self.non_terminal_tokens,
+                                   self.ext_initial_token, self.ext_productions, main_window, "LR", self)
 
     def parse_LL1_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLL1"])
@@ -1102,7 +1138,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    ventana = MainWindow()
-    ventana.show()
+    main_window = MainWindow()
+    main_window.show()
     app.exec_()
     sys.exit()

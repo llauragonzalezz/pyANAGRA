@@ -1,0 +1,16 @@
+%token word redirect
+%%
+sequence:
+| sequence words
+| sequence redirects
+;
+
+
+words:
+| words word
+;
+
+
+redirects:
+| redirects redirect
+;

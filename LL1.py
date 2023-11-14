@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import itertools
 import re
 import conjuntos as conj
@@ -23,7 +28,7 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
     for token in non_terminal_tokens:
         for production in productions[token]:
             if production is not None:
-                first_set_token = conj.calculate_first_set_sentence(production, token, terminal_tokens, non_terminal_tokens, productions)
+                first_set_token = conj.calculate_first_set_sentence(production, terminal_tokens, non_terminal_tokens, productions)
             else:
                 first_set_token = {None}
 

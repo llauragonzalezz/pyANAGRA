@@ -1,8 +1,15 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
+import json
 from math import log10
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget
+from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget, QMenuBar, \
+    QMenu, QAction, QFileDialog
 
 import automaton
 
@@ -71,6 +78,15 @@ class AnalysisTableLL1(QMainWindow):
     def initUI(self):
         self.setWindowTitle(self.traductions["tituloTablaLL1"])
 
+        self.menubar = QMenuBar(self)
+        self.setMenuBar(self.menubar)
+        file_menu = QMenu("File", self) # fixme
+        self.menubar.addMenu(file_menu)
+        new_action = QAction(self.traductions["submenuNuevo"], self)
+        new_action.triggered.connect(self.save_as_json)
+        file_menu.addAction(new_action)
+
+
         non_terminals = sorted(set(k[0] for k in self.analysis_table.keys()))
         terminals = sorted(set(k[1] for k in self.analysis_table.keys()))
 
@@ -113,6 +129,15 @@ class AnalysisTableLL1(QMainWindow):
 
         # Center window to the middle of the screen
         center_window(self)
+
+    def save_as_json(self):
+        file_route, _ = QFileDialog.getSaveFileName(self, self.traductions["tituloGuardarComo"])
+        if file_route:
+            with open(file_route, 'w') as file:
+                data = {str(k): v if v != ["error"] else [""] for k, v in self.analysis_table.items()}
+                for k, v in self.analysis_table.items():
+                    print(k, v)
+                json.dump(data, file, indent=4)
 
 
 class ExpandedGrammar(QMainWindow):
@@ -323,6 +348,7 @@ class GoToTable(QMainWindow):
         x = screen.width() // 2
         y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
+
 
 #todo cambiar nombre ya que lo usan lr y lalr tambien
 class AnalysisTableSLR1(QMainWindow):

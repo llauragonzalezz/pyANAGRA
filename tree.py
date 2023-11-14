@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description: Adapted from
+"""
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
@@ -12,7 +17,7 @@ from PyQt5.QtWidgets import (QGraphicsItem, QGraphicsObject, QGraphicsScene, QGr
                              QStyleOptionGraphicsItem, QWidget, QMainWindow, QDesktopWidget)
 
 import networkx as nx
-from networkx.drawing.nx_agraph import  graphviz_layout
+from networkx.drawing.nx_agraph import graphviz_layout
 
 
 class Node(QGraphicsObject):
@@ -373,7 +378,6 @@ class TreeWindow(QMainWindow):
         for edge in self.graph.edges:
             if edge[0] == iter:
                 self.view.scene().removeItem(self.edges[iter, edge[1]])
-                #del self.edges[iter, edge[1]]
 
         # Delete the node from the graph and from the view
         self.graph.remove_node(iter)

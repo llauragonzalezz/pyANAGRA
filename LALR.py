@@ -1,6 +1,12 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import LR
 
-def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
+# obsoleto
+def conj_LR1_original(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
     old = []
     new = [LR.clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], first_set, terminal_tokens,
                     non_terminal_tokens, productions)]
@@ -9,6 +15,7 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
     while old != new:
         old = new
         for I in new:
+            print(I)
             prods = {token for _, prod, _ in I for token in prod if token != '.'}
             for token in prods:
                 if (I, token) not in conjunto_I:
@@ -18,6 +25,45 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
                     sucesor_token = diccionario[len(conjunto_I) - 1, token]
                 else:
                     sucesor_token = diccionario[conjunto_I.index((I, token)), token]
+
+                if sucesor_token != [] and sucesor_token not in new:
+                    aniadir = True
+                    for i, c in enumerate(new):
+                        if len(c) == len(sucesor_token):
+                            for j in range(len(sucesor_token)):
+                                if c[j][0] != sucesor_token[j][0] or c[j][1] != sucesor_token[j][1]:
+                                    break
+                            else:
+                                aniadir = False
+                                break
+
+                    if aniadir:
+                        new.append(sucesor_token)
+                    else:
+                        new[i] = []
+                        for j in range(len(sucesor_token)):
+                            if c[j][2] - sucesor_token[j][2] == c[j][2]:
+                                new[i].append((c[j][0], c[j][1], c[j][2] | sucesor_token[j][2]))
+                            else:
+                                new[i].append((c[j][0], c[j][1], c[j][2]))
+
+    return new
+
+def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
+    old = []
+    new = [LR.clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], first_set, terminal_tokens,
+                    non_terminal_tokens, productions)]
+    diccionario = dict()
+    while old != new:
+        old = new
+        for I in new:
+            print(I)
+            prods = {token for _, prod, _ in I for token in prod if token != '.'}
+            for token in prods:
+                if (str(I), token) not in diccionario:
+                    diccionario[str(I), token] = LR.sucesor(I, token, first_set, terminal_tokens,
+                                                                         non_terminal_tokens, productions)
+                sucesor_token = diccionario[str(I), token]
 
                 if sucesor_token != [] and sucesor_token not in new:
                     aniadir = True

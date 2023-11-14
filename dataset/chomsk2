@@ -1,0 +1,7 @@
+%token a b
+%%
+S: A B;
+
+A: a A A | ;
+
+B: b B B | ;

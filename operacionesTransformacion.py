@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import itertools
 import conjuntos
 

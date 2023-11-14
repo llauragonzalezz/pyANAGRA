@@ -1,18 +1,20 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description: Adapted form
+"""
 # Copyright (C) 2022 The Qt Company Ltd.
 # SPDX-License-Identifier: LicenseRef-Qt-Commercial OR BSD-3-Clause
 
 
 import math
-import sys
 
 from PyQt5.QtCore import (QEasingCurve, QLineF,
-                            QParallelAnimationGroup, QPointF,
-                            QPropertyAnimation, QRectF, Qt)
-from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QFont, QPalette
-from PyQt5.QtWidgets import (QApplication, QComboBox, QGraphicsItem,
-                             QGraphicsObject, QGraphicsScene, QGraphicsView,
-                             QStyleOptionGraphicsItem, QVBoxLayout, QWidget, QMainWindow, QDesktopWidget, QMessageBox,
-                             QLabel, QPlainTextEdit)
+                          QParallelAnimationGroup, QPointF,
+                          QPropertyAnimation, QRectF, Qt)
+from PyQt5.QtGui import QBrush, QColor, QPainter, QPen, QPolygonF, QFont
+from PyQt5.QtWidgets import (QGraphicsItem, QGraphicsObject, QGraphicsScene, QGraphicsView,
+                             QStyleOptionGraphicsItem, QWidget, QMainWindow, QDesktopWidget, QPlainTextEdit)
 
 import networkx as nx
 

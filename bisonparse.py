@@ -1,5 +1,8 @@
-
-# --- Parser
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import bisonlex
 import bisonparse
 import re

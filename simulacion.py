@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
     QHBoxLayout, QDesktopWidget, QMessageBox

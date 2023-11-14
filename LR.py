@@ -1,3 +1,8 @@
+"""
+Filename:
+Author: Laura González Pizarro
+Description:
+"""
 import conjuntos as conj
 
 def is_lr(table):
@@ -26,7 +31,7 @@ def clausura(I, first_set, terminal_tokens, non_terminal_tokens, productions):
                 for prod_B in productions[prod[pos_dot + 1]]: # B -> y
                     first_set_token = set()
                     if pos_dot < len(prod) - 2:  # Pri(þ)
-                        first_set_token = conj.calculate_first_set_sentence_fs(prod[pos_dot + 2:], first_set, terminal_tokens, non_terminal_tokens, productions)
+                        first_set_token = conj.calculate_first_set_sentence_fs(prod[pos_dot + 2:], first_set)
                     if pos_dot >= len(prod) - 2:  # Si no existe þ => Pri(a)
                         first_set_token = terminal
                     for b in terminal_tokens & first_set_token:
@@ -61,7 +66,6 @@ def sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productio
 
 def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
     new = [clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], first_set, terminal_tokens, non_terminal_tokens, productions)]
-    conjunto_I = []
     diccionario = dict()
     bool_new = True
     while bool_new:
@@ -69,12 +73,9 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
         for I in new:
             prods = {token for _, prod, _ in I for token in prod if token != '.'}
             for token in prods:
-                if (I, token) not in conjunto_I:
-                    conjunto_I.append((I, token))
-                    diccionario[len(conjunto_I)-1, token] = sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productions)
-                    sucesor_token = diccionario[len(conjunto_I)-1, token]
-                else:
-                    sucesor_token = diccionario[conjunto_I.index((I, token)), token]
+                if (str(I), token) not in diccionario:
+                    diccionario[str(I), token] = sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productions)
+                sucesor_token = diccionario[str(I), token]
 
                 if sucesor_token != [] and sucesor_token not in new:
                     new.append(sucesor_token)
