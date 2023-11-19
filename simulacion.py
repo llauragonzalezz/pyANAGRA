@@ -11,15 +11,15 @@ import tree
 
 
 class VentanaSimulacion(QMainWindow):
-    def __init__(self, traductions, table, error, start_token, terminals, non_terminals, parent=None):
+    def __init__(self, traductions, table, error, grammar, parent=None):
         super().__init__(parent)
         self.traductions = traductions
         self.table = table
         self.error = error
-        self.terminals = terminals
-        self.non_terminals = non_terminals
+        self.terminals = grammar.terminals
+        self.non_terminals = grammar.non_terminals
         self.iter = 0
-        self.tree_window = tree.TreeWindow(traductions, start_token, self)
+        self.tree_window = tree.TreeWindow(traductions, grammar.initial_token, self)
         self.tree_window.show()
         self.initUI()
 
