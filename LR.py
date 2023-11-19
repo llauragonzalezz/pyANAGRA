@@ -16,13 +16,6 @@ def is_lr(table):
     return num_conflicts
 
 
-def extend_grammar(gr):
-    gr.initial_token_extended = gr.initial_token + "*"
-    gr.productions[gr.initial_token_extended] = [['.', gr.initial_token]]
-
-    return grammar.Grammar(gr.initial_token_extended, gr.terminals, {gr.initial_token_extended} | gr.non_terminals, gr.productions)
-
-
 def clausura(I, first_set, gr):
     nuevo = I
     bool_new = True
@@ -115,7 +108,7 @@ def action_table(first_set, C, gr):
                 terminal_token = prod[pos_dot + 1]
                 sucesor_i_token_terminal = sucesor(C[i], terminal_token, first_set, gr)
                 if sucesor_i_token_terminal in C:
-                    new_action = "desplazar " + str(C.index(sucesor_i_token_terminal))
+                    new_action = "shift " + str(C.index(sucesor_i_token_terminal))
                     if (i, terminal_token) in action and new_action not in action[i, terminal_token]:
                         action[i, terminal_token].append(new_action)
                     elif (i, terminal_token) not in action:
@@ -123,9 +116,9 @@ def action_table(first_set, C, gr):
 
             if pos_dot == len(prod) - 1:
                 if prod[0] == '.':   # epsilon production
-                    new_action = "reducir " + symbol + "  → ε"
+                    new_action = "reduce " + symbol + "  → ε"
                 else:
-                    new_action = "reducir " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
+                    new_action = "reduce " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
 
                 if (i, "$") in action and new_action not in action[i, "$"]:
                         action[i, "$"].append(new_action)
@@ -135,9 +128,9 @@ def action_table(first_set, C, gr):
         for symbol, prod, terminal in C[i]:
             if symbol != gr.initial_token and pos_dot == len(prod) - 1:
                 if prod[0] == '.':  # epsilon production
-                    new_action = "reducir " + symbol + "  → ε"
+                    new_action = "reduce " + symbol + "  → ε"
                 else:
-                    new_action = "reducir " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
+                    new_action = "reduce " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
 
                 for t in terminal:
                     if (i, t) in action and new_action not in action[i, t]:
@@ -145,7 +138,7 @@ def action_table(first_set, C, gr):
                     elif (i, t) not in action:
                         action[i, t] = [new_action]
             elif symbol == gr.initial_token and pos_dot == len(prod) - 1:
-                action[i, "$"] = ["aceptar"]
+                action[i, "$"] = ["accept"]
 
     for i in range(len(C)):
         for symbol in gr.terminals:

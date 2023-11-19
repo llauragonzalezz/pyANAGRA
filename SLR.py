@@ -16,12 +16,6 @@ def is_slr1(table):
     return num_conflicts
 
 
-def extend_grammar(gr):
-    initial_token_extended = gr.initial_token + "*"
-    gr.productions[initial_token_extended] = [['.', gr.initial_token]]
-    return grammar.Grammar(initial_token_extended, gr.terminals, {initial_token_extended} | gr.non_terminals, gr.productions)
-
-
 def clausura(I, gr):
     viejo = []
     nuevo = I
@@ -92,7 +86,7 @@ def action_table(C, gr, follow_set):
                 terminal_symbol = prod[prod.index('.') + 1]
                 sucesor_i_token_terminal = sucesor(C[i], terminal_symbol, gr)
                 if sucesor_i_token_terminal in C:
-                    new_action = "desplazar " + str(C.index(sucesor_i_token_terminal))
+                    new_action = "shift " + str(C.index(sucesor_i_token_terminal))
                     if (i, terminal_symbol) in action and new_action not in action[i, terminal_symbol]:
                         action[i, terminal_symbol].append(new_action)
                     elif (i, terminal_symbol) not in action:
@@ -100,9 +94,9 @@ def action_table(C, gr, follow_set):
 
             if prod.index('.') == len(prod) - 1:
                 if prod[0] == '.':   # epsilon production
-                    new_action = "reducir " + token + "  → ε"
+                    new_action = "reduce " + token + "  → ε"
                 else:
-                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                    new_action = "reduce " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
 
                 if (i, "$") in action and new_action not in action[i, "$"]:
                     action[i, "$"].append(new_action)
@@ -113,9 +107,9 @@ def action_table(C, gr, follow_set):
             if token != gr.initial_token and prod.index('.') == len(prod) - 1:
                 for token_no_terminal_siguiente in follow_set[token]:
                     if prod[0] == '.':  # epsilon production
-                        new_action = "reducir " + token + "  → ε"
+                        new_action = "reduce " + token + "  → ε"
                     else:
-                        new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                        new_action = "reduce " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
 
                     if (i, token_no_terminal_siguiente) in action and new_action not in action[i, token_no_terminal_siguiente]:
                         action[i, token_no_terminal_siguiente].append(new_action)
@@ -124,7 +118,7 @@ def action_table(C, gr, follow_set):
 
         for I in C:
             if (gr.initial_token, [gr.initial_token[:-1], '.']) in I:
-                action[C.index(I), "$"] = ["aceptar"]
+                action[C.index(I), "$"] = ["accept"]
 
     for i in range(len(C)):
         for token in gr.terminals | {"$"}:
@@ -219,9 +213,9 @@ def simulate(action_table, go_to_table, input):
 
     while not (aceptado or error or error_tok):
         s = int(stack[len(stack) - 1][0])
-        if action_table[s, n][0][:9] == "desplazar":
+        if action_table[s, n][0][:5] == "shift":
             stack.append((n, index))
-            stack.append((action_table[s, n][0][10:],))
+            stack.append((action_table[s, n][0][6:],))
 
             it_copia, it = itertools.tee(it)
             simulation_table.append((stack.copy(), "".join(it_copia), (), (n, index)))
@@ -229,12 +223,12 @@ def simulate(action_table, go_to_table, input):
 
             n, error_tok = sig_tok(it, action_table)
 
-        elif action_table[s, n][0] == "aceptar":
+        elif action_table[s, n][0] == "accept":
             aceptado = True
         elif action_table[s, n][0] == "ERROR":
             error = True
-        elif action_table[s, n][0][:7] == "reducir":
-            production = action_table[s, n][0][8:]
+        elif action_table[s, n][0][:6] == "reduce":
+            production = action_table[s, n][0][7:]
             partes = production.split("→")
             right_part = []
             if partes[1].strip() != "ε":

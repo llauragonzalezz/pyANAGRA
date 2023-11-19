@@ -7,7 +7,7 @@ import itertools
 import re
 import conjuntos as conj
 
-def is_ll1(table, terminals, non_terminals):
+def is_ll1(table, gr):
     """
     Calculates if the grammar is LL(1):
 
@@ -28,8 +28,8 @@ def is_ll1(table, terminals, non_terminals):
         The number of conflicts in the given grammar. If num_conflicts = 0 the grammar is LL(1)
     """
     num_conflicts = 0
-    for token_no_terminal in non_terminals:
-        for token_terminal in terminals | {"$"}:
+    for token_no_terminal in gr.non_terminals:
+        for token_terminal in gr.terminals | {"$"}:
             if len(table[token_no_terminal, token_terminal]) > 1:
                 num_conflicts += 1
 
@@ -42,17 +42,7 @@ def calculate_table(gr):
 
     Parameters
     ----------
-    initial_token: str
-        The initial token of the grammar.
-
-    terminals : set
-        A set containing the terminal symbols of the grammar.
-
-    non_terminals : set
-        A set containing the non-terminal symbols of the grammar.
-
-    productions : dict
-        A dictionary representing the productions of the grammar.
+    gr: Grammar
 
     Returns
     -------
@@ -94,7 +84,7 @@ def sig_tok(it, accion):
     return n, not any(n == key[1] for key in accion.keys())
 
 
-def simulate(table, initial_token, terminals, input):
+def simulate(table, gr, input):
     """
     Calculates the LL(1) parsing table for a given input based on a provided LL(1) grammar.
 
@@ -103,11 +93,7 @@ def simulate(table, initial_token, terminals, input):
     table : dict
         A dictionary containing the LL(1) analysis table of the grammar.
 
-    initial_token: str
-        The initial token of the grammar.
-
-    terminals : set
-        A set containing the terminal symbols of the grammar.
+    gr : Grammar
 
     input : str
         A string containing the input.
@@ -118,7 +104,7 @@ def simulate(table, initial_token, terminals, input):
         A dictionary containing the LL(1) parsing table for a given input based on a provided LL(1) grammar.
 
     """
-    stack = [("$", 0), (initial_token, 1)]
+    stack = [("$", 0), (gr.initial_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
     iterador = 2
     it = iter(elementos)
@@ -136,7 +122,7 @@ def simulate(table, initial_token, terminals, input):
 
     x = stack[len(stack)-1]
     while x[0] != "$":
-        if x[0] in terminals or x[0] == "$":
+        if x[0] in gr.terminals or x[0] == "$":
             if x[0] == sig_tok:
                 # Copiamos el iterador original
                 it_copia, it = itertools.tee(it)

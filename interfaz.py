@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
 import LALR
 import LL1
 import LR
+import bottom_up as bu
 import grammar
 import SLR
 import bisonlex
@@ -90,7 +91,7 @@ class VentanaInputGramatica(QMainWindow):
         text = self.text_edit.toPlainText()
         self.close()
         if self.type == "LL1":
-            table, error = LL1.simulate(main_window.table_LL1, main_window.start_token, main_window.terminal_tokens, text + " $")
+            table, error = LL1.simulate(main_window.table_LL1, main_window.grammar, text + " $")
             new_window = sim.VentanaSimulacion(self.traductions, table, error, main_window.start_token,
                                                main_window.terminal_tokens, main_window.non_terminal_tokens, self)
 
@@ -516,17 +517,37 @@ class MainWindow(QMainWindow):
         parse_LL1_grammar_action.triggered.connect(self.parse_LL1_grammar)
         parse_qmenu.addAction(parse_LL1_grammar_action)
 
+        self.save_LL1_table_action = QAction("Guardar tabla LL(1)", self)
+        self.save_LL1_table_action.triggered.connect(self.save_LL1_table)
+        self.save_LL1_table_action.setEnabled(False)  # Enable/Disable action
+        parse_qmenu.addAction(self.save_LL1_table_action)
+
         parse_SLR_grammar_action = QAction(self.traductions["submenuAnalizarSLR1"], self)
         parse_SLR_grammar_action.triggered.connect(self.parse_SLR_grammar)
         parse_qmenu.addAction(parse_SLR_grammar_action)
+
+        self.save_SLR_table_action = QAction("Guardar tablas SLR", self)
+        self.save_SLR_table_action.triggered.connect(self.save_SLR_table)
+        self.save_SLR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_qmenu.addAction(self.save_SLR_table_action)
 
         parse_LALR_grammar_action = QAction(self.traductions["submenuAnalizarLALR1"], self)
         parse_LALR_grammar_action.triggered.connect(self.parse_LALR_grammar)
         parse_qmenu.addAction(parse_LALR_grammar_action)
 
+        self.save_LALR_table_action = QAction("Guardar tablaS LALR", self)
+        self.save_LALR_table_action.triggered.connect(self.save_LALR_table)
+        self.save_LALR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_qmenu.addAction(self.save_LALR_table_action)
+
         parse_LR_grammar_action = QAction(self.traductions["submenuAnalizarLR1"], self)
         parse_LR_grammar_action.triggered.connect(self.parse_LR_grammar)
         parse_qmenu.addAction(parse_LR_grammar_action)
+
+        self.save_LR_table_action = QAction("Guardar tablaS LR", self)
+        self.save_LR_table_action.triggered.connect(self.save_LR_table)
+        self.save_LR_table_action.setEnabled(False)  # Enable/Disable action
+        parse_qmenu.addAction(self.save_LR_table_action)
 
 
     def simulate_menu(self):
@@ -722,7 +743,6 @@ class MainWindow(QMainWindow):
     def show_log(self):  # TODO
         self.log_window.show()
 
-
     def show_information(self):  # TODO
         mensaje = QMessageBox()
         mensaje.setWindowTitle(self.traductions["tituloCambioIdioma"]) # fixme cual pongo
@@ -913,7 +933,7 @@ class MainWindow(QMainWindow):
             self.table_LL1 = LL1.calculate_table(self.grammar)
 
             # Enable options if possible
-            conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
+            conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.grammar)
             is_ll1 = conclicts_ll1 == 0
             if is_ll1:
                 self.log_window.add_information(self.traductions["mensajeExitoLL1a"])
@@ -922,6 +942,8 @@ class MainWindow(QMainWindow):
                 self.log_window.add_information(self.traductions["etiqEstadisticas4"] + str(conclicts_ll1))
 
             self.parse_LL1_input_action.setEnabled(is_ll1)
+            self.save_LL1_table_action.setEnabled(is_ll1)
+
 
         analysis_table_window = conj_tab.AnalysisTableLL1(self.traductions, self.table_LL1, self)
         analysis_table_window.show()
@@ -929,7 +951,7 @@ class MainWindow(QMainWindow):
     def parse_SLR_grammar(self):
         if not (self.conj_LR0 and self.action_table_SLR and self.go_to_table_SLR and self.edges_SLR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoSLR1"])
-            self.ext_grammar = SLR.extend_grammar(self.grammar)
+            self.ext_grammar = bu.extend_grammar(self.grammar)
             follow_set = conj.calculate_follow_set(self.grammar)
             self.conj_LR0 = SLR.conj_LR0(self.ext_grammar)
             self.action_table_SLR = SLR.action_table(self.conj_LR0,  self.ext_grammar, follow_set)
@@ -946,6 +968,7 @@ class MainWindow(QMainWindow):
                 self.log_window.add_information(self.traductions["etiqEstadisticas6"] + str(conclicts_slr1))
 
             self.parse_SLR_input_action.setEnabled(is_slr1)
+            self.save_SLR_table_action.setEnabled(is_slr1)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
                                    self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
@@ -956,14 +979,9 @@ class MainWindow(QMainWindow):
         if not (self.conj_LALR and self.action_table_LALR and self.go_to_table_LALR and self.edges_LALR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLALR1"])
             first_set = conj.calculate_first_set(self.grammar)
-            self.ext_grammar = LR.extend_grammar(self.grammar)
+            self.ext_grammar = bu.extend_grammar(self.grammar)
             self.ext_grammar.terminals |= {'$'}
             self.conj_LALR = LALR.conj_LR1(first_set, self.ext_grammar)
-            self.conj_LALR_1 = LALR.conj_LR1_original(first_set, self.ext_grammar)
-
-            print(self.conj_LALR)
-            print(self.conj_LALR_1)
-
             self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.ext_grammar)
             self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.ext_grammar)
             self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.ext_grammar)
@@ -978,6 +996,7 @@ class MainWindow(QMainWindow):
                 self.log_window.add_information(self.traductions["etiqEstadisticas6"] + str(conclicts_lalr))
 
             self.parse_LALR_input_action.setEnabled(is_lalr)
+            self.save_LALR_table_action.setEnabled(is_lalr)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
                                    self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
@@ -987,7 +1006,7 @@ class MainWindow(QMainWindow):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLR1"])
             first_set = conj.calculate_first_set(self.grammar)
-            self.ext_grammar = LR.extend_grammar(self.grammar)
+            self.ext_grammar = bu.extend_grammar(self.grammar)
             self.ext_grammar.terminals |= {'$'}
 
             self.conj_LR1 = LR.conj_LR1(first_set, self.ext_grammar)
@@ -1005,10 +1024,48 @@ class MainWindow(QMainWindow):
                 self.log_window.add_information(self.traductions["etiqEstadisticas6"] + str(conclicts_lr))
 
             self.parse_LR_input_action.setEnabled(is_lr)
+            self.save_LR_table_action.setEnabled(is_lr)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
                                    self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
                                    self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
+
+    def save_json(self, data):
+        file_route, _ = QFileDialog.getSaveFileName(self, self.traductions["tituloGuardarComo"])
+        if file_route:
+            with open(file_route, 'w') as file:
+                json.dump(data, file, indent=4)
+
+    def save_LL1_table(self):
+        data = {str(k): v if v != ["error"] else [""] for k, v in self.table_LL1.items()}
+        self.save_json(data)
+
+    def save_SLR_table(self):
+        action_data = {str(k): v if v != ["error"] else [""] for k, v in self.action_table_SLR.items()}
+        go_to_data = {str(k): v if v != ["error"] else [""] for k, v in self.go_to_table_SLR.items()}
+        data = {
+            "action table": action_data,
+            "go_to table": go_to_data,
+        }
+        self.save_json(data)
+
+    def save_LALR_table(self):
+        action_data = {str(k): v if v != ["error"] else [""] for k, v in self.action_table_LALR.items()}
+        go_to_data = {str(k): v if v != ["error"] else [""] for k, v in self.go_to_table_LALR.items()}
+        data = {
+            "action table": action_data,
+            "go_to table": go_to_data,
+        }
+        self.save_json(data)
+
+    def save_LR_table(self):
+        action_data = {str(k): v if v != ["error"] else [""] for k, v in self.action_table_LR.items()}
+        go_to_data = {str(k): v if v != ["error"] else [""] for k, v in self.go_to_table_LR.items()}
+        data = {
+            "action table": action_data,
+            "go_to table": go_to_data,
+        }
+        self.save_json(data)
 
     def parse_LL1_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLL1"])

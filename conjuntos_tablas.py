@@ -127,15 +127,6 @@ class AnalysisTableLL1(QMainWindow):
     def initUI(self):
         self.setWindowTitle(self.traductions["tituloTablaLL1"])
 
-        self.menubar = QMenuBar(self)
-        self.setMenuBar(self.menubar)
-        file_menu = QMenu("File", self) # fixme
-        self.menubar.addMenu(file_menu)
-        new_action = QAction(self.traductions["submenuNuevo"], self)
-        new_action.triggered.connect(self.save_as_json)
-        file_menu.addAction(new_action)
-
-
         non_terminals = sorted(set(k[0] for k in self.analysis_table.keys()))
         terminals = sorted(set(k[1] for k in self.analysis_table.keys()))
 
@@ -331,12 +322,12 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
         for row, col in self.tabla_accion.keys():
             item_text = ""
             for i, prod in enumerate(self.tabla_accion[row, col]):
-                if prod[:9] == "desplazar":
-                    item_text += "d " + prod[10:]
-                elif prod == "aceptar":
+                if prod[:5] == "shift":
+                    item_text += "d " + prod[6:]
+                elif prod == "accept":
                     item_text += "acep"
-                elif prod[:7] == "reducir":
-                    item_text += "r " + prod[8:]
+                elif prod[:6] == "reduce":
+                    item_text += "r " + prod[7:]
 
                 if i < len(self.tabla_accion[row, col]) - 1:
                     item_text += "\n"
