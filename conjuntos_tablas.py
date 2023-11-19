@@ -4,14 +4,16 @@ Author: Laura González Pizarro
 Description:
 """
 import json
+import re
 from math import log10
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget, QMenuBar, \
-    QMenu, QAction, QFileDialog
+    QMenu, QAction, QFileDialog, QPushButton, QLineEdit, QLabel, QVBoxLayout, QWidget, QMessageBox
 
 import automaton
+import conjuntos as conj
 
 def center_window(window):
     screen = QDesktopWidget().availableGeometry()
@@ -22,7 +24,7 @@ def center_window(window):
 
 
 class FirstSet(QMainWindow):
-    def __init__(self, traductions,dicc, parent=None):
+    def __init__(self, traductions, dicc, parent=None):
         super().__init__(parent)
         self.traductions = traductions
         self.dicc = dicc
@@ -67,6 +69,53 @@ class FollowSet(QMainWindow):
             text += "Sig(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in self.dicc[key]]) + "\n"
         self.text_follow_set.setPlainText(text)
 
+
+
+class FirstSetSentenceWindow(QMainWindow):
+    def __init__(self, traductions, terminal_tokens, non_terminal_tokens, productions, parent=None):
+        super().__init__(parent)
+        self.terminal_tokens = terminal_tokens
+        self.non_terminal_tokens = non_terminal_tokens
+        self.productions = productions
+
+        self.setGeometry(0, 0, 300, 100)
+        center_window(self)
+
+        self.setWindowTitle(traductions["submenuPRIFormaFrase"])
+        central_widget = QWidget(self)
+        layout = QVBoxLayout(central_widget)
+
+        self.label1 = QLabel(traductions["etiqFormaFrase"])
+        self.text_input1 = QLineEdit()
+        layout.addWidget(self.label1)
+        layout.addWidget(self.text_input1)
+
+        self.label2 = QLabel(traductions["etiqConjFormaFrase"])
+        self.text_input2 = QLineEdit()
+        self.text_input2.setReadOnly(True)  # Disable
+        layout.addWidget(self.label2)
+        layout.addWidget(self.text_input2)
+
+        self.ok_button = QPushButton(traductions["etiqCalcular"])
+        self.ok_button.clicked.connect(self.accept)
+        layout.addWidget(self.ok_button)
+
+        # Establecer el widget principal y el
+        self.setCentralWidget(central_widget)
+
+    def accept(self): #
+        elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
+        if set(elements).difference(self.non_terminal_tokens).difference(self.terminal_tokens) != set():
+            error_message = QMessageBox()
+            error_message.setIcon(QMessageBox.Critical)
+            error_message.setWindowTitle("Error")
+            error_message.setText("error ")  # FIXME poner mensaje de error
+
+        else:
+            first_set_sentence = conj.calculate_first_set_sentence(elements, self.terminal_tokens,
+                                                                   self.non_terminal_tokens, self.productions)
+            text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
+            self.text_input2.setText(text)
 
 class AnalysisTableLL1(QMainWindow):
     def __init__(self, traductions, analysis_table, parent=None):

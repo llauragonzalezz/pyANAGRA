@@ -4,9 +4,9 @@ Author: Laura González Pizarro
 Description:
 """
 
-def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_terminal_tokens, productions):
+def calculate_first_set_token(token, recursive_tokens, gr):
     """
-    Calculates the 'first' set of a given token in the context of a grammar.
+    Calculates the 'first' set of a given symbol in the context of a grammar.
 
     Parameters
     ----------
@@ -17,14 +17,8 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
         A set containing tokens encountered during the current 'first' set calculation.
         This is used to prevent infinite recursion when calculating the 'first' set.
 
-    terminal_tokens : set
-        A set containing terminal tokens.
-
-    non_terminal_tokens : set
-        A set containing non-terminal tokens.
-
-    productions : dict
-        A dictionary representing the productions of the grammar.
+    gr : Grammar
+        A set containing the terminal symbols of the grammar.
 
     Returns
     -------
@@ -34,16 +28,16 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
     first_set = set()
 
     # Case token is a terminal token
-    if token in terminal_tokens:
+    if token in gr.terminals:
         first_set.add(token)
         return first_set
 
     # Case token has an epsilon-production
-    if token in non_terminal_tokens and None in productions[token]:
+    if token in gr.non_terminals and None in gr.productions[token]:
         first_set.add(None)
 
     # Iterate over the production of a given token
-    for production in productions[token]:
+    for production in gr.productions[token]:
         # If
         if production is not None:
             epsilon = True
@@ -51,7 +45,7 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
             for index, token_prod in enumerate(production):
                 # Stop if token_prod in recursive_tokens to prevent infinite recursion
                 if token_prod not in recursive_tokens:
-                    first_set_tok = calculate_first_set_token(token_prod, recursive_tokens | {token_prod}, terminal_tokens, non_terminal_tokens, productions)
+                    first_set_tok = calculate_first_set_token(token_prod, recursive_tokens | {token_prod}, gr)
                     first_set |= first_set_tok.difference({None})
                     if None not in first_set_tok:
                         epsilon = False
@@ -66,29 +60,23 @@ def calculate_first_set_token(token, recursive_tokens, terminal_tokens, non_term
     return first_set
 
 
-def calculate_first_set(terminal_tokens, non_terminal_tokens, productions):
+def calculate_first_set(gr):
     """
-    Calculates the 'first' set of all tokens in the context of a grammar.
+    Calculates the 'first' set of all symbols in the context of a grammar.
 
     Parameters
     ----------
-    terminal_tokens : set
-        A set containing terminal tokens.
-
-    non_terminal_tokens : set
-        A set containing non-terminal tokens.
-
-    productions : dict
-        A dictionary representing the productions of the grammar.
+    gr : Grammar
+        A set containing the terminal symbols of the grammar.
 
     Returns
     -------
     dict
-        A dictionary containing the 'first' set of all tokens of the grammar.
+        A dictionary containing the 'first' set of all symbols of the grammar.
     """
     first_set = dict()
-    for token in terminal_tokens | non_terminal_tokens:
-        first_set[token] = calculate_first_set_token(token, {token}, terminal_tokens, non_terminal_tokens, productions)
+    for token in gr.terminals | gr.non_terminals:
+        first_set[token] = calculate_first_set_token(token, {token}, gr)
     return first_set
 
 
@@ -124,7 +112,7 @@ def calculate_first_set_sentence_fs(elements, first_set):
 
     return first_set_sentence
 
-def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens, productions):
+def calculate_first_set_sentence(elements, gr):
     """
     Calculates the 'first' set of a given sentence form in the context of a grammar.
 
@@ -133,14 +121,11 @@ def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens,
     elements: set
         A set containing the tokens of the sentence form.
 
-    token: str
-        A string representing the left part of the production
-
     terminal_tokens : set
-        A set containing terminal tokens.
+        A set containing the terminal symbols of the grammar.
 
     non_terminal_tokens : set
-        A set containing non-terminal tokens.
+        A set containing the non-terminal symbols of the grammar.
 
     productions : dict
         A dictionary representing the productions of the grammar.
@@ -150,7 +135,7 @@ def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens,
     set
         A set containing the 'first' set of the given sentence form.
     """
-    first_set = calculate_first_set(terminal_tokens, non_terminal_tokens, productions)
+    first_set = calculate_first_set(gr)
     first_set_sentence = set()
     epsilon = True
     # Iterate over elements of a given sentence form
@@ -167,20 +152,19 @@ def calculate_first_set_sentence(elements, terminal_tokens, non_terminal_tokens,
     return first_set_sentence
 
 
-def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions):
+def calculate_follow_set(gr):
     """
     Calculates the 'follow' set of all tokens in the context of a grammar.
-
     Parameters
     ----------
-    starting_token: str
-        The stating_token of the grammar
+    initial_token: str
+        The initial token of the grammar
 
-    terminal_tokens : set
-        A set containing terminal tokens.
+    terminals : set
+        A set containing the terminal symbols of the grammar.
 
-    non_terminal_tokens : set
-        A set containing non-terminal tokens.
+    non_terminals : set
+        A set containing the non-terminal symbols of the grammar.
 
     productions : dict
         A dictionary representing the productions of the grammar.
@@ -188,28 +172,27 @@ def calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, p
     Returns
     -------
     dict
-        A dictionary containing the 'follow' set of all tokens of the grammar.
+        A dictionary containing the 'follow' set of all symbols of the grammar.
     """
+
     old_follow_set = dict()
     follow_set = dict()
-    follow_set[starting_token] = {"$"}
-    first_set = calculate_first_set(terminal_tokens, non_terminal_tokens, productions)
+    follow_set[gr.initial_token] = {"$"}
     # While nothing is added to follow_set
     while follow_set != old_follow_set:
         old_follow_set = follow_set.copy()
         # Iterate over non-terminal tokens
-        for token in non_terminal_tokens:
+        for token in gr.non_terminals:
             # Iterate over the productions of a given token
-            for production in productions[token]:
+            for production in gr.productions[token]:
                 # If it's not an epsilon production
                 if production is not None:
                     # Iterate over the tokens of a given production
                     for index, token_prod in enumerate(production):
                         first_set_beta = set()
-                        if token_prod in non_terminal_tokens: # A -> a B b
-                            epsilon = True
+                        if token_prod in gr.non_terminals: # A -> a B b
                             # Calculate Pri(þ)
-                            first_set_beta = calculate_first_set_sentence(production[index+1:], terminal_tokens, non_terminal_tokens, productions)
+                            first_set_beta = calculate_first_set_sentence(production[index+1:], gr)
 
                             # Add Pri(b)\{e} to FOLLOW(B)
                             if token_prod in follow_set:

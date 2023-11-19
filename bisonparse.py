@@ -6,6 +6,7 @@ Description:
 import bisonlex
 import bisonparse
 import re
+import grammar
 from ply import *
 
 tokens = bisonlex.tokens
@@ -162,11 +163,11 @@ def p_bison(p):
     if tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales) != set():
         print("token ilegales: ", tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales))
 
-    p[0] = (token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    p[0] = grammar.Grammar(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
 
 
 def p_error(p): #fixme
-    raise SyntaxError(f'Syntax error at {p}')
+    raise SyntaxError(f'Syntax error at {p.value[0]} {p.lineno} {p.lexpos}')
 
 
 yacc.yacc()

@@ -18,12 +18,12 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction,
 import LALR
 import LL1
 import LR
+import grammar
 import SLR
 import bisonlex
 import bisonparse
 from ply import *
 
-import operacionesTransformacion as ot
 import conjuntos as conj
 import conjuntos_tablas as conj_tab
 import simulacion as sim
@@ -202,45 +202,6 @@ class RemplaceWindow(QMainWindow):
         elif old: # fixme igual que en buscar
             QMessageBox.information(self, 'Error', f'La palabra "{old}" no se encontró en el texto.')
 
-class FirstSetSentenceWindow(QMainWindow):
-    def __init__(self, traductions, parent=None):
-        super().__init__(parent)
-        self.setGeometry(0, 0, 300, 100)
-        center_window(self)
-
-        self.setWindowTitle(traductions["submenuPRIFormaFrase"])
-        central_widget = QWidget(self)
-        layout = QVBoxLayout(central_widget)
-
-        self.label1 = QLabel(traductions["etiqFormaFrase"])
-        self.text_input1 = QLineEdit()
-        layout.addWidget(self.label1)
-        layout.addWidget(self.text_input1)
-
-        self.label2 = QLabel(traductions["etiqConjFormaFrase"])
-        self.text_input2 = QLineEdit()
-        self.text_input2.setReadOnly(True)  # Disable
-        layout.addWidget(self.label2)
-        layout.addWidget(self.text_input2)
-
-        self.ok_button = QPushButton(traductions["etiqCalcular"])
-        self.ok_button.clicked.connect(self.accept)
-        layout.addWidget(self.ok_button)
-
-        # Establecer el widget principal y el
-        self.setCentralWidget(central_widget)
-
-    def accept(self): #
-        elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
-        if set(elements).difference(main_window.non_terminal_tokens).difference(main_window.terminal_tokens) != set():
-            print("errorcito mor")
-        else:
-            first_set_sentence = conj.calculate_first_set_sentence(elements, main_window.terminal_tokens,
-                                                                   main_window.non_terminal_tokens, main_window.productions)
-            text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
-            self.text_input2.setText(text)
-
-
 class MainWindow(QMainWindow):
     """
        A class used to represent an Animal
@@ -263,20 +224,10 @@ class MainWindow(QMainWindow):
        says(sound=None)
            Prints the animals name and what sound it makes
        """
-    def __init__(self, start_token="", terminal_tokens=None, non_terminal_tokens=None, productions=None, parent=None):
+    def __init__(self, grammar="", parent=None):
         super().__init__(parent)
 
-        if terminal_tokens is None:
-            terminal_tokens = set()
-        if non_terminal_tokens is None:
-            non_terminal_tokens = set()
-        if productions is None:
-            productions = dict()
-
-        self.start_token = start_token
-        self.terminal_tokens = terminal_tokens
-        self.non_terminal_tokens = non_terminal_tokens
-        self.productions = productions
+        self.grammar = grammar
 
         self.table = dict()
         self.file = False
@@ -313,7 +264,7 @@ class MainWindow(QMainWindow):
         self.status_bar.addPermanentWidget(self.row_label)
         self.status_bar.addPermanentWidget(self.column_label)
 
-        if self.start_token != "":
+        if self.grammar != "":
             self.menu_gramaticas()
             self.show_compact_grammar()
         else:
@@ -648,11 +599,7 @@ class MainWindow(QMainWindow):
         self.text_grammar.setPlainText(text)
 
         try:
-            grammar = yacc.parse(text)
-            self.start_token = grammar[0]
-            self.terminal_tokens = grammar[1]
-            self.non_terminal_tokens = grammar[2]
-            self.productions = grammar[3]
+            self.grammar = yacc.parse(text)
 
             self.menu_gramaticas()
             self.log_window.add_information(self.traductions["mensajeGramaticaExito"])
@@ -690,10 +637,7 @@ class MainWindow(QMainWindow):
         bisonparse.tokens_no_terminales = set()
         bisonparse.producciones = dict()
 
-        self.start_token = ""
-        self.terminal_tokens = set()
-        self.non_terminal_tokens = set()
-        self.productions = dict()
+        self.grammar = ""
         self.table = dict()
 
         self.table_LL1 = {}
@@ -875,98 +819,98 @@ class MainWindow(QMainWindow):
 
     def calcular_conjunto_primero(self):
         self.log_window.add_information(self.traductions["mensajeConjuntoPRI"])
-        first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
+        first_set = conj.calculate_first_set(self.grammar)
         first_set_window = conj_tab.FirstSet(self.traductions, first_set, self)
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
         self.log_window.add_information(self.traductions["mensajeConjuntoSIG"])
-        follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                               self.productions)
+        follow_set = conj.calculate_follow_set(self.grammar)
         follow_set_window = conj_tab.FollowSet(self.traductions, follow_set, self)
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        first_set_sentence_window = FirstSetSentenceWindow(self.traductions, self)
+        first_set_sentence_window = conj_tab.FirstSetSentenceWindow(self.traductions, self.grammar, self)
         first_set_sentence_window.show()
 
     def left_factoring(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFactorizacionIzq"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.left_factoring(self.non_terminal_tokens.copy(),
-                                                             copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.left_factoring(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def removal_underivable_non_terminals(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoDerivables"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.removal_underivable_non_terminals(self.start_token,
-                                                                                self.terminal_tokens.copy(),
-                                                                                self.non_terminal_tokens.copy(),
-                                                                                copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.removal_underivable_non_terminals(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
-        if productions[self.start_token] == [[]]:     # fixme comentario
+
+        if gr.productions[self.grammar.initial_token] == [[]]:     # fixme comentario
             QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada generan el lenguaje vacío")
 
 
     def removal_left_recursion(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuRecursividadIzq"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions, _ = ot.removal_left_recursion(self.start_token,
-                                                                        self.non_terminal_tokens.copy(),
-                                                                        copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.removal_left_recursion(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
 
     def removal_unreachable_terminals(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoAccesibles"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        terminal_tokens, non_terminal_tokens, productions = ot.removal_unreachable_terminals(self.start_token,
-                                                                                             self.terminal_tokens.copy(),
-                                                                                             self.non_terminal_tokens.copy(),
-                                                                                             copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.removal_unreachable_terminals(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def removal_eps_prod(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuAnulables"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        productions = ot.removal_epsilon_productions(self.terminal_tokens, self.non_terminal_tokens.copy(),
-                                                      copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
+
+        gr = grammar.removal_epsilon_productions(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def removal_unit_prod(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuCiclos"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        productions = ot.removal_cycles(self.terminal_tokens.copy(), self.non_terminal_tokens.copy(),
-                                        copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, self.non_terminal_tokens, productions, self)
+
+        gr = grammar.removal_cycles(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def chomsky_normal_form(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFNChomsky"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.chomsky_normal_form(self.start_token, self.terminal_tokens.copy(),
-                                                                  self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.chomsky_normal_form(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def greibach_normal_form(self):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuFNGreibach"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
-        non_terminal_tokens, productions = ot.greibach_normal_form(self.start_token, self.non_terminal_tokens.copy(),
-                                                                   copy.deepcopy(self.productions))
-        new_window = MainWindow(self.start_token, self.terminal_tokens, non_terminal_tokens, productions, self)
+
+        gr = grammar.greibach_normal_form(self.grammar)
+        new_window = MainWindow(gr, self)
         new_window.show()
+
 
     def parse_LL1_grammar(self):
         if not self.table_LL1:
             self.log_window.add_information(self.traductions["mensajeAnalizandoLL1"])
-            self.table_LL1 = LL1.calculate_table(self.start_token, self.terminal_tokens, self.non_terminal_tokens,
-                                                 self.productions)
+            self.table_LL1 = LL1.calculate_table(self.grammar)
 
             # Enable options if possible
             conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.terminal_tokens, self.non_terminal_tokens)
@@ -985,13 +929,12 @@ class MainWindow(QMainWindow):
     def parse_SLR_grammar(self):
         if not (self.conj_LR0 and self.action_table_SLR and self.go_to_table_SLR and self.edges_SLR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoSLR1"])
-            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = SLR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            follow_set = conj.calculate_follow_set(self.start_token, self.terminal_tokens, self.non_terminal_tokens, self.productions)
-            self.conj_LR0 = SLR.conj_LR0(self.ext_initial_token, self.ext_non_terminals, self.ext_productions)
-            self.action_table_SLR = SLR.action_table(self.conj_LR0, self.ext_initial_token, self.terminal_tokens,
-                                                     self.ext_non_terminals, self.ext_productions, follow_set)
-            self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.ext_non_terminals, self.ext_productions)
-            self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.terminal_tokens, self.non_terminal_tokens, self.productions)
+            self.ext_grammar = SLR.extend_grammar(self.grammar)
+            follow_set = conj.calculate_follow_set(self.grammar)
+            self.conj_LR0 = SLR.conj_LR0(self.ext_grammar)
+            self.action_table_SLR = SLR.action_table(self.conj_LR0,  self.ext_grammar, follow_set)
+            self.go_to_table_SLR = SLR.go_to_table(self.conj_LR0, self.ext_grammar)
+            self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.ext_grammar)
 
             # Enable options if possible
             conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
@@ -1005,23 +948,25 @@ class MainWindow(QMainWindow):
             self.parse_SLR_input_action.setEnabled(is_slr1)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
-                                   self.conj_LR0, self.edges_SLR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.ext_initial_token, self.ext_productions, main_window, "SLR(1)", self)
+                                   self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
+                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
 
 
     def parse_LALR_grammar(self):
         if not (self.conj_LALR and self.action_table_LALR and self.go_to_table_LALR and self.edges_LALR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLALR1"])
-            first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            self.conj_LALR = LALR.conj_LR1_original(first_set, self.ext_initial_token, self.terminal_tokens | {'$'},
-                                           self.non_terminal_tokens, self.ext_productions)
-            self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.ext_initial_token, self.terminal_tokens | {'$'},
-                                                       self.non_terminal_tokens, self.ext_productions)
-            self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
-                                                     self.non_terminal_tokens, self.ext_productions)
-            self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.terminal_tokens | {'$'},
-                                                    self.non_terminal_tokens, self.ext_productions)
+            first_set = conj.calculate_first_set(self.grammar)
+            self.ext_grammar = LR.extend_grammar(self.grammar)
+            self.ext_grammar.terminals |= {'$'}
+            self.conj_LALR = LALR.conj_LR1(first_set, self.ext_grammar)
+            self.conj_LALR_1 = LALR.conj_LR1_original(first_set, self.ext_grammar)
+
+            print(self.conj_LALR)
+            print(self.conj_LALR_1)
+
+            self.action_table_LALR = LALR.action_table(first_set, self.conj_LALR, self.ext_grammar)
+            self.go_to_table_LALR = LALR.go_to_table(first_set, self.conj_LALR, self.ext_grammar)
+            self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.ext_grammar)
 
             # Enable options if possible
             conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
@@ -1035,23 +980,20 @@ class MainWindow(QMainWindow):
             self.parse_LALR_input_action.setEnabled(is_lalr)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
-                                   self.conj_LALR, self.edges_LALR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.ext_initial_token, self.ext_productions, main_window, "LALR", self)
+                                   self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
+                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
     def parse_LR_grammar(self):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLR1"])
-            first_set = conj.calculate_first_set(self.terminal_tokens, self.non_terminal_tokens, self.productions)
-            self.ext_initial_token, self.ext_non_terminals, self.ext_productions = LR.extend_grammar(self.start_token, self.non_terminal_tokens.copy(), copy.deepcopy(self.productions))
-            self.conj_LR1 = LR.conj_LR1(first_set, self.ext_initial_token, self.terminal_tokens | {'$'},
-                                        self.non_terminal_tokens, self.ext_productions)
-            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.ext_initial_token,
-                                                   self.terminal_tokens | {'$'}, self.non_terminal_tokens,
-                                                   self.ext_productions)
-            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.terminal_tokens | {'$'},
-                                                 self.non_terminal_tokens, self.ext_productions)
-            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.terminal_tokens | {'$'},
-                                                self.non_terminal_tokens, self.ext_productions)
+            first_set = conj.calculate_first_set(self.grammar)
+            self.ext_grammar = LR.extend_grammar(self.grammar)
+            self.ext_grammar.terminals |= {'$'}
+
+            self.conj_LR1 = LR.conj_LR1(first_set, self.ext_grammar)
+            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.ext_grammar)
+            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.ext_grammar)
+            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.ext_grammar)
 
             # Enable options if possible
             conclicts_lr = SLR.is_slr1(self.action_table_LR)
@@ -1065,8 +1007,8 @@ class MainWindow(QMainWindow):
             self.parse_LR_input_action.setEnabled(is_lr)
 
         conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
-                                   self.conj_LR1, self.edges_LR, self.terminal_tokens, self.non_terminal_tokens,
-                                   self.ext_initial_token, self.ext_productions, main_window, "LR", self)
+                                   self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
+                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
 
     def parse_LL1_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLL1"])

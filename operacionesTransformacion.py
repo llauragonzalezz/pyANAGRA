@@ -1,11 +1,6 @@
-"""
-Filename:
-Author: Laura González Pizarro
-Description:
-"""
+import copy
 import itertools
 import conjuntos
-
 
 def removal_unreachable_terminals(start_token, terminal_tokens, non_terminal_tokens, productions):
     old = set()
@@ -273,7 +268,7 @@ def chomsky_normal_form(start_token, terminal_tokens, non_terminal_tokens, produ
 
 
 def left_factoring(non_terminal_tokens, productions):
-    old_non_terminal_tokens = non_terminal_tokens
+    old_non_terminal_tokens = non_terminal_tokens.copy()
     for token in old_non_terminal_tokens:
         old_productions = productions[token].copy()
         times = 1

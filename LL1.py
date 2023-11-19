@@ -8,6 +8,25 @@ import re
 import conjuntos as conj
 
 def is_ll1(table, terminals, non_terminals):
+    """
+    Calculates if the grammar is LL(1):
+
+    Parameters
+    ----------
+    table : dict
+        A dictionary containing the analysis table of grammar
+
+    terminals : set
+        A set containing the terminal symbols of the grammar.
+
+    non_terminals : set
+        A set containing the non-terminal symbols of the grammar.
+
+    Returns
+    -------
+    int
+        The number of conflicts in the given grammar. If num_conflicts = 0 the grammar is LL(1)
+    """
     num_conflicts = 0
     for token_no_terminal in non_terminals:
         for token_terminal in terminals | {"$"}:
@@ -17,32 +36,54 @@ def is_ll1(table, terminals, non_terminals):
     return num_conflicts
 
 
-def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, productions):
-    follow_set = conj.calculate_follow_set(starting_token, terminal_tokens, non_terminal_tokens, productions)
+def calculate_table(gr):
+    """
+    Calculates the LL(1) analysis table of a given grammar
+
+    Parameters
+    ----------
+    initial_token: str
+        The initial token of the grammar.
+
+    terminals : set
+        A set containing the terminal symbols of the grammar.
+
+    non_terminals : set
+        A set containing the non-terminal symbols of the grammar.
+
+    productions : dict
+        A dictionary representing the productions of the grammar.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the LL(1) analysis table of the given grammar.
+    """
+    follow_set = conj.calculate_follow_set(gr)
     table = dict()
 
-    for non_terminal_token in non_terminal_tokens:
-        for token_terminal in terminal_tokens | {"$"}:
+    for non_terminal_token in gr.non_terminals:
+        for token_terminal in gr.terminals | {"$"}:
             table[non_terminal_token, token_terminal] = []
 
-    for token in non_terminal_tokens:
-        for production in productions[token]:
+    for token in gr.non_terminals:
+        for production in gr.productions[token]:
             if production is not None:
-                first_set_token = conj.calculate_first_set_sentence(production, terminal_tokens, non_terminal_tokens, productions)
+                first_set_token = conj.calculate_first_set_sentence(production, gr)
             else:
                 first_set_token = {None}
 
-            for elemento in first_set_token & terminal_tokens:
+            for elemento in first_set_token & gr.terminals:
                 table[token, elemento].append(production)
 
             if None in first_set_token:
-                for b in terminal_tokens & follow_set[token]:
+                for b in gr.terminals & follow_set[token]:
                     table[token, b].append(production)
                 if "$" in follow_set[token]:
                     table[token, "$"].append(production)
 
-    for non_terminal_token in non_terminal_tokens:
-        for token_terminal in terminal_tokens | {"$"}:
+    for non_terminal_token in gr.non_terminals:
+        for token_terminal in gr.terminals | {"$"}:
             if table[non_terminal_token, token_terminal] == []:
                 table[non_terminal_token, token_terminal] = ["error"]  
 
@@ -51,8 +92,33 @@ def calculate_table(starting_token, terminal_tokens, non_terminal_tokens, produc
 def sig_tok(it, accion):
     n = next(it)
     return n, not any(n == key[1] for key in accion.keys())
-def simulate(table, start_token, terminals, input):
-    stack = [("$", 0), (start_token, 1)]
+
+
+def simulate(table, initial_token, terminals, input):
+    """
+    Calculates the LL(1) parsing table for a given input based on a provided LL(1) grammar.
+
+    Parameters
+    ----------
+    table : dict
+        A dictionary containing the LL(1) analysis table of the grammar.
+
+    initial_token: str
+        The initial token of the grammar.
+
+    terminals : set
+        A set containing the terminal symbols of the grammar.
+
+    input : str
+        A string containing the input.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the LL(1) parsing table for a given input based on a provided LL(1) grammar.
+
+    """
+    stack = [("$", 0), (initial_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
     iterador = 2
     it = iter(elementos)

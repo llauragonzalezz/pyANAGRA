@@ -4,6 +4,8 @@ Author: Laura González Pizarro
 Description:
 """
 import conjuntos as conj
+import grammar
+
 
 def is_lr(table):
     num_conflicts = 0
@@ -14,27 +16,28 @@ def is_lr(table):
     return num_conflicts
 
 
-def extend_grammar(start_token, non_terminal_tokens, productions):
-    start_token_extended = start_token + "*"
-    productions[start_token_extended] = [['.', start_token]]
+def extend_grammar(gr):
+    gr.initial_token_extended = gr.initial_token + "*"
+    gr.productions[gr.initial_token_extended] = [['.', gr.initial_token]]
 
-    return start_token_extended, {start_token_extended} | non_terminal_tokens, productions
+    return grammar.Grammar(gr.initial_token_extended, gr.terminals, {gr.initial_token_extended} | gr.non_terminals, gr.productions)
 
-def clausura(I, first_set, terminal_tokens, non_terminal_tokens, productions):
+
+def clausura(I, first_set, gr):
     nuevo = I
     bool_new = True
     while bool_new:  # poner booleano
         bool_new = False
         for token, prod, terminal in nuevo:
             pos_dot = prod.index('.')
-            if pos_dot < len(prod) - 1 and prod[pos_dot + 1] in non_terminal_tokens: # A -> α.Bþ, {terminal}
-                for prod_B in productions[prod[pos_dot + 1]]: # B -> y
+            if pos_dot < len(prod) - 1 and prod[pos_dot + 1] in gr.non_terminals: # A -> α.Bþ, {terminal}
+                for prod_B in gr.productions[prod[pos_dot + 1]]: # B -> y
                     first_set_token = set()
                     if pos_dot < len(prod) - 2:  # Pri(þ)
                         first_set_token = conj.calculate_first_set_sentence_fs(prod[pos_dot + 2:], first_set)
                     if pos_dot >= len(prod) - 2:  # Si no existe þ => Pri(a)
                         first_set_token = terminal
-                    for b in terminal_tokens & first_set_token:
+                    for b in gr.terminals & first_set_token:
                         if prod_B is None and (prod[pos_dot + 1], ['.'], {b}) not in nuevo:
                             nuevo.append((prod[pos_dot + 1], ['.'], {b}))
                             bool_new = True
@@ -55,17 +58,17 @@ def clausura(I, first_set, terminal_tokens, non_terminal_tokens, productions):
 
     return nuevas_tuplas
 
-def sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productions):
+def sucesor(I, token, first_set, gr):
     S = []
     for token_prod, prod, terminal in I:
         pos_dot = prod.index('.')
         if pos_dot < len(prod) - 1 and prod[pos_dot + 1] == token:
             S.append((token_prod, prod[:pos_dot] + [prod[pos_dot + 1]] + ['.'] + prod[pos_dot + 2:], terminal))
 
-    return clausura(S, first_set, terminal_tokens, non_terminal_tokens, productions)
+    return clausura(S, first_set, gr)
 
-def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, productions):
-    new = [clausura([(start_token, prod, {'$'}) for prod in productions[start_token]], first_set, terminal_tokens, non_terminal_tokens, productions)]
+def conj_LR1(first_set, gr):
+    new = [clausura([(gr.initial_token, prod, {'$'}) for prod in gr.productions[gr.initial_token]], first_set, gr)]
     diccionario = dict()
     bool_new = True
     while bool_new:
@@ -74,7 +77,7 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
             prods = {token for _, prod, _ in I for token in prod if token != '.'}
             for token in prods:
                 if (str(I), token) not in diccionario:
-                    diccionario[str(I), token] = sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productions)
+                    diccionario[str(I), token] = sucesor(I, token, first_set, gr)
                 sucesor_token = diccionario[str(I), token]
 
                 if sucesor_token != [] and sucesor_token not in new:
@@ -83,15 +86,34 @@ def conj_LR1(first_set, start_token, terminal_tokens, non_terminal_tokens, produ
 
     return new
 
-def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens, productions):
+
+def action_table(first_set, C, gr):
+    """
+    Calculates the "action" table of a given rightmost LALR grammar.
+
+    Parameters
+    ----------
+    first_set : dict
+        A dictionary containing the 'first' set of all symbols of the grammar.
+
+    C: list
+        A list containing the canonical collection of LR(0) configurations.
+
+    gr : Grammar
+
+    Returns
+    -------
+    dict
+        A dictionary containing the "action" table of the given grammar.
+    """
     action = dict()
 
     for i in range(len(C)):
-        for token, prod, terminal in C[i]:
+        for symbol, prod, terminal in C[i]:
             pos_dot = prod.index('.')
-            if pos_dot < len(prod) - 1 and prod[pos_dot + 1] in terminal_tokens:
+            if pos_dot < len(prod) - 1 and prod[pos_dot + 1] in gr.terminals:
                 terminal_token = prod[pos_dot + 1]
-                sucesor_i_token_terminal = sucesor(C[i], terminal_token, first_set, terminal_tokens, non_terminal_tokens, productions)
+                sucesor_i_token_terminal = sucesor(C[i], terminal_token, first_set, gr)
                 if sucesor_i_token_terminal in C:
                     new_action = "desplazar " + str(C.index(sucesor_i_token_terminal))
                     if (i, terminal_token) in action and new_action not in action[i, terminal_token]:
@@ -101,60 +123,97 @@ def action_table(first_set, C, start_token, terminal_tokens, non_terminal_tokens
 
             if pos_dot == len(prod) - 1:
                 if prod[0] == '.':   # epsilon production
-                    new_action = "reducir " + token + "  → ε"
+                    new_action = "reducir " + symbol + "  → ε"
                 else:
-                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                    new_action = "reducir " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
 
                 if (i, "$") in action and new_action not in action[i, "$"]:
                         action[i, "$"].append(new_action)
                 elif (i, "$") not in action:
                     action[i, "$"] = [new_action]
 
-        for token, prod, terminal in C[i]:
-            if token != start_token and pos_dot == len(prod) - 1:
+        for symbol, prod, terminal in C[i]:
+            if symbol != gr.initial_token and pos_dot == len(prod) - 1:
                 if prod[0] == '.':  # epsilon production
-                    new_action = "reducir " + token + "  → ε"
+                    new_action = "reducir " + symbol + "  → ε"
                 else:
-                    new_action = "reducir " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
+                    new_action = "reducir " + "{} → {}".format(symbol, " ".join(str(x) for x in prod[:-1]))
 
                 for t in terminal:
                     if (i, t) in action and new_action not in action[i, t]:
-                            action[i, t].append(new_action)
+                        action[i, t].append(new_action)
                     elif (i, t) not in action:
                         action[i, t] = [new_action]
-            elif token == start_token and pos_dot == len(prod) - 1:
+            elif symbol == gr.initial_token and pos_dot == len(prod) - 1:
                 action[i, "$"] = ["aceptar"]
 
     for i in range(len(C)):
-        for token in terminal_tokens:
-            if (i, token) not in action:
-                action[i, token] = ["ERROR"]
+        for symbol in gr.terminals:
+            if (i, symbol) not in action:
+                action[i, symbol] = ["ERROR"]
 
     return action
 
-def go_to_table(first_set, C, terminal_tokens, non_terminal_tokens, productions):
+
+def go_to_table(first_set, C, gr):
+    """
+    Calculates the "go to" table of a given LR grammar.
+
+    Parameters
+    ----------
+    first_set : dict
+        A dictionary containing the 'first' set of all symbols of the grammar.
+
+    C: list
+        A list containing the canonical collection of LR(0) configurations.
+
+    gr : Grammar
+
+    Returns
+    -------
+    dict
+        A dictionary containing the "go to" table of the given grammar.
+    """
     ir_a = dict()
-    #conj_LR0(start_token, non_terminal_tokens, productions)
+    #conj_LR0(gr.initial_token, gr.non_terminals, productions)
     for i in range(len(C)):
-        for token_no_terminal in non_terminal_tokens:
-            sucesor_token = sucesor(C[i], token_no_terminal, first_set, terminal_tokens, non_terminal_tokens, productions)
+        for non_terminal in gr.non_terminals:
+            sucesor_token = sucesor(C[i], non_terminal, first_set, gr)
             if sucesor_token in C:
-                ir_a[i, token_no_terminal] = C.index(sucesor_token)
+                ir_a[i, non_terminal] = C.index(sucesor_token)
 
     for i in range(len(C)):
-        for token in non_terminal_tokens | {"$"}:
+        for token in gr.non_terminals | {"$"}:
             if (i, token) not in ir_a:
                 ir_a[i, token] = "ERROR"
 
     return ir_a
 
 
-def create_automaton(first_set, C, terminal_tokens, non_terminal_tokens, productions):
+def create_automaton(first_set, C, gr):
+    """
+    Calculates the automaton of a given LR grammar.
+
+    Parameters
+    ----------
+    first_set: dict
+        A dictionary containing the 'first' set of all symbols of the grammar.
+
+    C : list
+    
+    gr : Grammar
+
+    Returns
+    -------
+    dict
+        A dictionary containing the automaton of the given grammar.
+
+    """
     edges = dict()
     for I in C:
-        for token in terminal_tokens | non_terminal_tokens:
-            sucesor_token = sucesor(I, token, first_set, terminal_tokens, non_terminal_tokens, productions)
+        for symbol in gr.terminals | gr.non_terminals:
+            sucesor_token = sucesor(I, symbol, first_set, gr)
             if sucesor_token in C:
-                edges[str(C.index(I)), str(C.index(sucesor_token))] = token
+                edges[str(C.index(I)), str(C.index(sucesor_token))] = symbol
 
     return edges
