@@ -79,9 +79,15 @@ def calculate_table(gr):
 
     return table
 
-def sig_tok(it, accion):
-    n = next(it)
-    return n, not any(n == key[1] for key in accion.keys())
+
+def next_token(sig_tok, it):
+    if sig_tok == "'":
+        y = next(it)
+        if y == "'":
+            sig_tok += y
+        else:
+            sig_tok += y + next(it)
+    return sig_tok
 
 
 def simulate(table, gr, input):
@@ -103,43 +109,39 @@ def simulate(table, gr, input):
     dict
         A dictionary containing the LL(1) parsing table for a given input based on a provided LL(1) grammar.
 
+    bool
+        True if the input is not recognized by the grammar. False otherwise
     """
     stack = [("$", 0), (gr.initial_token, 1)]
     elementos = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', input)
     iterador = 2
     it = iter(elementos)
     sig_tok = next(it)
-    # simulation table: stack | entry text | output
-    simulation_table = []
-    simulation_table.append(("", input, ()))
+    # simulation table: (stack, entry text, output)
+    simulation_table = [("", input, ())]
 
-    if sig_tok == "'":
-        y = next(it)
-        if y == "'":
-            sig_tok += y
-        else:
-            sig_tok += y + next(it)
+    sig_tok = next_token(sig_tok, it)
 
     x = stack[len(stack)-1]
     while x[0] != "$":
+        # if x is terminal or x == "$"
         if x[0] in gr.terminals or x[0] == "$":
+            # if x == sig_tok
             if x[0] == sig_tok:
                 # Copiamos el iterador original
                 it_copia, it = itertools.tee(it)
                 simulation_table.append((stack.copy(), sig_tok+"".join(it_copia), ()))
+                # pop(P)
                 stack.pop()
+                # sig_tok = yylex()
                 sig_tok = next(it)
+                sig_tok = next_token(sig_tok, it)
 
-                if sig_tok == "'": # if sig_tok is character or string TODO poner tambien si es string "
-                    y = next(it)
-                    if y != "'":
-                        sig_tok += y
-                    else:
-                        sig_tok += y + next(it)
-            else:
+            else: # syntax error
                 return [("", input, ()), ("", input, ())], True
 
         else:
+            # if table[s, sig_tok] = X -> Y1 ... Yk
             if table[x[0], sig_tok][0] != "error":
                 # trigger production
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original
@@ -152,8 +154,10 @@ def simulate(table, gr, input):
                     salida = None
 
                 simulation_table.append((stack.copy(), sig_tok+"".join(it_copia), (x, salida)))
+                # pop(P)
                 stack.pop()
                 if salida is not None:
+                    # push(X -> Yk ... Y1)
                     stack.extend(reversed(salida))
             else:
                 return [("", input, ()), ("", input, ())], True

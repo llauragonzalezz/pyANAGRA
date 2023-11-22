@@ -14,23 +14,61 @@ def is_slr1(table):
 
 
 def clausura(I, gr):
-    viejo = []
-    nuevo = I
+    """
+    Calculates the LR(0) clausure of the grammar.
 
-    while viejo != nuevo:
-        viejo = nuevo
-        for token, prod in viejo:
+    Parameters
+    ----------
+    I: list
+         A list containing the configurations for an expanded grammar.
+
+    gr : Grammar
+
+    Returns
+    -------
+    list
+        A list containing LR(0) clausure of the grammar.
+    """
+    old = []
+    new = I
+
+    while old != new:
+        old = new
+        # for each A → α. B ß ∈ I*
+        for symbol, prod in old:
             if prod.index('.') < len(prod) - 1 and prod[prod.index('.')+1] in gr.non_terminals:
+                # for each B → γ in productions
                 for prod_B in gr.productions[prod[prod.index('.')+1]]:
-                    if prod_B is None and (prod[prod.index('.')+1], ['.']) not in nuevo:
-                        nuevo.append((prod[prod.index('.')+1], ['.']))
-                    elif prod_B is not None and (prod[prod.index('.')+1], ['.'] + prod_B) not in nuevo:
-                        nuevo.append((prod[prod.index('.')+1], ['.'] + prod_B))
+                    # if B → .γ ∉ I*
+                    if prod_B is None and (prod[prod.index('.')+1], ['.']) not in new:
+                        # I* = I* ∪ {B → .γ}
+                        new.append((prod[prod.index('.')+1], ['.']))
+                    elif prod_B is not None and (prod[prod.index('.')+1], ['.'] + prod_B) not in new: # case eps prod
+                        # I* = I* ∪ {B → .γ}
+                        new.append((prod[prod.index('.')+1], ['.'] + prod_B))
 
-    return nuevo
+    return new
 
 
 def sucesor(I, symbol, gr):
+    """
+    Calculates the successors of I with respect to the symbol X.
+
+    Parameters
+    ----------
+    I: list
+         A list containing the configurations for an expanded grammar.
+
+    symbol: str
+        The symbol on which the successor set is calculated.
+
+    gr : Grammar
+
+    Returns
+    -------
+    list
+        A list containing the successors of I with respect to the symbol X.
+    """
     S = []
     for token_prod, prod in I:
         pos_dot = prod.index('.')
@@ -75,46 +113,40 @@ def action_table(C, gr, follow_set):
         A dictionary containing the "action" table of the given grammar.
     """
     action = dict()
-    #follow_set = conjuntos.calculate_follow_set(initial_token[:-1], terminals, non_terminals, gr.productions)
 
     for i in range(len(C)):
         for token, prod in C[i]:
+            # if A -> α . a β
             if prod.index('.') < len(prod) - 1 and prod[prod.index('.') + 1] in gr.terminals:
                 terminal_symbol = prod[prod.index('.') + 1]
                 sucesor_i_token_terminal = sucesor(C[i], terminal_symbol, gr)
+                # If suc(C[i], a) = C[j]
                 if sucesor_i_token_terminal in C:
                     new_action = "shift " + str(C.index(sucesor_i_token_terminal))
+                    # action[i, a] = "shift j "
                     if (i, terminal_symbol) in action and new_action not in action[i, terminal_symbol]:
                         action[i, terminal_symbol].append(new_action)
                     elif (i, terminal_symbol) not in action:
                         action[i, terminal_symbol] = [new_action]
 
-            if prod.index('.') == len(prod) - 1:
-                if prod[0] == '.':   # epsilon production
-                    new_action = "reduce " + token + "  → ε"
-                else:
-                    new_action = "reduce " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
-
-                if (i, "$") in action and new_action not in action[i, "$"]:
-                    action[i, "$"].append(new_action)
-                elif (i, "$") not in action:
-                    action[i, "$"] = [new_action]
-
-        for token, prod in C[i]:
+            # if A -> . α and A != initial_token
             if token != gr.initial_token and prod.index('.') == len(prod) - 1:
+                # for each a in SIG(A)
                 for token_no_terminal_siguiente in follow_set[token]:
                     if prod[0] == '.':  # epsilon production
                         new_action = "reduce " + token + "  → ε"
                     else:
                         new_action = "reduce " + "{} → {}".format(token, " ".join(str(x) for x in prod[:-1]))
-
+                    # action[i, a] = "reduce A ->  α "
                     if (i, token_no_terminal_siguiente) in action and new_action not in action[i, token_no_terminal_siguiente]:
                         action[i, token_no_terminal_siguiente].append(new_action)
                     elif (i, token_no_terminal_siguiente) not in action:
                         action[i, token_no_terminal_siguiente] = [new_action]
 
         for I in C:
+            # if S* -> S . ∈ C[i]
             if (gr.initial_token, [gr.initial_token[:-1], '.']) in I:
+                # action[i, $] = "accept"
                 action[C.index(I), "$"] = ["accept"]
 
     for i in range(len(C)):
@@ -162,11 +194,30 @@ def go_to_table(C, gr):
 
 
 def create_automaton(C, gr):
+    """
+    Calculates the automaton of a given LR grammar.
+
+    Parameters
+    ----------
+
+    C : list
+        A list containing the canonical collection of LR(0) configurations.
+
+    gr : Grammar
+
+    Returns
+    -------
+    dict
+        A dictionary containing the automaton of the given grammar.
+
+    """
     edges = dict()
     for I in C:
         for token in gr.terminals | gr.non_terminals | {"$"}:
             sucesor_token = sucesor(I, token, gr)
+            # if suc(C[i], symbol) ∈ C
             if sucesor_token in C:
+                # edges[index(I), i] = symbol
                 edges[str(C.index(I)), str(C.index(sucesor_token))] = token
 
     return edges

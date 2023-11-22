@@ -794,7 +794,7 @@ class MainWindow(QMainWindow):
             self.edges_SLR = SLR.create_automaton(self.conj_LR0, self.ext_grammar)
 
             # Enable options if possible
-            conclicts_slr1 = SLR.is_slr1(self.action_table_SLR)
+            conclicts_slr1 = bu.is_bottom_up(self.action_table_SLR)
             is_slr1 = conclicts_slr1 == 0
             if is_slr1:
                 self.log_window.add_information(self.traductions["mensajeExitoSLR1"])
@@ -822,7 +822,7 @@ class MainWindow(QMainWindow):
             self.edges_LALR = LALR.create_automaton(first_set, self.conj_LALR, self.ext_grammar)
 
             # Enable options if possible
-            conclicts_lalr = SLR.is_slr1(self.action_table_LALR)
+            conclicts_lalr = bu.is_bottom_up(self.action_table_LALR)
             is_lalr = conclicts_lalr == 0
             if is_lalr:
                 self.log_window.add_information(self.traductions["mensajeExitoLALR1"])
@@ -850,7 +850,7 @@ class MainWindow(QMainWindow):
             self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.ext_grammar)
 
             # Enable options if possible
-            conclicts_lr = SLR.is_slr1(self.action_table_LR)
+            conclicts_lr = bu.is_bottom_up(self.action_table_LR)
             is_lr = conclicts_lr == 0
             if is_lr:
                 self.log_window.add_information(self.traductions["mensajeExitoLR1"])

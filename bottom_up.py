@@ -7,6 +7,30 @@ Description:
 import itertools
 import grammar
 
+
+def is_bottom_up(action_table):
+    """
+    Check if the given grammar is  a bottom-up grammar.
+
+    Parameters
+    ----------
+    action_table : dict
+        A dictionary representing the action table for the grammar.
+
+    Returns
+    -------
+    bool
+        True if the grammar is a bottom-up grammar, False otherwise.
+    """
+    num_conflicts = 0
+    for keys in action_table:
+        # conflict found
+        if len(action_table[keys]) > 1:
+            num_conflicts += 1
+
+    return num_conflicts
+
+
 def extend_grammar(gr):
     initial_token_extended = gr.initial_token + "*"
     gr.productions[initial_token_extended] = [['.', gr.initial_token]]
@@ -39,8 +63,11 @@ def simulate(action_table, go_to_table, input):
     -------
     dict
         A dictionary containing the parsing table for a given input based on a provided grammar.
+
+    bool
+        True if the input is not recognized by the grammar. False otherwise
     """
-    aceptado = False
+    accept = False
     error = False
     stack = [(0,)]
     elementos = input.strip().split()
@@ -48,13 +75,17 @@ def simulate(action_table, go_to_table, input):
     n, error_tok = sig_tok(it, action_table)
 
     index = 0
-    simulation_table = [] # simulation table: stack | entry text | output
-    simulation_table.append((stack.copy(), input, (), ()))
+    # simulation table: (stack, entry text, output)
+    simulation_table = [(stack.copy(), input, (), ())]
 
-    while not (aceptado or error or error_tok):
+    while not (accept or error or error_tok):
+        # s = top(P)
         s = int(stack[len(stack) - 1][0])
+        # if action[s,n] = "shift A -> þ"
         if action_table[s, n][0][:5] == "shift":
+            # push(P, n)
             stack.append((n, index))
+            # push (P, s')
             stack.append((action_table[s, n][0][6:],))
 
             it_copia, it = itertools.tee(it)
@@ -62,22 +93,28 @@ def simulate(action_table, go_to_table, input):
             index += 1
 
             n, error_tok = sig_tok(it, action_table)
-
+        # action[s, n] = "accept"
         elif action_table[s, n][0] == "accept":
-            aceptado = True
+            accept = True
+        # action[s, n] = "ERROR"
         elif action_table[s, n][0] == "ERROR":
             error = True
+        # action[s, n] = "reduce A -> þ"
         elif action_table[s, n][0][:6] == "reduce":
             production = action_table[s, n][0][7:]
             partes = production.split("→")
             right_part = []
             if partes[1].strip() != "ε":
+                # for i = 1 ... þ
                 for i in range(len(partes[1].strip().split())):
-                    stack.pop()
-                    right_part.append(stack.pop())
+                    stack.pop()  # pop(P)
+                    right_part.append(stack.pop())  # pop(P)
 
+            # s = top(P)
             s = int(stack[len(stack) - 1][0])
+            # push(P, A)
             stack.append((partes[0].strip(), index))
+            # push(P, go_to[s, A])
             stack.append((go_to_table[s, partes[0].strip()],))
             left_part = (partes[0].strip(), index)
 
