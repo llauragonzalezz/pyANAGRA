@@ -8,8 +8,9 @@ import json
 import os
 import re
 import sys
+from time import sleep
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
     QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
@@ -30,13 +31,21 @@ import conjuntos as conj
 import conjuntos_tablas as conj_tab
 import simulacion as sim
 
+class WorkerLR(QObject):
+    result_signal = pyqtSignal(tuple)
 
-def center_window(window):
-    screen = QDesktopWidget().availableGeometry()
-    window_size = window.frameGeometry()
-    x = (screen.width() - window_size.width()) // 2
-    y = (screen.height() - window_size.height()) // 2
-    window.move(x, y)
+    def __init__(self, grammar, ext_grammar):
+        super().__init__()
+        self.grammar = grammar
+        self.ext_grammar = ext_grammar
+
+    def run(self):
+        first_set = conj.calculate_first_set(self.grammar)
+        conj_LR1 = LR.conj_LR1(first_set, self.ext_grammar)
+        action_table_LR = LR.action_table(first_set, conj_LR1, self.ext_grammar)
+        go_to_table_LR = LR.go_to_table(first_set, conj_LR1, self.ext_grammar)
+        edges_LR = LR.create_automaton(first_set, conj_LR1, self.ext_grammar)
+        self.result_signal.emit((conj_LR1, action_table_LR, go_to_table_LR, edges_LR))
 
 class MainWindow(QMainWindow):
     """
@@ -77,7 +86,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("ANAGRA")
         self.setGeometry(0, 0, 800, 600)
         # Center window to the middle of the screen
-        center_window(self)
+        utils.center_window(self)
 
         self.menubar = QMenuBar(self)
         self.setMenuBar(self.menubar)
@@ -713,7 +722,7 @@ class MainWindow(QMainWindow):
         self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuRecursividadIzq"])
         self.log_window.add_information(self.traductions["mensajeTransformacion"])
 
-        gr = grammar.removal_left_recursion(self.grammar)
+        gr, _ = grammar.removal_left_recursion(self.grammar)
         new_window = MainWindow(gr, self)
         new_window.show()
 
@@ -805,9 +814,9 @@ class MainWindow(QMainWindow):
             self.parse_SLR_input_action.setEnabled(is_slr1)
             self.save_SLR_table_action.setEnabled(is_slr1)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
-                                   self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
-                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
+        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+                                        self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
+                                        self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
 
 
     def parse_LALR_grammar(self):
@@ -833,37 +842,51 @@ class MainWindow(QMainWindow):
             self.parse_LALR_input_action.setEnabled(is_lalr)
             self.save_LALR_table_action.setEnabled(is_lalr)
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
-                                   self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
-                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
+        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
+                                        self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
+                                        self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
     def parse_LR_grammar(self):
         if not (self.conj_LR1 and self.action_table_LR and self.go_to_table_LR and self.edges_LR):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLR1"])
-            first_set = conj.calculate_first_set(self.grammar)
             self.ext_grammar = bu.extend_grammar(self.grammar)
             self.ext_grammar.terminals |= {'$'}
+            self.progres_bar = utils.ProgressBarWindow(self)
+            self.progres_bar.show()
 
-            self.conj_LR1 = LR.conj_LR1(first_set, self.ext_grammar)
-            self.action_table_LR = LR.action_table(first_set, self.conj_LR1, self.ext_grammar)
-            self.go_to_table_LR = LR.go_to_table(first_set, self.conj_LR1, self.ext_grammar)
-            self.edges_LR = LR.create_automaton(first_set, self.conj_LR1, self.ext_grammar)
+            self.thread = QThread()
+            self.worker = WorkerLR(self.grammar, self.ext_grammar)
+            self.worker.moveToThread(self.thread)
+            self.worker.result_signal.connect(self.threadResultLR)
+            self.thread.started.connect(self.worker.run)
+            self.thread.finished.connect(self.thread.deleteLater)
+            self.thread.start()
 
-            # Enable options if possible
-            conclicts_lr = bu.is_bottom_up(self.action_table_LR)
-            is_lr = conclicts_lr == 0
-            if is_lr:
-                self.log_window.add_information(self.traductions["mensajeExitoLR1"])
-            else:
-                self.log_window.add_information(self.traductions["mensajeErrorLR1"])
-                self.log_window.add_information(self.traductions["etiqEstadisticas6"] + str(conclicts_lr))
+        else:
+            conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
+                                            self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
+                                            self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
 
-            self.parse_LR_input_action.setEnabled(is_lr)
-            self.save_LR_table_action.setEnabled(is_lr)
+    def threadResultLR(self, result_tuple):
+        self.conj_LR1 = result_tuple[0]
+        self.action_table_LR = result_tuple[1]
+        self.go_to_table_LR = result_tuple[2]
+        self.edges_LR = result_tuple[3]
+        # Enable options if possible
+        conclicts_lr = bu.is_bottom_up(self.action_table_LALR)
+        is_lr = conclicts_lr == 0
+        if is_lr:
+            self.log_window.add_information(self.traductions["mensajeExitoLR1"])
+        else:
+            self.log_window.add_information(self.traductions["mensajeErrorLR1"])
+            self.log_window.add_information(self.traductions["etiqEstadisticas6"] + str(conclicts_lr))
 
-        conj_tab.AnalysisTableSLR1(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
-                                   self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
-                                   self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
+        self.parse_LALR_input_action.setEnabled(is_lr)
+        self.save_LALR_table_action.setEnabled(is_lr)
+
+        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR,self.go_to_table_LR,
+                                        self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
+                                        self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
     def save_json(self, data):
         file_route, _ = QFileDialog.getSaveFileName(self, self.traductions["tituloGuardarComo"])
@@ -924,9 +947,9 @@ class MainWindow(QMainWindow):
 
     def show_grammar(self):
         pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
-        text = f"%start {self.start_token}\n"
+        text = f"%start {self.grammar.initial_token}\n"
         non_character_terminal_tokens = set()
-        for token in self.terminal_tokens:
+        for token in self.grammar.terminals:
             if not pattern.fullmatch(token):
                 non_character_terminal_tokens.add(token)
 
@@ -935,22 +958,22 @@ class MainWindow(QMainWindow):
 
         text += f"%%\n\n"
 
-        for token, prods_token in self.productions.items():
+        for token, prods_token in self.grammar.productions.items():
             text += token + ": "
             spacing = "\t" * self.tabs
             for index, prod in enumerate(prods_token):
                 if prod is not None:
                     text += "  ".join(prod)
-                if index != len(self.productions[token]) - 1:
+                if index != len(self.grammar.productions[token]) - 1:
                     text += "\n" + spacing + "| "
             text += "\n;\n\n"
         self.text_grammar.setPlainText(text)
 
     def show_compact_grammar(self):
         pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
-        text = f"%start {self.start_token}\n"
+        text = f"%start {self.grammar.initial_token}\n"
         non_character_terminal_tokens = set()
-        for token in self.terminal_tokens:
+        for token in self.grammar.terminals:
             if not pattern.fullmatch(token):
                 non_character_terminal_tokens.add(token)
 
@@ -958,12 +981,12 @@ class MainWindow(QMainWindow):
             text += "%token " + " ".join(non_character_terminal_tokens) + "\n"
 
         text += f"%%\n\n"
-        for token, prods_token in self.productions.items():
+        for token, prods_token in self.grammar.productions.items():
             text += token + ": "
             for index, prod in enumerate(prods_token):
                 if prod is not None:
                     text += "  ".join(prod)
-                if index != len(self.productions[token]) - 1:
+                if index != len(self.grammar.productions[token]) - 1:
                     text += "| "
             text += ";\n"
 

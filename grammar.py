@@ -21,6 +21,18 @@ class Grammar:
 
 
 def removal_unreachable_terminals(grammar):
+    """
+    Removes unreachable terminals of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing unreachable terminals.
+    """
     gr = grammar.copy()
     old = set()
     new = set(symbol for production in gr.productions[gr.initial_token] if production is not None for symbol in production) \
@@ -30,61 +42,67 @@ def removal_unreachable_terminals(grammar):
         new_symbols = new.difference(old)
         old = new
 
-        # iteramos sobre los tokens añadidos en la iteración anterior
-        for token in new_symbols:
-            if token in gr.non_terminals:
-                # añadimos todos los tokens (terminales y no terminales) que se pueden alcanzar desde un token dado
-                new |= set(token for production in gr.productions[token] if production is not None for token in production)
+        # iterate over new sumbols
+        for symbol in new_symbols:
+            if symbol in gr.non_terminals:
+                # add all terminal and non-terminal symbols that we can reach
+                new |= set(symbol for production in gr.productions[symbol] if production is not None for symbol in production)
 
-    # actualizamos los conjunto de tokens terminales y no terminales a aquellos que sean alcanzables desde el token inicial
+    # update terminals and non-terminal sets
     gr.terminals &= new
-    # eliminamos todos los tokens no terminales que no sean alcanzables
-    tokens_a_eliminar = gr.non_terminals.difference(new)
-    gr.non_terminals &= set(token for token in new if token in gr.non_terminals)
+    # remove all unreachable non-terminals
+    unreachable_symbols = gr.non_terminals.difference(new)
+    gr.non_terminals &= set(symbol for symbol in new if symbol in gr.non_terminals)
 
-    # dejamos solo las productions que contengan tokens lcanzables desde el token inicial
-    gr.productions = {key: value for key, value in gr.productions.items() if key not in tokens_a_eliminar}
+    # keep productions of reachable non-terminals
+    gr.productions = {key: value for key, value in gr.productions.items() if key not in unreachable_symbols}
 
     return gr
 
 
-def non_empty_grammar(initial_token, terminals, non_terminals, productions):
-    _, new_productions = removal_underivable_non_terminals(initial_token, terminals, non_terminals, productions)
-    return productions[initial_token] == [[]]
-
-
 def removal_underivable_non_terminals(grammar):
+    """
+    Removes underivable non terminals of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing underivable non terminals.
+    """
     gr = grammar.copy()
 
     old = set(gr.initial_token)
     new = set()
 
-    # Añadimos a new todos los tokens que tengan al menos una production compuesta por terminales o epsilon
-    for token in gr.non_terminals:
-        for production in gr.productions[token]:
+    # Add all non-terminals that have at least one production made of all terminals or an epsilon production
+    for symbol in gr.non_terminals:
+        for production in gr.productions[symbol]:
             if production is None or set(production) <= gr.terminals:
-                new |= set(token)
+                new |= set(symbol)
 
     while old != new:
         old = new
-        # Añadimos a new todos los tokens que tengan al menos una production compuesta por tokens terminales o
-        # elementos de new o sea una producción epsilon
-        for token in gr.non_terminals:
-            for production in gr.productions[token]:
+        # Add all non-terminals that have at least one production made of all terminals or an epsilon production
+        for symbol in gr.non_terminals:
+            for production in gr.productions[symbol]:
                 if production is None or set(production) <= gr.terminals | old:
-                    new |= set(token)
+                    new |= set(symbol)
 
-    # Dejamos todas las productions que esten compuestas por elementos de new o tokens terminales
+    # Keep all productions made of elements in new or terminal symbols
     new_productions = dict()
-    for token in new:
+    for symbol in new:
         productions_list = []
-        for production in gr.productions[token]:
+        for production in gr.productions[symbol]:
             if production is None or set(production) <= new | gr.terminals:
                 productions_list.append(production)
 
-        new_productions[token] = productions_list
+        new_productions[symbol] = productions_list
 
-    # In this case, the initial token is underivable, therefore, it produces the empty languaje
+    # In this case, the initial token is underivable, therefore, it produces the empty language
     if gr.initial_token not in new:
         new.add(gr.initial_token)
         new_productions[gr.initial_token] = [[]]
@@ -93,11 +111,26 @@ def removal_underivable_non_terminals(grammar):
 
 
 def removal_left_recursion(grammar):
+    """
+    Removes left recursion of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing left recursion(direct and indirect).
+
+    list
+        A sorted list of the non-terminals of the grammar.
+    """
     gr = grammar.copy()
 
     nt_symbols = list(gr.non_terminals)
 
-    # cambiamos la posición del primer elemento para que sea el token inicial
+    # Change position of initial token to be the first one in the list
     if nt_symbols.index(gr.initial_token) != 0:
         pos_initial_token = nt_symbols.index(gr.initial_token)
         nt_symbols[pos_initial_token], nt_symbols[0] = nt_symbols[0], nt_symbols[pos_initial_token]
@@ -123,45 +156,74 @@ def removal_left_recursion(grammar):
     return gr, nt_symbols
 
 
-def removal_direct_left_recursion(grammar, sysmbol):
+def removal_direct_left_recursion(grammar, symbol):
+    """
+    Removes direct left recursion from the given non-terminal symbol in the grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    symbol: str
+        The symbol for which direct left recursion needs to be removed.
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing direct left recursion for the given symbol.
+    """
     gr = grammar.copy()
     recursive_productions = list()
     non_recursive_productions = list()
 
-    # Hay recursividad a izquierda directa si el primer token de la producción es el mismo que el la parte
-    # izquierda de la producción
-    for production in gr.productions[sysmbol]:
-        if production is not None and production[0] == sysmbol:
+    # There is direct left recursion if the first symbol of the production is the same as the left part of the production
+    for production in gr.productions[symbol]:
+        if production is not None and production[0] == symbol:
             recursive_productions.append(production[1:])
         else:
             non_recursive_productions.append(production)
 
     if recursive_productions != []:
-        gr.productions[sysmbol].clear()
-        # Creamos el token que va a eliminar la recursividad a izquierda el token
-        name = sysmbol + "_rec"
+        gr.productions[symbol].clear()
+        # Create the symbol that removes the left recursion of the given symbol
+        name = symbol + "_rec"
         gr.non_terminals.add(name)
         gr.productions[name] = [None]
 
-        # Añadimos al new token las produciones con recursividad a izquierda de forma que se convierta en recursividad
-        # a derecha
+        # Add to the new symbol the productions with left recursion so that it becomes right recursion
         for prod in recursive_productions:
             gr.productions[name].append(prod + [name])
 
-        # Añadimos a las productions del token las reglas que no tenian recuersividad
+        # Add to the symbol productions the rules that did not have recursion
         for prod in non_recursive_productions:
-            gr.productions[sysmbol].append(prod + [name])
+            gr.productions[symbol].append(prod + [name])
 
     return gr
 
 
-# Un token es nullable si y solo si este puede alcanzar una producción epsilon a partir de derivar sus productions
-def is_nullable(gr, token):
-    if None in gr.productions[token]:
+def is_nullable(gr, symbol):
+    """
+    Checks if a symbol is nullable in the given grammar.
+
+    Parameters
+    ----------
+    gr: Grammar
+
+    symbol: str
+        The symbol to check for nullability.
+
+    Returns
+    -------
+    bool
+        True if symbol is nullable. False otherwise
+    """
+    # symbol derivates epsilon (direct)
+    if None in gr.productions[symbol]:
         return True
 
-    for production in gr.productions[token]:
-        if None in conjuntos.calculate_first_set_sentence(production, token, gr.terminals, gr.non_terminals, gr.productions):
+    # symbol =>* epsilon (indirect)
+    for production in gr.productions[symbol]:
+        if None in conjuntos.calculate_first_set_sentence(production, gr):
             return True
 
     return False
@@ -169,33 +231,42 @@ def is_nullable(gr, token):
 
 
 def removal_epsilon_productions(grammar):
+    """
+    Removes direct left recursion of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing direct left recursion.
+    """
     gr = grammar.copy()
 
-    # Calculamos el conjunto de tokens nullables
+    # Calculates the set of nullable symbols
     nullable_tokens = {symbol for symbol in gr.non_terminals if is_nullable(gr, symbol)}
     for symbol in gr.non_terminals:
         if symbol in nullable_tokens and None in gr.productions[symbol]:
-            gr.productions[symbol].remove(None)  # quitamos la production epsilon
+            gr.productions[symbol].remove(None)  # Remove epsilon-prod
 
         for production in gr.productions[symbol]:
-            # Obtenemos los tokens nullables dentro de la producción
+            # Calculate nullable symbols in the production
             nullable_tokens_production = set(production) & nullable_tokens
             indexs_token_nullable = {production.index(null_token) for null_token in nullable_tokens_production}
             combinations = []
 
-            # Creamos todas las combinaciones posibles de los indexs de tokenes nullables
+            # All possible combinations of the nullable symbol index
             for i in range(1, len(indexs_token_nullable) + 1):
                 combinations.extend(list(x) for x in itertools.combinations(indexs_token_nullable, i))
 
             if len(nullable_tokens_production) == len(production):
                 combinations.remove([*range(len(production))])
 
-            # Añadimos al token todas las combinaciones posibles de las apariciones de los tokens nullables de la producción
+            # Add to the symbol productions all the possible combinations of occurrences of the nullable tokens in the production
             for combination in combinations:
                 new_production = [x for i, x in enumerate(production) if i not in combination]
-                # Añadimos todas las productions (no epsilon) que no esten en las productions del token
-                # El único token que puede tener una producción epsilon es el token inicial en el caso de que la cadena
-                # vácia pertenezca al lenguaje
                 if new_production not in gr.productions[symbol]:
                     gr.productions[symbol].append(new_production)
 
@@ -203,32 +274,48 @@ def removal_epsilon_productions(grammar):
 
 
 def remove_unit_productions(grammar, symbol):
+    """
+    Removes unit productions of a given non-terminal symbol.
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    symbol: str
+        The non-terminal symbol for which unit productions should be removed.
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing unit productions of the given non-terminal.
+    """
     gr = grammar.copy()
 
     old = set()
     new = set()
-    # Añadimos todos los tokens que sean producción unitaria de un token
+
+    # Add all symbols that are unit productions
     for production in gr.productions[symbol]:
         if production is not None and len(production) == 1 and production[0] in gr.non_terminals:
-            gr.productions[symbol].remove(production) # delete unit production
+            gr.productions[symbol].remove(production)  # delete unit production
             new.add(production[0])
 
     while old != new:
         new_symbols = new.difference(old)
         old = new.copy()
 
-        # Iteramos sobre los tokens añadidos en la utlima iteración
+        # Iterate over new tokens
         for new_symbol in new_symbols:
             added = False
 
             for production in gr.productions[new_symbol]:
-                # Añadimos todas las poduccion unitaria que se puedan alcanzar desde un token
+                # Add all unit prodcutions that can be reached from a token.
                 if production is not None and len(production) == 1 and production[0] in gr.non_terminals:
                     new.add(production[0])
                 elif not added:
                     added = True
-                    # Para que la gramática sea equivalente trás eliminar la producción unitaria es necesario añadir
-                    # todas las productions(no unitarias) del token de la producción unitaria
+                    # For the grammar to be equivalent after eliminating the unit production, it is necessary to add
+                    # all non-unit productions from the token of the unit production.
                     for production_to_add in gr.productions[new_symbol]:
                         if (len(production_to_add) > 1 or (len(production_to_add) == 1 and production_to_add[0] in gr.terminals)) and production_to_add not in gr.productions[symbol]:
                             gr.productions[symbol].append(production_to_add)
@@ -237,22 +324,49 @@ def remove_unit_productions(grammar, symbol):
 
 
 def removal_cycles(grammar):
+    """
+    Removes cycles of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing cycles.
+    """
     gr = grammar.copy()
 
-    # Eliminamos las productions no unitarias de cada token, eliminando así los posibles ciclos produciadas por estas
+    # Remove all unit productions of each non-terminal, therefore removing all possible cycles
     for symbol in gr.non_terminals:
         gr = remove_unit_productions(gr, symbol)
 
     return gr
 
+
 def removal_nonsolitary_terminals(grammar):
+    """
+    Removes non-solitary terminal productions of a given grammar
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after removing cycles.
+    """
     gr = grammar.copy()
 
+    # Create productions for terminal-symbol
     for token in gr.terminals:
         name = "token_" + token
-        gr.productions[name] = [[token]]
+        gr.productions[name] = [[token]] # token_A -> A
         gr.non_terminals.add(name)
 
+    # Remplace all terminals in productions with the previous productions
     for token in gr.non_terminals:
         for production in gr.productions[token]:
             if production is not None and len(production) > 1:
@@ -263,31 +377,61 @@ def removal_nonsolitary_terminals(grammar):
     return gr
 
 
-def agrupar_productions_pares(grammar):
+def eliminate_long_productions(grammar):
+    """
+    Eliminates right-hand sides with more than 2 nonterminals in a grammar.
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+         A modified grammar after grouping productions into pairs.
+    """
     gr = grammar.copy()
 
     chomsky_index = 1
     nt_tokens = gr.non_terminals.copy()
+    # for each non-terminal
     for symbol in gr.non_terminals:
+        # for each production
         for index, production in enumerate(gr.productions[symbol]):
+            # if the production lenght is > 2 => group production
             if production is not None and len(production) > 2:
-                new_production = "Chom_"+str(chomsky_index)
+                new_production = "Chom_"+str(chomsky_index) #
                 chomsky_index += 1
-                nt_tokens.add(new_production)
-                gr.productions[symbol][index] = [production[0], new_production]
+                nt_tokens.add(new_production)  # Add new non-terminal
+                gr.productions[symbol][index] = [production[0], new_production]  # Change production of symbol
                 last_symbol = new_production
                 for token_prod in production[1:-2]:
                     new_production = "Chom_" + str(chomsky_index)
                     chomsky_index += 1
-                    nt_tokens.add(new_production)
+                    nt_tokens.add(new_production)  # Add new non-terminal
+                    # Create production for new non-terminal (last_symbol)
                     gr.productions[last_symbol] = [[token_prod, new_production]]
                     last_symbol = new_production
+
+                # Create production for new non-terminal (last_symbol)
                 gr.productions[last_symbol] = [production[-2:]]
 
     return Grammar(gr.initial_token, gr.terminals, nt_tokens, gr.productions)
 
 
 def chomsky_normal_form(grammar):
+    """
+    Tranform grammar into Chomsky normal form.
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+         A modified grammar after transforming into Chomsky normal form.
+    """
     gr = grammar.copy()
     # Step 1: remove epilon productions
     gr = removal_epsilon_productions(gr)
@@ -295,75 +439,145 @@ def chomsky_normal_form(grammar):
     gr = removal_cycles(gr)
     # Step 3: remove left recursion
     gr, _ = removal_left_recursion(gr)
-    # Step 4: remove un
+    # Step 4: remove non-solitary terminals in productions
     gr = removal_nonsolitary_terminals(gr)
-    # Step 5:
-    gr = agrupar_productions_pares(gr)
+    # Step 5: eliminate long productions
+    gr = eliminate_long_productions(gr)
 
     return gr
 
 
 def left_factoring(grammar):
+    """
+    Tranform grammar into Chomsky normal form.
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+         A modified grammar after transforming into Chomsky normal form.
+    """
     gr = grammar.copy()
 
     old_non_terminals = gr.non_terminals
-    for token in old_non_terminals:
-        old_productions = gr.productions[token].copy()
+    # for each non-terminal
+    for symbol in old_non_terminals:
+        old_productions = gr.productions[symbol].copy()
         times = 1
+        # for each production
         for production in old_productions:
-            if production in gr.productions[token] and production is not None and len(gr.productions[token]) > 1: # sino esta es que se ha reducido en alguna iteracion anterior
-                gr, times = find_prefix(production, gr.productions[token], token, times, "_" + str(times), gr)
+            if production in gr.productions[symbol] and production is not None and len(gr.productions[symbol]) > 1: # sino esta es que se ha reducido en alguna iteracion anterior
+                # left factorize production by finding longest sufix in productions[symbol]
+                gr, times = find_prefix(production, gr.productions[symbol], symbol, times, "_" + str(times), gr)
 
     return gr
 
 
-# cadenas_differents si y solo si la cadena es una producción epsilon o si la cadena y la de referencia no comienzan por
-# el mismo token
-def different_productions(reference_string, cadena):
-    return cadena is None or cadena == [] or reference_string[0] != cadena[0]
+def different_productions(reference_string, c_string):
+    """
+    Check if two strings represent different productions.
 
-#
+    Parameters
+    ----------
+    reference_string : str
+        The reference string for comparison.
+
+    c_string : str
+        The string to compare with the reference.
+
+    Returns
+    -------
+    Grammar
+         True if the strings represent different productions, False otherwise.
+    """
+    return c_string is None or c_string == [] or reference_string[0] != c_string[0]
+
+
+
 def find_prefix(reference_string, new_productions, name_prod, times, sufix, grammar):
+    """
+    Find the longest prefix in the given context.
+
+    Parameters
+    ----------
+    reference_string : str
+        The reference string used for finding the prefix.
+
+    new_productions : List[str]
+        List of new productions to consider.
+
+    name_prod : str
+        The name of the production to be modified.
+
+    times : int
+        The number of times to apply the modification.
+
+    suffix : str
+        The suffix to be added to the modified production.
+
+    grammar : Grammar
+
+    Returns
+    -------
+    Grammar
+        A modified grammar after finding and applying the prefix.
+    """
     gr = grammar.copy()
 
     prefix_productions = list()
     different = False
+    # for each character in the reference string
     for index, character in enumerate(reference_string):
         for new_production in new_productions:
-            # En el momento en el que cadenas que no son differents dejan de coincidir se ha calulado el prefijo común
+            # The moment when non-different strings does not match, the common prefix has been calculated.
             if not different_productions(reference_string, new_production) and (len(new_production) < index + 1 or character != new_production[index]):
                 different = True
             elif not different_productions(reference_string, new_production) and character == new_production[index] and new_production not in prefix_productions:
                 prefix_productions.append(new_production)
 
-        if prefix_productions == []:  # No hay prefijo común
+        if prefix_productions == []:  # There is not a common prefix
             return gr, times
 
-        if different: # Left factorice
-            # Añadimos un token no terminal el cual agrupe todas las productions con sufijo comun
+        if different: # Left factorize
+            # We add a non-terminal token that groups all productions with a common suffix.
             name = name_prod + sufix
             sufix = "'"
-            # Las productions del new token contienen todas las cadenas comunes sin el prefijo
+            # The productions of the new token contain all common strings without the prefix.
             gr.productions[name] = [prod[index:] for prod in prefix_productions]
             gr.non_terminals.add(name)
-            # Sustituimos las productions con prefijo por una que sea el prefijo + new token
+            # Replace productions with a prefix with one that is the "prefix + new token".
             new_productions.append(reference_string[:index] + [name])
             for prefix_prod in prefix_productions:
                 new_productions.remove(prefix_prod)
 
             gr.productions[name_prod] = new_productions
-            # Factorizamos a izquierda ahora sobre el new token
+            # Left factorize over the new token.
             gr, _ = find_prefix(gr.productions[name][0], gr.productions[name], name, 0, sufix, gr)
             return gr, times + 1
 
     return gr, times
 
 
-def greibach_normal_form(grammar):
+def greibach_normal_form(grammar): # FIXME
+    """
+    Tranform grammar into Greibach normal form.
+
+    Parameters
+    ----------
+    grammar: Grammar
+
+    Returns
+    -------
+    Grammar
+         A modified grammar after transforming into Greibach normal form.
+    """
     gr = grammar.copy()
 
     # Step 1: remove left recursion
-    non_terminals, new_productions, nt_tokens = removal_left_recursion(gr)
+    gr, nt_tokens = removal_left_recursion(gr)
 
     # En el orden inverso al elegido para eliminar la recursividad a izquierda eliminamos todas las productions que
     # empiecen por no terminal
@@ -375,12 +589,12 @@ def greibach_normal_form(grammar):
                 # Sustituimos en la producción el primer token por todas las productions que tiene
                 for production_to_remplace in gr.productions[production[0]]:
                     if production_to_remplace is None:
-                        new_productions[symbol].append(production[1:])
+                        gr.productions[symbol].append(production[1:])
                     else:
-                        new_productions[symbol].append(production_to_remplace + production[1:])
+                        gr.productions[symbol].append(production_to_remplace + production[1:])
 
         for production in productions_to_remove:
-            new_productions[symbol].remove(production)
+            gr.productions[symbol].remove(production)
 
     # Eliminamos todas las productions que empiecen por no terminal de los tokens que se han añadido a la hora de
     # eliminar la recursividad a izquierda
@@ -392,8 +606,8 @@ def greibach_normal_form(grammar):
                 productions_to_remove.append(production)
                 # Sustituimos en la producción el primer token por todas las productions que tiene
                 for production_to_remplace in gr.productions[production[0]]:
-                    new_productions[symbol].append(production_to_remplace + production[1:])
+                    gr.productions[symbol].append(production_to_remplace + production[1:])
         for production in productions_to_remove:
-            new_productions[symbol].remove(production)
+            gr.productions[symbol].remove(production)
 
     return gr

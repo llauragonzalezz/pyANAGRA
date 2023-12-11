@@ -5,7 +5,7 @@ Description:
 """
 from PyQt5.QtGui import QTextDocument, QTextCursor, QColor
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QPlainTextEdit, QDesktopWidget, QVBoxLayout, QLabel, QPushButton, \
-    QWidget, QLineEdit, QTextEdit
+    QWidget, QLineEdit, QTextEdit, QProgressBar
 
 import conjuntos as conj
 import conjuntos_tablas as conj_tab
@@ -17,13 +17,15 @@ import LR
 import bottom_up as bu
 import grammar
 
+
 def center_window(window):
     screen = QDesktopWidget().availableGeometry()
     window_size = window.frameGeometry()
     x = (screen.width() - window_size.width()) // 2
     y = (screen.height() - window_size.height()) // 2
     window.move(x, y)
-    
+
+
 class InformationLog(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -201,3 +203,32 @@ class RemplaceWindow(QMainWindow):
 
         elif old: # fixme igual que en buscar
             QMessageBox.information(self, 'Error', f'La palabra "{old}" no se encontró en el texto.')
+
+
+class ProgressBarWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Procesando...')
+        self.setGeometry(300, 300, 300, 140)
+        center_window(self)
+
+        self.message_label = QLabel('Procesando...', self)
+        self.message_label.setGeometry(30, 20, 240, 25)
+
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setGeometry(30, 50, 240, 25)
+
+        self.progress_bar.setRange(0, 0)  # No percentage
+
+        self.stop_button = QPushButton('Cancelar', self)
+        self.stop_button.setGeometry(90, 80, 120, 25)
+        self.stop_button.clicked.connect(self.cancelProgress)
+
+    def cancelProgress(self):
+        self.close()
+
+    def stopProgress(self):
+        self.close()

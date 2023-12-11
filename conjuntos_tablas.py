@@ -9,18 +9,12 @@ from math import log10
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget, QMenuBar, \
-    QMenu, QAction, QFileDialog, QPushButton, QLineEdit, QLabel, QVBoxLayout, QWidget, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget, \
+                            QFileDialog, QPushButton, QLineEdit, QLabel, QVBoxLayout, QWidget, QMessageBox
 
 import automaton
 import conjuntos as conj
-
-def center_window(window):
-    screen = QDesktopWidget().availableGeometry()
-    window_size = window.frameGeometry()
-    x = (screen.width() - window_size.width()) // 2
-    y = (screen.height() - window_size.height()) // 2
-    window.move(x, y)
+import utils
 
 
 class FirstSet(QMainWindow):
@@ -34,7 +28,7 @@ class FirstSet(QMainWindow):
         self.setWindowTitle(self.traductions["tituloConjuntoPRI"])
         self.setGeometry(0, 0, 400, 300)
         # Center window to the middle of the screen
-        center_window(self)
+        utils.center_window(self)
 
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
@@ -58,7 +52,7 @@ class FollowSet(QMainWindow):
         self.setWindowTitle(self.traductions["tituloConjuntoSIG"])
         self.setGeometry(0, 0, 400, 300)
         # Center window to the middle of the screen
-        center_window(self)
+        utils.center_window(self)
 
         self.text_follow_set = QPlainTextEdit(self)
         self.setCentralWidget(self.text_follow_set)
@@ -79,7 +73,7 @@ class FirstSetSentenceWindow(QMainWindow):
         self.productions = productions
 
         self.setGeometry(0, 0, 300, 100)
-        center_window(self)
+        utils.center_window(self)
 
         self.setWindowTitle(traductions["submenuPRIFormaFrase"])
         central_widget = QWidget(self)
@@ -168,7 +162,7 @@ class AnalysisTableLL1(QMainWindow):
                     table.verticalHeader().length() + 30)
 
         # Center window to the middle of the screen
-        center_window(self)
+        utils.center_window(self)
 
     def save_as_json(self):
         file_route, _ = QFileDialog.getSaveFileName(self, self.traductions["tituloGuardarComo"])
@@ -227,7 +221,7 @@ class AutomatonText(QMainWindow):
         self.setWindowTitle(self.traductions["tituloEscrito"] + self.type)
         self.setGeometry(0, 0, 500, 500)
 
-        center_window(self)
+        utils.center_window(self)
 
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
@@ -391,10 +385,10 @@ class GoToTable(QMainWindow):
 
 
 #todo cambiar nombre ya que lo usan lr y lalr tambien
-class AnalysisTableSLR1(QMainWindow):
-    def __init__(self, traductions, max_lenght, accion, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type,parent=None):
+class AnalysisWindowBottomUp(QMainWindow):
+    def __init__(self, traductions, max_lenght, action, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type, parent=None):
         super().__init__(parent)
-        action_window = ActionTable(traductions, accion, terminal_tokens, productions, type, self)
+        action_window = ActionTable(traductions, action, terminal_tokens, productions, type, self)
         action_window.show()
         go_to_window = GoToTable(traductions, ir_a, non_terminal_tokens, type, self)
         go_to_window.show()

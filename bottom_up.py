@@ -69,9 +69,9 @@ def simulate(action_table, go_to_table, input):
     """
     accept = False
     error = False
-    stack = [(0,)]
-    elementos = input.strip().split()
-    it = iter(elementos)
+    stack = [(0,)]  # P = stack
+    elements = input.strip().split()
+    it = iter(elements)
     n, error_tok = sig_tok(it, action_table)
 
     index = 0
