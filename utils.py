@@ -3,6 +3,7 @@ Filename:
 Author: Laura González Pizarro
 Description:
 """
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextDocument, QTextCursor, QColor
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QPlainTextEdit, QDesktopWidget, QVBoxLayout, QLabel, QPushButton, \
     QWidget, QLineEdit, QTextEdit, QProgressBar
@@ -206,25 +207,27 @@ class RemplaceWindow(QMainWindow):
 
 
 class ProgressBarWindow(QMainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, text, parent=None):
         super().__init__(parent)
+        self.text = text
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle('Procesando...')
-        self.setGeometry(300, 300, 300, 140)
+        self.setGeometry(300, 300, 300, 150)
         center_window(self)
 
-        self.message_label = QLabel('Procesando...', self)
-        self.message_label.setGeometry(30, 20, 240, 25)
+        self.message_label = QLabel(self.text, self)
+        self.message_label.setAlignment(Qt.AlignCenter)
+        self.message_label.setGeometry(30, 20, 240, 40)
 
         self.progress_bar = QProgressBar(self)
-        self.progress_bar.setGeometry(30, 50, 240, 25)
+        self.progress_bar.setGeometry(30, 70, 240, 25)
 
         self.progress_bar.setRange(0, 0)  # No percentage
 
         self.stop_button = QPushButton('Cancelar', self)
-        self.stop_button.setGeometry(90, 80, 120, 25)
+        self.stop_button.setGeometry(90, 100, 120, 25)
         self.stop_button.clicked.connect(self.cancelProgress)
 
     def cancelProgress(self):
