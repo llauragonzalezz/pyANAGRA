@@ -51,7 +51,6 @@ class FollowSet(QMainWindow):
     def initUI(self):
         self.setWindowTitle(self.traductions["tituloConjuntoSIG"])
         self.setGeometry(0, 0, 400, 300)
-        # Center window to the middle of the screen
         utils.center_window(self)
 
         self.text_follow_set = QPlainTextEdit(self)
@@ -66,11 +65,9 @@ class FollowSet(QMainWindow):
 
 
 class FirstSetSentenceWindow(QMainWindow):
-    def __init__(self, traductions, terminal_tokens, non_terminal_tokens, productions, parent=None):
+    def __init__(self, traductions, grammar, parent=None):
         super().__init__(parent)
-        self.terminal_tokens = terminal_tokens
-        self.non_terminal_tokens = non_terminal_tokens
-        self.productions = productions
+        self.grammar = grammar
 
         self.setGeometry(0, 0, 300, 100)
         utils.center_window(self)
@@ -99,17 +96,17 @@ class FirstSetSentenceWindow(QMainWindow):
 
     def accept(self): #
         elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
-        if set(elements).difference(self.non_terminal_tokens).difference(self.terminal_tokens) != set():
+        if set(elements).difference(self.grammar.non_terminals).difference(self.grammar.terminals) != set():
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
             error_message.setText("error ")  # FIXME poner mensaje de error
 
         else:
-            first_set_sentence = conj.calculate_first_set_sentence(elements, self.terminal_tokens,
-                                                                   self.non_terminal_tokens, self.productions)
+            first_set_sentence = conj.calculate_first_set_sentence(elements, self.grammar)
             text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
             self.text_input2.setText(text)
+
 
 class AnalysisTableLL1(QMainWindow):
     def __init__(self, traductions, analysis_table, parent=None):
@@ -175,11 +172,11 @@ class AnalysisTableLL1(QMainWindow):
 
 
 class ExpandedGrammar(QMainWindow):
-    def __init__(self, traductions, start_token, non_terminal_tokens, productions, type, parent=None):
+    def __init__(self, traductions, start_token, non_terminals, productions, type, parent=None):
         super().__init__(parent)
         self.traductions = traductions
         self.start_token = start_token
-        self.non_terminal_tokens = non_terminal_tokens
+        self.non_terminals = non_terminals
         self.productions = productions
         self.type = type
         self.initUI()
@@ -287,11 +284,11 @@ class AutomatonText(QMainWindow):
 
 
 class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
-    def __init__(self, traductions, accion, terminal_tokens, productions, type, parent=None):
+    def __init__(self, traductions, action, terminals, productions, type, parent=None):
         super().__init__(parent)
         self.traductions = traductions
-        self.tabla_accion = accion
-        self.terminal_tokens = list(terminal_tokens | {"$"})
+        self.tabla_accion = action
+        self.terminals = list(terminals | {"$"})
         self.productions = productions
         self.type = type
         self.productions_index = dict()
@@ -307,9 +304,9 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
         table_action = QTableWidget()
         table_action.setEditTriggers(QTableWidget.NoEditTriggers)  # Disable edit cell
         table_action.setSelectionMode(QTableWidget.NoSelection)
-        table_action.setColumnCount(len(self.terminal_tokens))
+        table_action.setColumnCount(len(self.terminals))
         table_action.setRowCount(rows)
-        table_action.setHorizontalHeaderLabels(self.terminal_tokens)
+        table_action.setHorizontalHeaderLabels(self.terminals)
         table_action.setVerticalHeaderLabels([str(i) for i in range(rows)])
 
         row_height = table_action.rowHeight(0)
@@ -336,7 +333,7 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
 
                 item.setBackground(QColor("red"))   # SLR conflict
 
-            table_action.setItem(row, self.terminal_tokens.index(col), item)
+            table_action.setItem(row, self.terminals.index(col), item)
 
         self.setCentralWidget(table_action)
         self.resize(table_action.horizontalHeader().length() + 20,
@@ -349,11 +346,11 @@ class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la pro
 
 
 class GoToTable(QMainWindow):
-    def __init__(self, traductions, ir_a, non_terminal_tokens, type, parent=None):
+    def __init__(self, traductions, ir_a, non_terminals, type, parent=None):
         super().__init__(parent)
         self.traductions = traductions
         self.ir_a = ir_a
-        self.non_terminals = list(non_terminal_tokens)
+        self.non_terminals = list(non_terminals)
         self.type = type
         self.initUI()
 
@@ -385,17 +382,17 @@ class GoToTable(QMainWindow):
 
 
 class AnalysisWindowBottomUp(QMainWindow):
-    def __init__(self, traductions, max_lenght, action, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type, parent=None):
+    def __init__(self, traductions, max_lenght, action, ir_a, nodes, edges, terminals, non_terminals, start_token, productions, window, type, parent=None):
         super().__init__(parent)
-        action_window = ActionTable(traductions, action, terminal_tokens, productions, type, self)
+        action_window = ActionTable(traductions, action, terminals, productions, type, self)
         action_window.show()
-        go_to_window = GoToTable(traductions, ir_a, non_terminal_tokens, type, self)
+        go_to_window = GoToTable(traductions, ir_a, non_terminals, type, self)
         go_to_window.show()
         automaton_text_window = AutomatonText(traductions, nodes, edges, start_token, productions, type, self)
         automaton_text_window.show()
         if len(nodes) <= max_lenght:
             automaton_window = automaton.AutomatonWindow(traductions, nodes, edges, window, type, self)
             automaton_window.show()
-        extended_grammar = ExpandedGrammar(traductions, start_token, non_terminal_tokens, productions, type, self)
+        extended_grammar = ExpandedGrammar(traductions, start_token, non_terminals, productions, type, self)
         extended_grammar.show()
 
