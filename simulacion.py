@@ -139,13 +139,13 @@ class VentanaSimulacion(QMainWindow):
 
 
 class VentanaSimulacionSLR(QMainWindow):
-    def __init__(self, traductions, table, error, terminals, non_terminals, parent=None):
+    def __init__(self, traductions, table, error, grammar, parent=None):
         super().__init__(parent)
         self.traductions = traductions
         self.table = table
         self.error = error
-        self.terminals = terminals
-        self.non_terminals = non_terminals
+        self.terminals = grammar.terminals
+        self.non_terminals = grammar.non_terminals
         self.iter = 0
         self.tree_window = tree.TreeWindow(traductions=traductions, parent=self)
         self.tree_window.show()

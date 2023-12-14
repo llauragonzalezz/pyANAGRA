@@ -384,7 +384,6 @@ class GoToTable(QMainWindow):
         self.move(x, y)
 
 
-#todo cambiar nombre ya que lo usan lr y lalr tambien
 class AnalysisWindowBottomUp(QMainWindow):
     def __init__(self, traductions, max_lenght, action, ir_a, nodes, edges, terminal_tokens, non_terminal_tokens, start_token, productions, window, type, parent=None):
         super().__init__(parent)

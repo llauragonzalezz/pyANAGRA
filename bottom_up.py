@@ -72,6 +72,7 @@ def simulate(action_table, go_to_table, input):
     stack = [(0,)]  # P = stack
     elements = input.strip().split()
     it = iter(elements)
+
     n, error_tok = sig_tok(it, action_table)
 
     index = 0

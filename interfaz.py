@@ -8,7 +8,6 @@ import json
 import os
 import re
 import sys
-from time import sleep
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
 from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont, QPixmap
@@ -31,6 +30,23 @@ import conjuntos as conj
 import conjuntos_tablas as conj_tab
 import simulacion as sim
 
+class WorkerLL1(QObject):
+    result_signal = pyqtSignal(dict)
+
+    def __init__(self, grammar):
+        super().__init__()
+        self.grammar = grammar
+        self.isRunning = True
+
+    def run(self):
+        table_LL1 = LL1.calculate_table(self.grammar)
+
+        if self.isRunning:
+            self.result_signal.emit(table_LL1)
+
+    def stop(self):
+        self.isRunning = False
+
 class WorkerLR(QObject):
     result_signal = pyqtSignal(tuple)
 
@@ -38,6 +54,7 @@ class WorkerLR(QObject):
         super().__init__()
         self.grammar = grammar
         self.ext_grammar = ext_grammar
+        self.isRunning = True
 
     def run(self):
         first_set = conj.calculate_first_set(self.grammar)
@@ -45,7 +62,13 @@ class WorkerLR(QObject):
         action_table_LR = LR.action_table(first_set, conj_LR1, self.ext_grammar)
         go_to_table_LR = LR.go_to_table(first_set, conj_LR1, self.ext_grammar)
         edges_LR = LR.create_automaton(first_set, conj_LR1, self.ext_grammar)
-        self.result_signal.emit((conj_LR1, action_table_LR, go_to_table_LR, edges_LR))
+
+        if self.isRunning:
+            self.result_signal.emit((conj_LR1, action_table_LR, go_to_table_LR, edges_LR))
+
+    def stop(self):
+        self.isRunning = False
+
 
 class WorkerLALR(QObject):
     result_signal = pyqtSignal(tuple)
@@ -54,6 +77,8 @@ class WorkerLALR(QObject):
         super().__init__()
         self.grammar = grammar
         self.ext_grammar = ext_grammar
+        self.isRunning = True
+
 
     def run(self):
         first_set = conj.calculate_first_set(self.grammar)
@@ -61,8 +86,11 @@ class WorkerLALR(QObject):
         action_table_LALR = LALR.action_table(first_set, conj_LALR, self.ext_grammar)
         go_to_table_LALR = LALR.go_to_table(first_set, conj_LALR, self.ext_grammar)
         edges_LALR = LALR.create_automaton(first_set, conj_LALR, self.ext_grammar)
-        self.result_signal.emit((conj_LALR, action_table_LALR, go_to_table_LALR, edges_LALR))
+        if self.isRunning:
+            self.result_signal.emit((conj_LALR, action_table_LALR, go_to_table_LALR, edges_LALR))
 
+    def stop(self):
+        self.isRunning = False
 
 class WorkerSLR(QObject):
     result_signal = pyqtSignal(tuple)
@@ -71,6 +99,8 @@ class WorkerSLR(QObject):
         super().__init__()
         self.grammar = grammar
         self.ext_grammar = ext_grammar
+        self.isRunning = True
+
 
     def run(self):
         follow_set = conj.calculate_follow_set(self.grammar)
@@ -78,7 +108,12 @@ class WorkerSLR(QObject):
         action_table_SLR = SLR.action_table(conj_LR0, self.ext_grammar, follow_set)
         go_to_table_SLR = SLR.go_to_table(conj_LR0, self.ext_grammar)
         edges_SLR = SLR.create_automaton(conj_LR0, self.ext_grammar)
-        self.result_signal.emit((conj_LR0, action_table_SLR, go_to_table_SLR, edges_SLR))
+        if self.isRunning:
+            self.result_signal.emit((conj_LR0, action_table_SLR, go_to_table_SLR, edges_SLR))
+
+    def stop(self):
+        self.isRunning = False
+
 
 class MainWindow(QMainWindow):
     """
@@ -807,21 +842,45 @@ class MainWindow(QMainWindow):
     def parse_LL1_grammar(self):
         if not self.table_LL1:
             self.log_window.add_information(self.traductions["mensajeAnalizandoLL1"])
-            self.table_LL1 = LL1.calculate_table(self.grammar)
 
-            # Enable options if possible
-            conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.grammar)
-            is_ll1 = conclicts_ll1 == 0
-            if is_ll1:
-                self.log_window.add_information(self.traductions["mensajeExitoLL1a"])
-            else:
-                self.log_window.add_information(self.traductions["mensajeErrorLL1a"])
-                self.log_window.add_information(self.traductions["etiqEstadisticas4"] + str(conclicts_ll1))
+            self.progres_bar_LL1 = utils.ProgressBarWindow("Calculando la colección canónica de \nconjuntos de configuraciones SLR(1)", self.cancelProgressLL1, self)
+            self.progres_bar_LL1.show()
 
-            self.parse_LL1_input_action.setEnabled(is_ll1)
-            self.save_LL1_table_action.setEnabled(is_ll1)
+            self.thread_LL1 = QThread()
+            self.worker_LL1 = WorkerLL1(self.grammar)
+            self.worker_LL1.moveToThread(self.thread_LL1)
+            self.worker_LL1.result_signal.connect(self.threadResultLL1)
+            self.thread_LL1.started.connect(self.worker_LL1.run)
+            self.thread_LL1.finished.connect(self.thread_LL1.deleteLater)
+            self.thread_LL1.start()
 
+        else:
+            analysis_table_window = conj_tab.AnalysisTableLL1(self.traductions, self.table_LL1, self)
+            analysis_table_window.show()
 
+    def cancelProgressLL1(self):
+        print("hola")
+        self.progres_bar_LL1.stopProgress()
+        print("1")
+        self.worker_LL1.stop()
+        print("2")
+
+    def threadResultLL1(self, result):
+        self.progres_bar_LL1.stopProgress()
+
+        self.table_LL1 = result
+
+        # Enable options if possible
+        conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.grammar)
+        is_ll1 = conclicts_ll1 == 0
+        if is_ll1:
+            self.log_window.add_information(self.traductions["mensajeExitoLL1a"])
+        else:
+            self.log_window.add_information(self.traductions["mensajeErrorLL1a"])
+            self.log_window.add_information(self.traductions["etiqEstadisticas4"] + str(conclicts_ll1))
+
+        self.parse_LL1_input_action.setEnabled(is_ll1)
+        self.save_LL1_table_action.setEnabled(is_ll1)
         analysis_table_window = conj_tab.AnalysisTableLL1(self.traductions, self.table_LL1, self)
         analysis_table_window.show()
 
@@ -830,7 +889,7 @@ class MainWindow(QMainWindow):
             self.log_window.add_information(self.traductions["mensajeAnalizandoSLR1"])
             self.ext_grammar = bu.extend_grammar(self.grammar)
 
-            self.progres_bar_SLR = utils.ProgressBarWindow("Calculando la colección canonica de \nconjuntos de configuraciones SLR(1)", self)
+            self.progres_bar_SLR = utils.ProgressBarWindow("Calculando la colección canónica de \nconjuntos de configuraciones SLR(1)", self.cancelProgressSLR, self)
             self.progres_bar_SLR.show()
 
             self.thread_SLR = QThread()
@@ -845,6 +904,13 @@ class MainWindow(QMainWindow):
             conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
                                             self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
+
+    def cancelProgressSLR(self):
+        print("hola")
+        self.progres_bar_SLR.stopProgress()
+        print("1")
+        self.worker_SLR.stop()
+        print("2")
 
     def threadResultSLR(self, result_tuple):
         self.progres_bar_SLR.stopProgress()
@@ -875,7 +941,7 @@ class MainWindow(QMainWindow):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLALR1"])
             self.ext_grammar = bu.extend_grammar(self.grammar)
             self.ext_grammar.terminals |= {'$'}
-            self.progres_bar_LALR = utils.ProgressBarWindow("Calculando la colección canonica de \nconjuntos de configuraciones LALR(1)", self)
+            self.progres_bar_LALR = utils.ProgressBarWindow("Calculando la colección canónica de \nconjuntos de configuraciones LALR(1)", self.cancelProgressLALR, self)
             self.progres_bar_LALR.show()
 
             self.thread_LALR = QThread()
@@ -889,6 +955,13 @@ class MainWindow(QMainWindow):
             conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
                                             self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
+
+    def cancelProgressLALR(self):
+        print("hola")
+        self.progres_bar_LALR.stopProgress()
+        print("1")
+        self.worker_LALR.stop()
+        print("2")
 
     def threadResultLALR(self, result_tuple):
         self.progres_bar_LALR.stopProgress()
@@ -918,7 +991,7 @@ class MainWindow(QMainWindow):
             self.log_window.add_information(self.traductions["mensajeAnalizandoLR1"])
             self.ext_grammar = bu.extend_grammar(self.grammar)
             self.ext_grammar.terminals |= {'$'}
-            self.progres_bar_LR = utils.ProgressBarWindow("Calculando la colección canonica de \nconjuntos de configuraciones LR(0)", self)
+            self.progres_bar_LR = utils.ProgressBarWindow("Calculando la colección canónica de \nconjuntos de configuraciones LR(0)", self.cancelProgressLR, self)
             self.progres_bar_LR.show()
 
             self.thread_LR = QThread()
@@ -933,6 +1006,14 @@ class MainWindow(QMainWindow):
             conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
                                             self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
+
+    def cancelProgressLR(self):
+        print("hola")
+        self.progres_bar_LR.stopProgress()
+        print("1")
+        self.worker_LR.stop()
+        print("2")
+
 
     def threadResultLR(self, result_tuple):
         self.progres_bar_LR.stopProgress()
@@ -1001,17 +1082,17 @@ class MainWindow(QMainWindow):
 
     def parse_SLR_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoSLR1"])
-        input_window = utils.InputGrammarWindow(self.traductions, "SLR1", self.grammar, self.save_SLR_table_action, self.go_to_table_SLR, self)
+        input_window = utils.InputGrammarWindow(self.traductions, "SLR1", self.grammar, self.action_table_SLR, self.go_to_table_SLR, self)
         input_window.show()
 
     def parse_LALR_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLALR1"])
-        input_window = utils.InputGrammarWindow(self.traductions, "LALR", self.grammar, self.save_LALR_table_action, self.go_to_table_LALR, self)
+        input_window = utils.InputGrammarWindow(self.traductions, "LALR", self.grammar, self.action_table_LALR, self.go_to_table_LALR, self)
         input_window.show()
 
     def parse_LR_input(self):
         self.log_window.add_information(self.traductions["mensajeSimulandoLR1"])
-        input_window = utils.InputGrammarWindow(self.traductions, "LR", self.grammar, self.save_LR_table_action, self.go_to_table_LR, self)
+        input_window = utils.InputGrammarWindow(self.traductions, "LR", self.grammar, self.action_table_LR, self.go_to_table_LR, self)
         input_window.show()
 
     def show_grammar(self):

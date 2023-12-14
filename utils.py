@@ -56,7 +56,11 @@ class InputGrammarWindow(QMainWindow):
             self.table_LL1 = table1
         elif self.type == "SLR1":
             self.action_table_SLR = table1
+            print("hola1")
+            print(self.action_table_SLR)
             self.go_to_table_SLR = table2
+            print("hola2")
+            print(self.go_to_table_SLR)
 
         elif self.type == "LALR":
             self.action_table_LALR = table1
@@ -97,11 +101,10 @@ class InputGrammarWindow(QMainWindow):
         if self.type == "LL1":
             table, error = LL1.simulate(self.table_LL1, self.grammar, text + " $")
             new_window = sim.VentanaSimulacion(self.traductions, table, error, self.grammar, self)
-
         elif self.type == "SLR1":
             table, error = bu.simulate(self.action_table_SLR, self.go_to_table_SLR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
-
+            print("5")
         elif self.type == "LALR":
             table, error = bu.simulate(self.action_table_LALR, self.go_to_table_LALR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
@@ -109,7 +112,9 @@ class InputGrammarWindow(QMainWindow):
         elif self.type == "LR":
             table, error = bu.simulate(self.action_table_LR, self.go_to_table_LR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
-
+            print("hola")
+            new_window.show()
+            print("hola")
         new_window.show()
 
 
@@ -207,9 +212,11 @@ class RemplaceWindow(QMainWindow):
 
 
 class ProgressBarWindow(QMainWindow):
-    def __init__(self, text, parent=None):
+    def __init__(self, text, stop_func, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.text = text
+        self.stop_func = stop_func
         self.initUI()
 
     def initUI(self):
@@ -228,10 +235,7 @@ class ProgressBarWindow(QMainWindow):
 
         self.stop_button = QPushButton('Cancelar', self)
         self.stop_button.setGeometry(90, 100, 120, 25)
-        self.stop_button.clicked.connect(self.cancelProgress)
-
-    def cancelProgress(self):
-        self.close()
+        self.stop_button.clicked.connect(self.stop_func)
 
     def stopProgress(self):
         self.close()
