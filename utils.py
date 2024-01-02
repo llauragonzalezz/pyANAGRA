@@ -56,10 +56,7 @@ class InputGrammarWindow(QMainWindow):
             self.table_LL1 = table1
         elif self.type == "SLR1":
             self.action_table_SLR = table1
-            print("hola1")
-            print(self.action_table_SLR)
             self.go_to_table_SLR = table2
-            print("hola2")
             print(self.go_to_table_SLR)
 
         elif self.type == "LALR":
@@ -104,7 +101,6 @@ class InputGrammarWindow(QMainWindow):
         elif self.type == "SLR1":
             table, error = bu.simulate(self.action_table_SLR, self.go_to_table_SLR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
-            print("5")
         elif self.type == "LALR":
             table, error = bu.simulate(self.action_table_LALR, self.go_to_table_LALR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
@@ -112,7 +108,6 @@ class InputGrammarWindow(QMainWindow):
         elif self.type == "LR":
             table, error = bu.simulate(self.action_table_LR, self.go_to_table_LR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
-            print("hola")
             new_window.show()
             print("hola")
         new_window.show()
@@ -145,18 +140,18 @@ class FindWindow(QMainWindow):
         text = self.main_window.text_grammar.toPlainText()
         if search_word in text:
             options = QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively
-            cursor = QTextCursor(self.text_grammar.document())
+            cursor = QTextCursor(self.main_window.text_grammar.document())
             selections = []
 
             while not cursor.isNull():
-                cursor = self.text_grammar.document().find(search_word, cursor, options)
+                cursor = self.main_window.text_grammar.document().find(search_word, cursor, options)
                 if not cursor.isNull():
                     sel = QTextEdit.ExtraSelection()
                     sel.format.setBackground(QColor("green"))  # Cambiar el color de fondo a verde
                     sel.cursor = cursor
                     selections.append(sel)
 
-            self.text_grammar.setExtraSelections(selections)
+            self.main_window.text_grammar.setExtraSelections(selections)
 
         else: # fixme poner mensaje desde traductions
             QMessageBox.information(self, 'Mensaje', f'La palabra "{search_word}" no se encontró en el texto.')
