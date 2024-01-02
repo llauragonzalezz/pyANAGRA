@@ -1,12 +1,12 @@
 {
-    "default": 1,
-    "family": "Noto Sans",
-    "point_size": 10,
-    "bold": true,
+    "default": false,
+    "family": "Ubuntu",
+    "point_size": 11,
+    "bold": false,
     "italic": false,
     "underline": false,
-    "color": "#ffffff",
-    "tabs": 2,
+    "color": "#000000",
+    "tabs": "4",
     "states": 30,
-    "english": 0
+    "english": 1
 }
