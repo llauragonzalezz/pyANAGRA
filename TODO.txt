@@ -129,6 +129,8 @@ hola2
 ------------------------------------------------------------------
 15) Tenemos que ver los vídeos conjuntamente y resolver las cuestiones que muestran
 
+16) En la simulación, la pila estaría mejor en vertical
+
 
 
 
