@@ -19,6 +19,51 @@ class Grammar:
     def copy(self):
         return Grammar(self.initial_token, self.terminals.copy(), self.non_terminals.copy(), copy.deepcopy(self.productions))
 
+    def empty_languaje(self):
+        gr = removal_underivable_non_terminals(self)
+        return gr.productions[self.initial_token] == [[]]
+
+
+    def has_cycles(self):
+        for non_terminal in self.non_terminals:
+            symbols = set(symbol for production in self.productions[non_terminal] if production is not None for symbol in production)
+            if non_terminal in symbols:
+                return True
+            else:
+                new_symbols = []
+                while symbols != new_symbols:
+                    for symbol in symbols & self.non_terminals:
+                        new_symbols = symbols
+                        new_symbols += set(symbol for production in self.productions[symbol] if production is not None for symbol in production)
+                        if non_terminal in symbols:
+                            return True
+        return False
+
+
+    def has_epsilon_productions(self):
+        for non_terminal in self.non_terminals:
+            if None in self.productions[non_terminal]:
+                return True
+        return False
+
+    def has_no_terminals(self):
+        new = set()
+        for symbol in self.non_terminals:
+            for production in self.productions[symbol]:
+                if production is None or set(production) <= self.terminals:
+                    new |= set(symbol)
+
+        while old != new:
+            old = new
+            # Add all non-terminals that have at least one production made of all terminals or an epsilon production
+            for symbol in self.non_terminals:
+                for production in self.productions[symbol]:
+                    if production is None or set(production) <= self.terminals | old:
+                        new |= set(symbol)
+
+        return new != self.non_terminals, self.non_terminals - new
+
+
 
 def removal_unreachable_terminals(grammar):
     """
@@ -35,8 +80,7 @@ def removal_unreachable_terminals(grammar):
     """
     gr = grammar.copy()
     old = set()
-    new = set(symbol for production in gr.productions[gr.initial_token] if production is not None for symbol in production) \
-            | set(gr.initial_token)
+    new = set(symbol for production in gr.productions[gr.initial_token] if production is not None for symbol in production) | set(gr.initial_token)
 
     while old != new:
         new_symbols = new.difference(old)
@@ -143,9 +187,13 @@ def removal_left_recursion(grammar):
                     # Si el primer token de la producción es un token anterior al de la parte izquierda de la producción
                     # lo sustituimos por todas las producciónes del token
                     if production is not None and production[0] == symbol_j:
+                        print(gr.productions[symbol_i])
                         gr.productions[symbol_i].remove(production)
+                        print(gr.productions[symbol_i])
                         for production_to_remplace in gr.productions[symbol_j]:
-                            if production is None:
+                            if production_to_remplace is None and production[1:] == []:
+                                gr.productions[symbol_i].append(None)
+                            elif production_to_remplace is None:
                                 gr.productions[symbol_i].append(production[1:])
                             else:
                                 gr.productions[symbol_i].append(production_to_remplace + production[1:])
@@ -153,6 +201,7 @@ def removal_left_recursion(grammar):
         # Eliminamos la recursividad a izquierda directa que se haya podido generar
         gr = removal_direct_left_recursion(gr, symbol_i)
 
+    print(gr.productions)
     return gr, nt_symbols
 
 
@@ -337,6 +386,9 @@ def removal_cycles(grammar):
         A modified grammar after removing cycles.
     """
     gr = grammar.copy()
+
+    # Remove all unreachable symbols
+    gr = removal_unreachable_terminals(gr)
 
     # Remove all unit productions of each non-terminal, therefore removing all possible cycles
     for symbol in gr.non_terminals:
@@ -578,23 +630,31 @@ def greibach_normal_form(grammar): # FIXME
 
     # Step 1: remove left recursion
     gr, nt_tokens = removal_left_recursion(gr)
-
+    print(gr)
     # En el orden inverso al elegido para eliminar la recursividad a izquierda eliminamos todas las productions que
     # empiecen por no terminal
     for symbol in reversed(nt_tokens):
         productions_to_remove = []
+        print("symbol",symbol)
+        print(gr.productions[symbol])
         for production in gr.productions[symbol]:
+            print(production)
             if production is not None and production[0] in gr.non_terminals:
                 productions_to_remove.append(production)
                 # Sustituimos en la producción el primer token por todas las productions que tiene
                 for production_to_remplace in gr.productions[production[0]]:
-                    if production_to_remplace is None:
+                    print(production_to_remplace, production[1:])
+                    if production_to_remplace is None and production[1:] == []:
+                        gr.productions[symbol].append(None)
+                    elif production_to_remplace is None:
                         gr.productions[symbol].append(production[1:])
                     else:
                         gr.productions[symbol].append(production_to_remplace + production[1:])
 
         for production in productions_to_remove:
+            print(gr.productions[symbol])
             gr.productions[symbol].remove(production)
+            print(gr.productions[symbol])
 
     # Eliminamos todas las productions que empiecen por no terminal de los tokens que se han añadido a la hora de
     # eliminar la recursividad a izquierda

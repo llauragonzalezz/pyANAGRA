@@ -109,9 +109,6 @@ t_ignore_comment = r'//.*'
 # Error handler for illegal characters
 def t_error(t):
     raise SyntaxError(f'Illegal character {t.value[0]!r} at line {t.lineno!r} and column {t.lexpos[0]!r}')
-    # print(f'Illegal character {t.value[0]!r}') LINENO POS
-    # print(t.value)
-    # t.lexer.skip(1)
 
 
 lex.lex()

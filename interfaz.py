@@ -566,8 +566,8 @@ class MainWindow(QMainWindow):
 
     def edit_file(self):
         bisonparse.token_inicial = ""
-        bisonparse.tokens_terminales = set()
-        bisonparse.tokens_no_terminales = set()
+        bisonparse.terminals = set()
+        bisonparse.non_terminals = set()
         bisonparse.producciones = dict()
 
         self.grammar = ""
@@ -708,6 +708,7 @@ class MainWindow(QMainWindow):
                 self.tabs = int(spaces)
                 self.changes = True
                 self.data["tabs"] = spaces
+                self.show_grammar()
             else: # mensaje de error
                 error_message = QMessageBox()
                 error_message.setIcon(QMessageBox.Critical)
@@ -730,8 +731,13 @@ class MainWindow(QMainWindow):
                     self.english_checkbox.setChecked(False)
                     self.spanish_checkbox.setChecked(True)
 
-                self.changes = True
-                self.data["english"] = english
+                with open('locales/config.json', 'r') as file:
+                    data = json.load(file)
+
+                data["english"] = english
+
+                with open('locales/config.json', 'w') as file:
+                    json.dump(data, file, indent=4)
 
             else:
                 if english:
@@ -843,7 +849,7 @@ class MainWindow(QMainWindow):
         if not self.table_LL1:
             self.log_window.add_information(self.traductions["mensajeAnalizandoLL1"])
 
-            self.progres_bar_LL1 = utils.ProgressBarWindow("Calculando la colección canónica de \nconjuntos de configuraciones SLR(1)", self.cancelProgressLL1, self)
+            self.progres_bar_LL1 = utils.ProgressBarWindow("Calculando la tabla de analisis LL(1)", self.cancelProgressLL1, self)
             self.progres_bar_LL1.show()
 
             self.thread_LL1 = QThread()
@@ -859,11 +865,8 @@ class MainWindow(QMainWindow):
             analysis_table_window.show()
 
     def cancelProgressLL1(self):
-        print("hola")
         self.progres_bar_LL1.stopProgress()
-        print("1")
         self.worker_LL1.stop()
-        print("2")
 
     def threadResultLL1(self, result):
         self.progres_bar_LL1.stopProgress()
@@ -906,11 +909,8 @@ class MainWindow(QMainWindow):
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
 
     def cancelProgressSLR(self):
-        print("hola")
         self.progres_bar_SLR.stopProgress()
-        print("1")
         self.worker_SLR.stop()
-        print("2")
 
     def threadResultSLR(self, result_tuple):
         self.progres_bar_SLR.stopProgress()
@@ -957,11 +957,8 @@ class MainWindow(QMainWindow):
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
     def cancelProgressLALR(self):
-        print("hola")
         self.progres_bar_LALR.stopProgress()
-        print("1")
         self.worker_LALR.stop()
-        print("2")
 
     def threadResultLALR(self, result_tuple):
         self.progres_bar_LALR.stopProgress()
@@ -1008,11 +1005,8 @@ class MainWindow(QMainWindow):
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
 
     def cancelProgressLR(self):
-        print("hola")
         self.progres_bar_LR.stopProgress()
-        print("1")
         self.worker_LR.stop()
-        print("2")
 
 
     def threadResultLR(self, result_tuple):
@@ -1098,13 +1092,13 @@ class MainWindow(QMainWindow):
     def show_grammar(self):
         pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
         text = f"%start {self.grammar.initial_token}\n"
-        non_character_terminal_tokens = set()
+        non_character_terminals = set()
         for token in self.grammar.terminals:
             if not pattern.fullmatch(token):
-                non_character_terminal_tokens.add(token)
+                non_character_terminals.add(token)
 
-        if non_character_terminal_tokens:
-            text += "%token " + " ".join(non_character_terminal_tokens) + "\n"
+        if non_character_terminals:
+            text += "%token " + " ".join(non_character_terminals) + "\n"
 
         text += f"%%\n\n"
 
@@ -1122,13 +1116,13 @@ class MainWindow(QMainWindow):
     def show_compact_grammar(self):
         pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
         text = f"%start {self.grammar.initial_token}\n"
-        non_character_terminal_tokens = set()
+        non_character_terminals = set()
         for token in self.grammar.terminals:
             if not pattern.fullmatch(token):
-                non_character_terminal_tokens.add(token)
+                non_character_terminals.add(token)
 
-        if non_character_terminal_tokens:
-            text += "%token " + " ".join(non_character_terminal_tokens) + "\n"
+        if non_character_terminals:
+            text += "%token " + " ".join(non_character_terminals) + "\n"
 
         text += f"%%\n\n"
         for token, prods_token in self.grammar.productions.items():

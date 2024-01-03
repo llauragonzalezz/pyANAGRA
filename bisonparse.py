@@ -17,17 +17,22 @@ start = 'bison'
 
 # Parametros de una gramatica
 token_inicial = ""
-tokens_terminales = set()
-tokens_no_terminales = set()
+terminals = set()
+non_terminals = set()
 producciones = dict()
 
-tokens_aux = set()
+aux_symbols = set()
+aux_symbols_dict = dict()
+
 
 def p_prec(p):
     ''' prec : PREC TOKENID
              | PREC LITERAL '''
     # ignoramos prec
     p[0] = p[2]
+    if p[2] not in aux_symbols_dict:
+        aux_symbols_dict[p[2]] = (p.lineno, p.lexpos)
+        print(p.lineno, p.lexpos)
 
 def p_start(p):
     ''' start : START TOKENID '''
@@ -35,8 +40,8 @@ def p_start(p):
 
 def p_token(p):
     ''' token : TOKEN listaTokens'''
-    global tokens_terminales
-    tokens_terminales |= set(p[2])
+    global terminals
+    terminals |= set(p[2])
 
 def p_declaracion_tipo(p):
     ''' declaracion_tipo : LEFT
@@ -58,13 +63,13 @@ def p_declaracion_tokens_tipo(p):
     ''' declaracion  : declaracion_tipo tipo_dato listaTokens'''
     if p[1] != "%type":
         for token in p[3]:
-            tokens_terminales.add(token)
+            terminals.add(token)
 
 def p_declaracion_tokens(p):
     ''' declaracion  : declaracion_tipo listaTokens '''
     if p[1] != "%type":
         for token in p[2]:
-            tokens_terminales.add(token)
+            terminals.add(token)
 
 def p_declaraciones_declaracion(p):
     ''' declaraciones : declaracion declaraciones
@@ -92,16 +97,28 @@ def p_expresion_expresion(p):
                   | expresion LITERAL '''
     p[1].append(p[2])
     p[0] = p[1]
+    if p[2] not in aux_symbols_dict:
+        aux_symbols_dict[p[2]] = (p.lineno, p.lexpos)
+        print(p.lineno, p.lexpos)
+
 
 
 def p_expresion(p):
     ''' expresion : TOKENID
-                  | LITERAL
-                  | prec '''
+                  | LITERAL '''
+    p[0] = [p[1]]
+    if p[1] not in aux_symbols_dict:
+        aux_symbols_dict[p[1]] = (p.lineno, p.lexpos)
+        print(p.lineno, p.lexpos)
+
+
+def p_expresion_prec(p):
+    ''' expresion : prec '''
     p[0] = [p[1]]
 
+
 def p_expresion_epsilon(p):
-    ''' expresion :  empty '''
+    ''' expresion : empty '''
 
 
 def p_listaExpresiones(p):
@@ -128,16 +145,14 @@ def p_produccion(p):
 
     pattern = re.compile(r'''(?P<quote>['"]).*?(?P=quote)''')
 
-    tokens_no_terminales.add(p[1])
+    non_terminals.add(p[1])
 
-    for produccion in p[3]:
-        if produccion is not None:
-            for token in produccion:
-                tokens_aux.add(token)
-                if pattern.fullmatch(token):           # es un char o string
-                    tokens_terminales.add(token)
-                #elif (not pattern.fullmatch(token)) and token not in tokens_terminales:  # es un no terminal
-                #    tokens_no_terminales.add(token)
+    for production in p[3]:
+        if production is not None:
+            for symbol in production:
+                aux_symbols.add(symbol)
+                if pattern.fullmatch(symbol):           # es un char o string
+                    terminals.add(symbol)
 
 
 def p_listaProducciones(p):
@@ -160,10 +175,10 @@ def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
 
-    if tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales) != set():
-        print("token ilegales: ", tokens_aux.difference(tokens_terminales).difference(tokens_no_terminales))
-
-    p[0] = grammar.Grammar(token_inicial, tokens_terminales, tokens_no_terminales, producciones)
+    if aux_symbols.difference(terminals).difference(non_terminals) != set():
+        print("token ilegales: ", aux_symbols.difference(terminals).difference(non_terminals))
+        print(aux_symbols_dict)
+    p[0] = grammar.Grammar(token_inicial, terminals, non_terminals, producciones)
 
 
 def p_error(p): #fixme

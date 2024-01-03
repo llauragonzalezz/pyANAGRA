@@ -80,7 +80,7 @@ class Node(QGraphicsObject):
         else:
             for token, prod, terminal in self._content:
                 text += "{} → {}".format(token, " ".join(str(x) for x in prod)) + " ," + str(terminal) + "\n"
-        node_text_window = NodeText(f"Node Label: {self._name}", text, self._window)
+        node_text_window = NodeText(f"Node: {self._name}", text, self._window)
         node_text_window.show()
 
 
