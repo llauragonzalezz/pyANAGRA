@@ -10,9 +10,6 @@ import grammar
 from ply import *
 
 tokens = bisonlex.tokens
-
-# TODO mirar si se meten producciones repetidas
-
 start = 'bison'
 
 # Parametros de una gramatica
@@ -22,7 +19,6 @@ non_terminals = set()
 producciones = dict()
 
 aux_symbols = set()
-aux_symbols_dict = dict()
 
 
 def p_prec(p):
@@ -30,9 +26,6 @@ def p_prec(p):
              | PREC LITERAL '''
     # ignoramos prec
     p[0] = p[2]
-    if p[2] not in aux_symbols_dict:
-        aux_symbols_dict[p[2]] = (p.lineno, p.lexpos)
-        print(p.lineno, p.lexpos)
 
 def p_start(p):
     ''' start : START TOKENID '''
@@ -97,9 +90,6 @@ def p_expresion_expresion(p):
                   | expresion LITERAL '''
     p[1].append(p[2])
     p[0] = p[1]
-    if p[2] not in aux_symbols_dict:
-        aux_symbols_dict[p[2]] = (p.lineno, p.lexpos)
-        print(p.lineno, p.lexpos)
 
 
 
@@ -107,9 +97,6 @@ def p_expresion(p):
     ''' expresion : TOKENID
                   | LITERAL '''
     p[0] = [p[1]]
-    if p[1] not in aux_symbols_dict:
-        aux_symbols_dict[p[1]] = (p.lineno, p.lexpos)
-        print(p.lineno, p.lexpos)
 
 
 def p_expresion_prec(p):
@@ -174,15 +161,14 @@ def p_reglas(p):
 def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
-
     if aux_symbols.difference(terminals).difference(non_terminals) != set():
         print("token ilegales: ", aux_symbols.difference(terminals).difference(non_terminals))
-        print(aux_symbols_dict)
+        #raise SyntaxError(f'Syntax error at {p.value[0]} {p.lineno} {p.lexpos}')
     p[0] = grammar.Grammar(token_inicial, terminals, non_terminals, producciones)
 
 
 def p_error(p): #fixme
-    raise SyntaxError(f'Syntax error at {p.value[0]} {p.lineno} {p.lexpos}')
+    raise Exception(f'{p.lexpos}')
 
 
 yacc.yacc()

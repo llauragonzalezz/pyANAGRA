@@ -1,5 +1,5 @@
 {
-    "default": false,
+    "default": true,
     "family": "Ubuntu",
     "point_size": 11,
     "bold": false,
@@ -7,6 +7,6 @@
     "underline": false,
     "color": "#000000",
     "tabs": "4",
-    "states": 30,
-    "english": 1
+    "states": 20,
+    "english": 0
 }

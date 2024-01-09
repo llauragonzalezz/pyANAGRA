@@ -47,6 +47,7 @@ class Grammar:
         return False
 
     def has_no_terminals(self):
+        old = set()
         new = set()
         for symbol in self.non_terminals:
             for production in self.productions[symbol]:
@@ -387,8 +388,9 @@ def removal_cycles(grammar):
     """
     gr = grammar.copy()
 
-    # Remove all unreachable symbols
-    gr = removal_unreachable_terminals(gr)
+    gr = removal_epsilon_productions(gr)
+
+    gr = removal_underivable_non_terminals(gr)
 
     # Remove all unit productions of each non-terminal, therefore removing all possible cycles
     for symbol in gr.non_terminals:
@@ -630,15 +632,14 @@ def greibach_normal_form(grammar): # FIXME
 
     # Step 1: remove left recursion
     gr, nt_tokens = removal_left_recursion(gr)
-    print(gr)
+    # Step 1: remove cycles
+    gr = removal_cycles(gr)
+
     # En el orden inverso al elegido para eliminar la recursividad a izquierda eliminamos todas las productions que
     # empiecen por no terminal
     for symbol in reversed(nt_tokens):
         productions_to_remove = []
-        print("symbol",symbol)
-        print(gr.productions[symbol])
         for production in gr.productions[symbol]:
-            print(production)
             if production is not None and production[0] in gr.non_terminals:
                 productions_to_remove.append(production)
                 # Sustituimos en la producción el primer token por todas las productions que tiene
@@ -652,9 +653,7 @@ def greibach_normal_form(grammar): # FIXME
                         gr.productions[symbol].append(production_to_remplace + production[1:])
 
         for production in productions_to_remove:
-            print(gr.productions[symbol])
             gr.productions[symbol].remove(production)
-            print(gr.productions[symbol])
 
     # Eliminamos todas las productions que empiecen por no terminal de los tokens que se han añadido a la hora de
     # eliminar la recursividad a izquierda

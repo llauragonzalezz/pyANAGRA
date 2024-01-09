@@ -192,8 +192,8 @@
   "etiqTextoAnalizar": "Parse text",
   "etiqAvanzar": "Go foward",
   "etiqRetroceder": "Go back",
-  "mensajeCadenaAceptada": "The grammar DOES NOT accept the input",
-  "mensajeCadenaNoAceptada": "The grammar accepts the input",
+  "mensajeCadenaAceptada": "The grammar accepts the input",
+  "mensajeCadenaNoAceptada": "The grammar DOES NOT accept the input",
   "tituloVentanaSimulacion": "Simulation window",
   "tituloAutomataGramatica": "Grammar Automaton ",
   "mensaje": "mensaje"

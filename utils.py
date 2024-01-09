@@ -57,7 +57,6 @@ class InputGrammarWindow(QMainWindow):
         elif self.type == "SLR1":
             self.action_table_SLR = table1
             self.go_to_table_SLR = table2
-            print(self.go_to_table_SLR)
 
         elif self.type == "LALR":
             self.action_table_LALR = table1
@@ -109,7 +108,6 @@ class InputGrammarWindow(QMainWindow):
             table, error = bu.simulate(self.action_table_LR, self.go_to_table_LR, text + " $")
             new_window = sim.VentanaSimulacionSLR(self.traductions, table, error, self.grammar, self)
             new_window.show()
-            print("hola")
         new_window.show()
 
 

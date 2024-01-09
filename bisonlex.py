@@ -94,21 +94,19 @@ t_LITERAL = r'''(?P<quote>['"]).*?(?P=quote)'''
 # A function can be used if there is an associated action.
 # Write the matching regex in the docstring.
 # Ignored token with an action associated with it
-def t_ignore_newline(t):
-    r'\n+'
-    t.lexer.lineno += 1
+def t_NEWLINE(t):
+    r'\n'
+    #t.lexer.lineno += 1
 
-def t_comment(t):
+def t_ccomment(t):
     r'/\*(.|\n)*?\*/'
-    t.lexer.lineno += t.value.count('\n')
+    #t.lexer.lineno += t.value.count('\n')
 
-
-t_ignore_comment = r'//.*'
-
+# t_ignore_cppcomment = r'//.*'
 
 # Error handler for illegal characters
 def t_error(t):
-    raise SyntaxError(f'Illegal character {t.value[0]!r} at line {t.lineno!r} and column {t.lexpos[0]!r}')
+    raise SyntaxError(f'{t.lexpos!r}')
 
 
 lex.lex()

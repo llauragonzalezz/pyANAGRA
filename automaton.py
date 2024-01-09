@@ -47,7 +47,7 @@ class Node(QGraphicsObject):
 
     """A QGraphicsItem representing node in a graph"""
 
-    def __init__(self, name: str, content, window, parent=None):
+    def __init__(self, name: str, content, window, scene, parent=None):
         """Node constructor
 
         Args:
@@ -57,6 +57,7 @@ class Node(QGraphicsObject):
         self._name = name
         self._content = content
         self._window = window
+        self._scene = scene
         self._edges = []
         self._color = "#00afb9"
         self._radius = 30
@@ -138,6 +139,8 @@ class Node(QGraphicsObject):
         if change == QGraphicsItem.ItemPositionHasChanged:
             for edge in self._edges:
                 edge.adjust()
+
+        self._scene.update()
 
         return super().itemChange(change, value)
 
@@ -388,7 +391,7 @@ class GraphView(QGraphicsView):
 
         # Add nodes
         for node in self._graph:
-            item = Node(node, self._nodes[int(node)], self._window)
+            item = Node(node, self._nodes[int(node)], self._window, self._scene)
             self.scene().addItem(item)
             self._nodes_map[node] = item
 

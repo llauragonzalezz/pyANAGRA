@@ -166,8 +166,6 @@ class AnalysisTableLL1(QMainWindow):
         if file_route:
             with open(file_route, 'w') as file:
                 data = {str(k): v if v != ["error"] else [""] for k, v in self.analysis_table.items()}
-                for k, v in self.analysis_table.items():
-                    print(k, v)
                 json.dump(data, file, indent=4)
 
 

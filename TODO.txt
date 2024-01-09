@@ -1,7 +1,7 @@
 Con la versión descargada de Github, ocurre lo siguiente:
 
-1) no cambia de idioma: cambio a inglés, arranco de nuevo, pero sigue en español
-2) "Buscar" "A" (por ejemplo, en cualquiera de las grámáticas) da la excepción que pongo debajo. Sin embargo, "Buscar" y "Remplazar" funciona correctamente.
+OK 1) no cambia de idioma: cambio a inglés, arranco de nuevo, pero sigue en español 
+OK 2) "Buscar" "A" (por ejemplo, en cualquiera de las grámáticas) da la excepción que pongo debajo. Sin embargo, "Buscar" y "Remplazar" funciona correctamente.
 
 Traceback (most recent call last):
   File "/home/ezpeleta/Documents/TFG_TFM_PracticasEmpresa/TFG_Laura/github/ANAGRA/utils.py", line 148, in accept
@@ -12,7 +12,7 @@ Traceback (most recent call last):
     cursor = QTextCursor(self.text_grammar.document())
 AttributeError: 'FindWindow' object has no attribute 'text_grammar'
 
-3) "Compute First of sentential form" parece que no calcula nada
+OK 3) "Compute First of sentential form" parece que no calcula nada
 
 4) Con la siguiente gramática, la factorización a izda. da la excepción que pongo debajo
 %%
@@ -41,8 +41,8 @@ D:D
     gr.productions[symbol_i].append(production_to_remplace + production[1:])
 TypeError: unsupported operand type(s) for +: 'NoneType' and 'list'
 
-5) Pongo el "tabcount" a 4, pero parece que sigue siendo 8
-6) Lo relativo a la gramática está en el menú "Grammar", pero aceptar la gramática está en el menú "Edit". Creo que estaría mejor en el primero, parece un poco fuera de lugar
+OK 5) Pongo el "tabcount" a 4, pero parece que sigue siendo 8
+6) Lo relativo a la gramática está en el menú "Grammar", pero aceptar la gramática está en el menú "Edit". Creo que estaría mejor en el primero, parece un poco fuera de lugar (debajo editar)
 7) Parece que "Removal of cycles" no es correcto. Con la misma gramática de antes, da la siguiente gramática, que on es correcta (pues ahora D deriva epsilon, lo que no puede ser). Es posible que no se cumpla alguna precondición, o que haya fallo en la implementación
 %%
 %start S
@@ -63,7 +63,7 @@ Traceback (most recent call last):
     if production is not None and production[0] in gr.non_terminals:
 IndexError: list index out of range
 
-9) Con la misma gramática, al probar "Parse LL(1)" da 
+OK 9) Con la misma gramática, al probar "Parse LL(1)" da 
 Traceback (most recent call last):
   File "/home/ezpeleta/Documents/TFG_TFM_PracticasEmpresa/TFG_Laura/github/ANAGRA/interfaz.py", line 42, in run
     table_LL1 = LL1.calculate_table(self.grammar)
@@ -74,7 +74,7 @@ hola
 1
 2
 
-Y, además, aparece ventana de "Calculando la ... SLR(1)"
+Y, además, aparece ventana de "Calculando la ... SLR(1)" OK 
 ------------------------------------------------------------------
 10) Mejorar algo el formato automática de salida. Al transformar lo siguiente con "leftFactoring"
 %token c d
@@ -96,7 +96,7 @@ C: c  C| d;
 
 Dado que hab. se trabajará con gramáticas pequeñas, es mejor mostrarlo en el formato extendido
 
-11) Parece que no siempre redibuja bien: ver image_1.png y video_1
+OK 11) Parece que no siempre redibuja bien: ver image_1.png y video_1
 
 12) Con
 %token c d
@@ -117,7 +117,7 @@ Traceback (most recent call last):
 KeyError: ('S', 'cccccd$')
 ------------------------------------------------------------------
 13) Errores en sitio equivocado (ver imagen_2)
-14) Ver video_3: aparecen varias situaciones de error
+OK 14) Ver video_3: aparecen varias situaciones de error
 * parsing LL(1), pero mensaje dice SLR(1), y otros
 * después de factorización a izda. da una gramática extraña.
 15) Hay que limpiar todas las salidas por stdout/stderr que, claramente, son de "debugueo", como
@@ -127,6 +127,10 @@ hola1
 hola2
 {(0, 'C'): 1, (0, 'S'): 4, (1, 'C'): 5, (2, 'C'): 6, (0, '$'): 'ERROR', (0, 'S*'): 'ERROR', (1, '$'): 'ERROR', (1, 'S'): 'ERROR', (1, 'S*'): 'ERROR', (2, '$'): 'ERROR', (2, 'S'): 'ERROR', (2, 'S*'): 'ERROR', (3, '$'): 'ERROR', (3, 'C'): 'ERROR', (3, 'S'): 'ERROR', (3, 'S*'): 'ERROR', (4, '$'): 'ERROR', (4, 'C'): 'ERROR', (4, 'S'): 'ERROR', (4, 'S*'): 'ERROR', (5, '$'): 'ERROR', (5, 'C'): 'ERROR', (5, 'S'): 'ERROR', (5, 'S*'): 'ERROR', (6, '$'): 'ERROR', (6, 'C'): 'ERROR', (6, 'S'): 'ERROR', (6, 'S*'): 'ERROR'}
 
+implementación propia de un analizador descendente (recursivo o por tabla)
+
+
+parse text sin espacios
 
 
 

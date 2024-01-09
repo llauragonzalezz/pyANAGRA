@@ -142,6 +142,8 @@ def simulate(table, gr, input):
 
         else:
             # if table[s, sig_tok] = X -> Y1 ... Yk
+            if (x[0], sig_tok) not in table:
+                return [("", input, ()), ("", input, ())], True
             if table[x[0], sig_tok][0] != "error":
                 # trigger production
                 it_copia, it = itertools.tee(it) # Copiamos el iterador original

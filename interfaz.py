@@ -3,7 +3,6 @@ Filename:
 Author: Laura González Pizarro
 Description:
 """
-import copy
 import json
 import os
 import re
@@ -21,7 +20,6 @@ import LR
 import bottom_up as bu
 import grammar
 import SLR
-import bisonlex
 import bisonparse
 import utils
 from ply import *
@@ -542,9 +540,38 @@ class MainWindow(QMainWindow):
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
-            error_message.setText(str(e))
+            error_message.setText(self.message_error("Illegal character", int(str(e))))
             error_message.setStandardButtons(QMessageBox.Ok)
             error_message.exec_()
+
+        except Exception as e:
+            self.log_window.add_information(self.traductions["mensajeGramaticaFracaso"])
+            error_message = QMessageBox()
+            error_message.setIcon(QMessageBox.Critical)
+            error_message.setWindowTitle("Error")
+            error_message.setText(self.message_error("Syntax error ", int(str(e))))
+            error_message.setStandardButtons(QMessageBox.Ok)
+            error_message.exec_()
+
+    def message_error(self, message, pos):
+        text = self.text_grammar.toPlainText()[:pos+1]
+        line = text.count('\n') + 1
+        col = len(text) - text.rfind('\n')
+        seleccion = QTextEdit.ExtraSelection()
+        seleccion.format.setBackground(QColor("red"))  # Cambiar el color de fondo a rojo
+
+        cursor = QTextCursor(self.text_grammar.document())
+        for _ in range(line - 1):  # Restamos 1 porque los índices comienzan desde 1
+            cursor.movePosition(QTextCursor.NextBlock)
+
+            # Seleccionar toda la línea
+        cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
+        cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+
+        seleccion.cursor = cursor
+        self.text_grammar.setExtraSelections([seleccion])
+
+        return f'{message} {text[pos]} at line {line} and column {col}'
 
     def new_app(self):  # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
         python_path = sys.executable
@@ -569,6 +596,7 @@ class MainWindow(QMainWindow):
         bisonparse.terminals = set()
         bisonparse.non_terminals = set()
         bisonparse.producciones = dict()
+        bisonparse.aux_symbols = set()
 
         self.grammar = ""
         self.table = dict()
@@ -781,32 +809,75 @@ class MainWindow(QMainWindow):
 
 
     def removal_underivable_non_terminals(self):
-        self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoDerivables"])
-        self.log_window.add_information(self.traductions["mensajeTransformacion"])
+        pre = True
+        message = "El algoritmo de eliminación de símbolos no terminables exige en la PRE" \
+                  "que el lenguaje generado sea no vacío."
+        if self.grammar.empty_languaje():
+            pre = False
+            message += "La gramática suministrada genera el lenguaje vacío"
 
-        gr = grammar.removal_underivable_non_terminals(self.grammar)
-        new_window = MainWindow(gr, self)
-        new_window.show()
+        if not pre:
+            QMessageBox.information(self, 'Warning', message)
+        else:
+            self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoDerivables"])
+            self.log_window.add_information(self.traductions["mensajeTransformacion"])
 
-        if gr.productions[self.grammar.initial_token] == [[]]:     # fixme comentario
-            QMessageBox.information(self, self.traductions["mensajeAtencion"], "La gramática original y la transformada generan el lenguaje vacío")
+            gr = grammar.removal_underivable_non_terminals(self.grammar)
+            new_window = MainWindow(gr, self)
+            new_window.show()
 
 
     def removal_left_recursion(self):
-        self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuRecursividadIzq"])
-        self.log_window.add_information(self.traductions["mensajeTransformacion"])
+        pre = True
+        message = "El algoritmo de eliminación de recursividad a izquierda exige en la PRE" \
+                  "que no haya ciclos, ni producciones epsilón. "
+        if self.grammar.has_cycles() and self.grammar.has_epsilon_productions():
+            pre = False
+            message += "En la gramática suministrada hay ciclos y producciones epsilón."
+        elif self.grammar.has_cycles():
+            pre = False
+            message += "En la gramática suministrada hay ciclos."
 
-        gr, _ = grammar.removal_left_recursion(self.grammar)
-        new_window = MainWindow(gr, self)
-        new_window.show()
+        elif self.grammar.has_epsilon_productions():
+            pre = False
+            message += "En la gramática suministrada hay producciones epsilón."
+
+        if not pre:
+            QMessageBox.information(self, 'Warning', message)
+        else:
+            self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuRecursividadIzq"])
+            self.log_window.add_information(self.traductions["mensajeTransformacion"])
+
+            gr, _ = grammar.removal_left_recursion(self.grammar)
+            new_window = MainWindow(gr, self)
+            new_window.show()
 
     def removal_unreachable_terminals(self):
-        self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoAccesibles"])
-        self.log_window.add_information(self.traductions["mensajeTransformacion"])
+        pre = True
+        message = "El algoritmo de eliminación de símbolos no accesibles exige en la PRE " \
+                  "que el lenguaje generado sea no vacío, y que cada símbolo sea " \
+                  "terminable"
+        if self.grammar.empty_languaje() and self.grammar.has_no_terminals():
+            pre = False
+            message += "La gramática suministrada genera el lenguaje vacío " \
+                       "y hay símbolos no terminables."
+        elif self.grammar.empty_languaje():
+            pre = False
+            message += "La gramática suministrada genera el lenguaje vacío."
 
-        gr = grammar.removal_unreachable_terminals(self.grammar)
-        new_window = MainWindow(gr, self)
-        new_window.show()
+        elif self.grammar.has_no_terminals():
+            pre = False
+            message += "En la gramática suministrada hay símbolos no terminables."
+
+        if not pre:
+            QMessageBox.information(self, 'Warning', message)
+        else:
+            self.log_window.add_information(self.traductions["mensajeAplicando"] + self.traductions["submenuNoAccesibles"])
+            self.log_window.add_information(self.traductions["mensajeTransformacion"])
+
+            gr = grammar.removal_unreachable_terminals(self.grammar)
+            new_window = MainWindow(gr, self)
+            new_window.show()
 
 
     def removal_eps_prod(self):
@@ -849,7 +920,7 @@ class MainWindow(QMainWindow):
         if not self.table_LL1:
             self.log_window.add_information(self.traductions["mensajeAnalizandoLL1"])
 
-            self.progres_bar_LL1 = utils.ProgressBarWindow("Calculando la tabla de analisis LL(1)", self.cancelProgressLL1, self)
+            self.progres_bar_LL1 = utils.ProgressBarWindow("Calculando la tabla para el análisis LL(1)", self.cancelProgressLL1, self)
             self.progres_bar_LL1.show()
 
             self.thread_LL1 = QThread()
