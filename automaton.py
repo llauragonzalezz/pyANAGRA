@@ -425,7 +425,7 @@ class AutomatonWindow(QMainWindow):
         self.view = GraphView(self.graph, self.nodes, self.edges, self._window, self)
         self.setCentralWidget(self.view)
 
-        screen = QDesktopWidget().availableGeometry()   # TODO VER DONDE LO PONGO
+        screen = QDesktopWidget().availableGeometry()   
         window_size = self.frameGeometry()
         x = (screen.width() - window_size.width()) // 2
         y = (screen.height() - window_size.height()) // 2

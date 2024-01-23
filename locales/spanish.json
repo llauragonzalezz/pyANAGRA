@@ -120,14 +120,14 @@
   "mensajeSimulandoLR1": "Simulando analizador sintáctico LR(1) asociado a la gramática.",
   "mensajeSimulandoLALR1": "Simulando analizador sintáctico LALR(1) asociado a la gramática.",
   "mensajeAcercaDe1": "ANAGRA 3.0: Herramienta para el estudio de gramaticas",
-  "mensajeAcercaDe2": " libres de contexto y técnicas de analisis sintáctico ",
+  "mensajeAcercaDe2": "libres de contexto y técnicas de analisis sintáctico ",
   "mensajeAcercaDe3": "Realizado por: Laura González Pizarro ",
   "mensajeAcercaDe4": "Dirigido por: Joaquín Ezpeleta Mateo",
   "mensajeAcercaDe5": "Enviar comentarios de proyecto a: 409570@cepsz.unizar.es",
   "tituloAutomataLALR1": "Autómata LALR(1)",
   "tituloAutomataLR1": "Autómata LR(1)",
   "tituloAutomataSLR1": "Autómata SLR(1)",
-  "tituloEscrito": "Autómata escrito",
+  "tituloEscrito": "Autómata escrito ",
   "tituloReducir": "    reduce usando la regla ",
   "tituloIrA": " ir al estado ",
   "tituloDesplazarEIr": " desplazar e ir al estado ",
@@ -198,6 +198,6 @@
   "mensajeCadenaNoAceptada": "La entrada NO es aceptada por la gramática",
   "tituloVentanaSimulacion": "Ventana de simulación",
   "tituloAutomataGramatica": "Automata gramática ",
-  "mensaje": "mensaje"
+  "mensaje": "Mensaje"
 }
 

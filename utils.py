@@ -4,7 +4,7 @@ Author: Laura González Pizarro
 Description:
 """
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QTextDocument, QTextCursor, QColor
+from PyQt5.QtGui import QTextDocument, QTextCursor, QColor, QPixmap
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QPlainTextEdit, QDesktopWidget, QVBoxLayout, QLabel, QPushButton, \
     QWidget, QLineEdit, QTextEdit, QProgressBar
 
@@ -46,6 +46,7 @@ class InformationLog(QMainWindow):
 
     def add_information(self, text):
         self.text_edit.appendPlainText(text)
+
 
 class InputGrammarWindow(QMainWindow):
     def __init__(self, traductions, type, grammar, table1, table2=None, parent=None):

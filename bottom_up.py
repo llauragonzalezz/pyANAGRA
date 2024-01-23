@@ -123,7 +123,7 @@ def simulate(action_table, go_to_table, input):
             simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
             index += 1
 
-    if error_tok or len(simulation_table) == 1:
+    if error_tok or error or len(simulation_table) == 1:
         return [(stack.copy(), input, (), ()), (stack.copy(), input, (), ())], error or error_tok
 
     return simulation_table, error or error_tok

@@ -100,7 +100,7 @@ class FirstSetSentenceWindow(QMainWindow):
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
-            error_message.setText("error ")  # FIXME poner mensaje de error
+            error_message.setText("error ")
 
         else:
             first_set_sentence = conj.calculate_first_set_sentence(elements, self.grammar)
@@ -281,7 +281,7 @@ class AutomatonText(QMainWindow):
         self.text_edit.setPlainText(text)
 
 
-class ActionTable(QMainWindow): # TODO poner el numero de la produccoin o la produccion
+class ActionTable(QMainWindow): 
     def __init__(self, traductions, action, terminals, productions, type, parent=None):
         super().__init__(parent)
         self.traductions = traductions

@@ -126,18 +126,15 @@ hola1
 {(0, 'c'): ['shift 2'], (0, 'd'): ['shift 3'], (4, '$'): ['accept'], (1, 'c'): ['shift 2'], (1, 'd'): ['shift 3'], (2, 'c'): ['shift 2'], (2, 'd'): ['shift 3'], (3, '$'): ['reduce C → d'], (3, 'c'): ['reduce C → d'], (3, 'd'): ['reduce C → d'], (5, '$'): ['reduce S → C C'], (6, '$'): ['reduce C → c C'], (6, 'c'): ['reduce C → c C'], (6, 'd'): ['reduce C → c C'], (0, '$'): ['ERROR'], (1, '$'): ['ERROR'], (2, '$'): ['ERROR'], (4, 'c'): ['ERROR'], (4, 'd'): ['ERROR'], (5, 'c'): ['ERROR'], (5, 'd'): ['ERROR']}
 hola2
 {(0, 'C'): 1, (0, 'S'): 4, (1, 'C'): 5, (2, 'C'): 6, (0, '$'): 'ERROR', (0, 'S*'): 'ERROR', (1, '$'): 'ERROR', (1, 'S'): 'ERROR', (1, 'S*'): 'ERROR', (2, '$'): 'ERROR', (2, 'S'): 'ERROR', (2, 'S*'): 'ERROR', (3, '$'): 'ERROR', (3, 'C'): 'ERROR', (3, 'S'): 'ERROR', (3, 'S*'): 'ERROR', (4, '$'): 'ERROR', (4, 'C'): 'ERROR', (4, 'S'): 'ERROR', (4, 'S*'): 'ERROR', (5, '$'): 'ERROR', (5, 'C'): 'ERROR', (5, 'S'): 'ERROR', (5, 'S*'): 'ERROR', (6, '$'): 'ERROR', (6, 'C'): 'ERROR', (6, 'S'): 'ERROR', (6, 'S*'): 'ERROR'}
-<<<<<<< HEAD
 
 implementación propia de un analizador descendente (recursivo o por tabla)
 
 
 parse text sin espacios
-=======
 ------------------------------------------------------------------
 15) Tenemos que ver los vídeos conjuntamente y resolver las cuestiones que muestran
 
-16) En la simulación, la pila estaría mejor en vertical
->>>>>>> c09c3964b43426d7db677413b2fa531ad83ebeef
+OK 16) En la simulación, la pila estaría mejor en vertical
 
 
 

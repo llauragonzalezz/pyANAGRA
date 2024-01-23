@@ -114,27 +114,7 @@ class WorkerSLR(QObject):
 
 
 class MainWindow(QMainWindow):
-    """
-       A class used to represent an Animal
 
-       ...
-
-       Attributes
-       ----------
-       says_str : str
-           a formatted string to print out what the animal says
-       name : str
-           the name of the animal
-       sound : str
-           the sound that the animal makes
-       num_legs : int
-           the number of legs the animal has (default 4)
-
-       Methods
-       -------
-       says(sound=None)
-           Prints the animals name and what sound it makes
-       """
     def __init__(self, grammar="", parent=None):
         super().__init__(parent)
 
@@ -379,7 +359,7 @@ class MainWindow(QMainWindow):
         follow_set_action.triggered.connect(self.calcular_conjunto_siguiente)
         tools_qmenu.addAction(follow_set_action)
 
-        first_set_sentence_action = QAction(self.traductions["submenuPRIFormaFrase"], self)  # TODO: mirar que es
+        first_set_sentence_action = QAction(self.traductions["submenuPRIFormaFrase"], self)  
         first_set_sentence_action.triggered.connect(self.calcular_conjunto_primero_frase)
         tools_qmenu.addAction(first_set_sentence_action)
 
@@ -445,7 +425,7 @@ class MainWindow(QMainWindow):
         parse_LALR_grammar_action.triggered.connect(self.parse_LALR_grammar)
         parse_qmenu.addAction(parse_LALR_grammar_action)
 
-        self.save_LALR_table_action = QAction("Guardar tablaS LALR", self)
+        self.save_LALR_table_action = QAction("Guardar tablas LALR", self)
         self.save_LALR_table_action.triggered.connect(self.save_LALR_table)
         self.save_LALR_table_action.setEnabled(False)  # Enable/Disable action
         parse_qmenu.addAction(self.save_LALR_table_action)
@@ -454,7 +434,7 @@ class MainWindow(QMainWindow):
         parse_LR_grammar_action.triggered.connect(self.parse_LR_grammar)
         parse_qmenu.addAction(parse_LR_grammar_action)
 
-        self.save_LR_table_action = QAction("Guardar tablaS LR", self)
+        self.save_LR_table_action = QAction("Guardar tablas LR", self)
         self.save_LR_table_action.triggered.connect(self.save_LR_table)
         self.save_LR_table_action.setEnabled(False)  # Enable/Disable action
         parse_qmenu.addAction(self.save_LR_table_action)
@@ -511,8 +491,8 @@ class MainWindow(QMainWindow):
         self.mode_label.setText(self.traductions["lectura"])
 
 
-    #def closeEvent(self, event): # FIXME descomentame por favor
-    #    self.exit()
+    def closeEvent(self, event):
+        self.exit()
 
 
     def update_row_column(self):
@@ -554,6 +534,8 @@ class MainWindow(QMainWindow):
             error_message.exec_()
 
     def message_error(self, message, pos):
+        if pos == -1:
+            pos = len(self.text_grammar.toPlainText()) - 1
         text = self.text_grammar.toPlainText()[:pos+1]
         line = text.count('\n') + 1
         col = len(text) - text.rfind('\n')
@@ -573,7 +555,7 @@ class MainWindow(QMainWindow):
 
         return f'{message} {text[pos]} at line {line} and column {col}'
 
-    def new_app(self):  # TODO COMPROBAR QUE FUNCIONA EN WINDOWS
+    def new_app(self):  
         python_path = sys.executable
         os.system(python_path + " " + os.path.abspath(__file__) + " &")
 
@@ -680,22 +662,19 @@ class MainWindow(QMainWindow):
         cursor.select(QTextCursor.Document)
         self.text_grammar.setTextCursor(cursor)
 
-    def show_log(self):  # TODO
+    def show_log(self):  
         self.log_window.show()
 
-    def show_information(self):  # TODO
+    def show_information(self):
         mensaje = QMessageBox()
-        mensaje.setWindowTitle(self.traductions["tituloCambioIdioma"]) # fixme cual pongo
+        mensaje.setWindowTitle(self.traductions["mensaje"])
 
         label_izquierda = QLabel(mensaje)
-        pixmap_izquierda = QPixmap("uz.png").scaled(150, 150, aspectRatioMode=Qt.KeepAspectRatio)
+        pixmap_izquierda = QPixmap("uz.png").scaled(220, 220, aspectRatioMode=Qt.KeepAspectRatio)
         mensaje.setIconPixmap(pixmap_izquierda)
+        label_izquierda.setAlignment(Qt.AlignHCenter)
 
-        label_derecha = QLabel(mensaje)
-        pixmap_derecha = QPixmap("uz.png").scaled(150, 150, aspectRatioMode=Qt.KeepAspectRatio)
-        label_derecha.setPixmap(pixmap_derecha)
-
-        message = self.traductions["mensajeAcercaDe1"] + "\n  " + \
+        message = self.traductions["mensajeAcercaDe1"] + " " + \
                   self.traductions["mensajeAcercaDe2"] + "\n\n" + \
                   self.traductions["mensajeAcercaDe3"] + "\n" + \
                   self.traductions["mensajeAcercaDe4"]
@@ -703,8 +682,6 @@ class MainWindow(QMainWindow):
 
         # Agregar widgets directamente al contenedor principal del QMessageBox
         mensaje.layout().addWidget(label_izquierda, 0, 0, alignment=Qt.AlignLeft)
-        mensaje.layout().addWidget(label_derecha, 1, 0, alignment=Qt.AlignLeft)
-
         mensaje.exec_()
 
 
@@ -729,7 +706,7 @@ class MainWindow(QMainWindow):
             self.data["default"] = False
             self.data["color"] = color.name()
 
-    def change_tab(self):  # TODO cambiar y ver qué hago
+    def change_tab(self):  
         spaces, ok = QInputDialog.getText(self, self.traductions["submenuTabulador"], self.traductions["mensajeTabulador"])
         if ok:
             if spaces.isdigit() and int(spaces) > 0:
@@ -741,7 +718,7 @@ class MainWindow(QMainWindow):
                 error_message = QMessageBox()
                 error_message.setIcon(QMessageBox.Critical)
                 error_message.setWindowTitle("Error")
-                error_message.setText("error ") # FIXME poner mensaje de error
+                error_message.setText("error ")
 
 
     def cambiar_idioma(self, english):
@@ -1175,7 +1152,7 @@ class MainWindow(QMainWindow):
 
         for token, prods_token in self.grammar.productions.items():
             text += token + ": "
-            spacing = "\t" * self.tabs
+            spacing = " " * int(self.tabs)
             for index, prod in enumerate(prods_token):
                 if prod is not None:
                     text += "  ".join(prod)

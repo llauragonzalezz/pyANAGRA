@@ -106,7 +106,7 @@ class VentanaSimulacion(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(self.table[self.iter][1][:-1])
+        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
 
 
     def avanzar(self): # '(''x'';''(''x'')'')'
@@ -116,7 +116,7 @@ class VentanaSimulacion(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(self.table[self.iter][1][:-1])
+        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
 
         # Update tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
@@ -152,11 +152,11 @@ class VentanaSimulacionSLR(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(0, 0, 450, 150)
+        self.setGeometry(0, 0, 500, 400)
         screen = QDesktopWidget().availableGeometry()
         window_size = self.frameGeometry()
         x = screen.width() // 2 - window_size.width()
-        y = screen.height() // 2 - window_size.height()
+        y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
 
         self.setWindowTitle(self.traductions["tituloVentanaSimulacion"])
@@ -216,6 +216,8 @@ class VentanaSimulacionSLR(QMainWindow):
 
         # Agregar el layout de los botones al diseño de cuadrícula
         grid_layout.addLayout(button_layout, 6, 0, 1, 3)
+        self.text_production.setFixedHeight(7 * self.text_production.fontMetrics().lineSpacing())
+        self.text_stack.setFixedHeight(7 * self.text_stack.fontMetrics().lineSpacing())
 
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
@@ -237,7 +239,7 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(self.table[self.iter][1][:-1])
+        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
 
 
     def avanzar(self):  # '(''x'';''(''x'')'')'
@@ -247,7 +249,7 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(self.table[self.iter][1][:-1])
+        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
 
         # Update tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
@@ -276,7 +278,7 @@ class VentanaSimulacionSLR(QMainWindow):
 def write_stack(stack):
     string = ""
     for elem in stack:
-        string += str(elem[0]) + " "
+        string += str(elem[0]) + " \n"
     return string
 # id '+' id
 
@@ -287,8 +289,8 @@ def write_production(tuple):
     elif tuple[1] is None:
         return str(tuple[0][0]) + "  → ε"
     else:
-        string = tuple[0][0] + "→"
+        string = tuple[0][0] + "→ "
         for elem in tuple[1]:
-            string += elem[0]
+            string += elem[0] + " "
 
         return string

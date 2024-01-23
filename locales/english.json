@@ -127,7 +127,7 @@
   "tituloAutomataLALR1": "LALR(1) machine",
   "tituloAutomataLR1": "LR(1) machine",
   "tituloAutomataSLR1": "SLR(1) machine",
-  "tituloEscrito": "Written automaton",
+  "tituloEscrito": "Written automaton ",
   "tituloReducir": "    reduce using rule ",
   "tituloIrA": " go to state ",
   "tituloDesplazarEIr": " shift and go to state ",

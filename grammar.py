@@ -34,7 +34,7 @@ class Grammar:
                 while symbols != new_symbols:
                     for symbol in symbols & self.non_terminals:
                         new_symbols = symbols
-                        new_symbols += set(symbol for production in self.productions[symbol] if production is not None for symbol in production)
+                        new_symbols |= set(symbol for production in self.productions[symbol] if production is not None for symbol in production)
                         if non_terminal in symbols:
                             return True
         return False
@@ -139,7 +139,7 @@ def removal_underivable_non_terminals(grammar):
 
     # Keep all productions made of elements in new or terminal symbols
     new_productions = dict()
-    for symbol in new:
+    for symbol in new & gr.non_terminals:
         productions_list = []
         for production in gr.productions[symbol]:
             if production is None or set(production) <= new | gr.terminals:
@@ -188,9 +188,7 @@ def removal_left_recursion(grammar):
                     # Si el primer token de la producción es un token anterior al de la parte izquierda de la producción
                     # lo sustituimos por todas las producciónes del token
                     if production is not None and production[0] == symbol_j:
-                        print(gr.productions[symbol_i])
                         gr.productions[symbol_i].remove(production)
-                        print(gr.productions[symbol_i])
                         for production_to_remplace in gr.productions[symbol_j]:
                             if production_to_remplace is None and production[1:] == []:
                                 gr.productions[symbol_i].append(None)
@@ -202,7 +200,6 @@ def removal_left_recursion(grammar):
         # Eliminamos la recursividad a izquierda directa que se haya podido generar
         gr = removal_direct_left_recursion(gr, symbol_i)
 
-    print(gr.productions)
     return gr, nt_symbols
 
 
@@ -644,7 +641,6 @@ def greibach_normal_form(grammar): # FIXME
                 productions_to_remove.append(production)
                 # Sustituimos en la producción el primer token por todas las productions que tiene
                 for production_to_remplace in gr.productions[production[0]]:
-                    print(production_to_remplace, production[1:])
                     if production_to_remplace is None and production[1:] == []:
                         gr.productions[symbol].append(None)
                     elif production_to_remplace is None:

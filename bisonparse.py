@@ -162,13 +162,16 @@ def p_bison(p):
     ''' bison : declaraciones  reglas
               | reglas '''
     if aux_symbols.difference(terminals).difference(non_terminals) != set():
-        print("token ilegales: ", aux_symbols.difference(terminals).difference(non_terminals))
+        print("token ilegales: ", aux_symbols.difference(terminals).difference(non_terminals), " at ", p.lexpos)
         #raise SyntaxError(f'Syntax error at {p.value[0]} {p.lineno} {p.lexpos}')
     p[0] = grammar.Grammar(token_inicial, terminals, non_terminals, producciones)
 
 
 def p_error(p): #fixme
-    raise Exception(f'{p.lexpos}')
+    if p is None:
+        raise Exception(f'{-1}')
+    else:
+        raise Exception(f'{p.lexpos}')
 
 
 yacc.yacc()
