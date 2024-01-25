@@ -1,6 +1,8 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description:
 """
 from PyQt5.QtCore import Qt
@@ -8,15 +10,10 @@ from PyQt5.QtGui import QTextDocument, QTextCursor, QColor, QPixmap
 from PyQt5.QtWidgets import QMessageBox, QMainWindow, QPlainTextEdit, QDesktopWidget, QVBoxLayout, QLabel, QPushButton, \
     QWidget, QLineEdit, QTextEdit, QProgressBar
 
-import conjuntos as conj
-import conjuntos_tablas as conj_tab
-import simulacion as sim
 
-import LALR
+import simulacion as sim
 import LL1
-import LR
 import bottom_up as bu
-import grammar
 
 
 def center_window(window):

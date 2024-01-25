@@ -1,6 +1,8 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description:
 """
 import json
@@ -9,104 +11,10 @@ from math import log10
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget, \
-                            QFileDialog, QPushButton, QLineEdit, QLabel, QVBoxLayout, QWidget, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QPlainTextEdit, QTableWidgetItem, QTableWidget, QDesktopWidget,  QFileDialog
 
 import automaton
-import conjuntos as conj
 import utils
-
-
-class FirstSet(QMainWindow):
-    def __init__(self, traductions, dicc, parent=None):
-        super().__init__(parent)
-        self.traductions = traductions
-        self.dicc = dicc
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle(self.traductions["tituloConjuntoPRI"])
-        self.setGeometry(0, 0, 400, 300)
-        # Center window to the middle of the screen
-        utils.center_window(self)
-
-        self.text_edit = QPlainTextEdit(self)
-        self.setCentralWidget(self.text_edit)
-        self.text_edit.setReadOnly(True)
-
-        text = ""
-        for key in self.dicc.keys():  # FIXME LOS ESPACIOS NO FUNCIONAN TIENE QUE SER CARACTERES NO IMPRIMIBLES COMO \u00A0
-            text += "Pri(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in self.dicc[key]]) + "\n"
-
-        self.text_edit.setPlainText(text)
-
-
-class FollowSet(QMainWindow):
-    def __init__(self, traductions, dicc, parent=None):
-        super().__init__(parent)
-        self.traductions = traductions
-        self.dicc = dicc
-        self.initUI()
-
-    def initUI(self):
-        self.setWindowTitle(self.traductions["tituloConjuntoSIG"])
-        self.setGeometry(0, 0, 400, 300)
-        utils.center_window(self)
-
-        self.text_follow_set = QPlainTextEdit(self)
-        self.setCentralWidget(self.text_follow_set)
-        self.text_follow_set.setReadOnly(True)
-
-        text = ""
-        for key in self.dicc.keys():
-            text += "Sig(" + key + "): " + " , ".join([str(x) if x is not None else 'ε' for x in self.dicc[key]]) + "\n"
-        self.text_follow_set.setPlainText(text)
-
-
-
-class FirstSetSentenceWindow(QMainWindow):
-    def __init__(self, traductions, grammar, parent=None):
-        super().__init__(parent)
-        self.grammar = grammar
-
-        self.setGeometry(0, 0, 300, 100)
-        utils.center_window(self)
-
-        self.setWindowTitle(traductions["submenuPRIFormaFrase"])
-        central_widget = QWidget(self)
-        layout = QVBoxLayout(central_widget)
-
-        self.label1 = QLabel(traductions["etiqFormaFrase"])
-        self.text_input1 = QLineEdit()
-        layout.addWidget(self.label1)
-        layout.addWidget(self.text_input1)
-
-        self.label2 = QLabel(traductions["etiqConjFormaFrase"])
-        self.text_input2 = QLineEdit()
-        self.text_input2.setReadOnly(True)  # Disable
-        layout.addWidget(self.label2)
-        layout.addWidget(self.text_input2)
-
-        self.ok_button = QPushButton(traductions["etiqCalcular"])
-        self.ok_button.clicked.connect(self.accept)
-        layout.addWidget(self.ok_button)
-
-        # Establecer el widget principal y el
-        self.setCentralWidget(central_widget)
-
-    def accept(self): #
-        elements = re.findall(r'("[^"]*"|\'[^\']*\'|\S+)', self.text_input1.text())
-        if set(elements).difference(self.grammar.non_terminals).difference(self.grammar.terminals) != set():
-            error_message = QMessageBox()
-            error_message.setIcon(QMessageBox.Critical)
-            error_message.setWindowTitle("Error")
-            error_message.setText("error ")
-
-        else:
-            first_set_sentence = conj.calculate_first_set_sentence(elements, self.grammar)
-            text = " , ".join([str(x) if x is not None else 'ε' for x in first_set_sentence])
-            self.text_input2.setText(text)
-
 
 class AnalysisTableLL1(QMainWindow):
     def __init__(self, traductions, analysis_table, parent=None):
@@ -182,7 +90,7 @@ class ExpandedGrammar(QMainWindow):
     def initUI(self):
         self.setWindowTitle(self.traductions["tituloAmpliada"] + self.type)
         self.setGeometry(0, 0, 300, 200)
-
+        utils.center_window(self)
         self.text_edit = QPlainTextEdit(self)
         self.setCentralWidget(self.text_edit)
         self.text_edit.setReadOnly(True)
@@ -281,7 +189,7 @@ class AutomatonText(QMainWindow):
         self.text_edit.setPlainText(text)
 
 
-class ActionTable(QMainWindow): 
+class ActionTable(QMainWindow):
     def __init__(self, traductions, action, terminals, productions, type, parent=None):
         super().__init__(parent)
         self.traductions = traductions
@@ -382,6 +290,8 @@ class GoToTable(QMainWindow):
 class AnalysisWindowBottomUp(QMainWindow):
     def __init__(self, traductions, max_lenght, action, ir_a, nodes, edges, terminals, non_terminals, start_token, productions, window, type, parent=None):
         super().__init__(parent)
+        extended_grammar = ExpandedGrammar(traductions, start_token, non_terminals, productions, type, self)
+        extended_grammar.show()
         action_window = ActionTable(traductions, action, terminals, productions, type, self)
         action_window.show()
         go_to_window = GoToTable(traductions, ir_a, non_terminals, type, self)
@@ -391,6 +301,3 @@ class AnalysisWindowBottomUp(QMainWindow):
         if len(nodes) <= max_lenght:
             automaton_window = automaton.AutomatonWindow(traductions, nodes, edges, window, type, self)
             automaton_window.show()
-        extended_grammar = ExpandedGrammar(traductions, start_token, non_terminals, productions, type, self)
-        extended_grammar.show()
-

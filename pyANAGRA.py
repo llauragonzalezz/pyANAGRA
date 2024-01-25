@@ -1,6 +1,8 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description:
 """
 import json
@@ -9,24 +11,23 @@ import re
 import sys
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QTextDocument, QFont, QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, QAction, QCheckBox, QWidgetAction, \
-    QPlainTextEdit, QMessageBox, QFileDialog, QStatusBar, QLabel, qApp, QVBoxLayout, QPushButton, QWidget, \
-    QDesktopWidget, QInputDialog, QTextEdit, QFontDialog, QColorDialog, QLineEdit
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor,  QFont, QPixmap
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, qApp, QAction, QCheckBox, QPlainTextEdit, \
+    QWidgetAction, QMessageBox, QFileDialog, QStatusBar, QLabel, QInputDialog, QTextEdit, QFontDialog, QColorDialog
 
 import LALR
 import LL1
 import LR
 import bottom_up as bu
 import grammar
+import tables
+import sets
 import SLR
 import bisonparse
 import utils
 from ply import *
 
-import conjuntos as conj
-import conjuntos_tablas as conj_tab
-import simulacion as sim
+
 
 class WorkerLL1(QObject):
     result_signal = pyqtSignal(dict)
@@ -55,7 +56,8 @@ class WorkerLR(QObject):
         self.isRunning = True
 
     def run(self):
-        first_set = conj.calculate_first_set(self.grammar)
+        #first_set = conj.calculate_first_set(self.grammar)
+        first_set = self.grammar.calculate_first_set()
         conj_LR1 = LR.conj_LR1(first_set, self.ext_grammar)
         action_table_LR = LR.action_table(first_set, conj_LR1, self.ext_grammar)
         go_to_table_LR = LR.go_to_table(first_set, conj_LR1, self.ext_grammar)
@@ -79,7 +81,8 @@ class WorkerLALR(QObject):
 
 
     def run(self):
-        first_set = conj.calculate_first_set(self.grammar)
+        #first_set = conj.calculate_first_set(self.grammar)
+        first_set = self.grammar.calculate_first_set()
         conj_LALR = LALR.conj_LR1(first_set, self.ext_grammar)
         action_table_LALR = LALR.action_table(first_set, conj_LALR, self.ext_grammar)
         go_to_table_LALR = LALR.go_to_table(first_set, conj_LALR, self.ext_grammar)
@@ -101,7 +104,8 @@ class WorkerSLR(QObject):
 
 
     def run(self):
-        follow_set = conj.calculate_follow_set(self.grammar)
+        #follow_set = conj.calculate_follow_set(self.grammar)
+        follow_set = self.grammar.calculate_follow_set()
         conj_LR0 = SLR.conj_LR0(self.ext_grammar)
         action_table_SLR = SLR.action_table(conj_LR0, self.ext_grammar, follow_set)
         go_to_table_SLR = SLR.go_to_table(conj_LR0, self.ext_grammar)
@@ -762,18 +766,20 @@ class MainWindow(QMainWindow):
 
     def calcular_conjunto_primero(self):
         self.log_window.add_information(self.traductions["mensajeConjuntoPRI"])
-        first_set = conj.calculate_first_set(self.grammar)
-        first_set_window = conj_tab.FirstSet(self.traductions, first_set, self)
+        #first_set = conj.calculate_first_set(self.grammar)
+        first_set = self.grammar.calculate_first_set()
+        first_set_window = sets.FirstSet(self.traductions, first_set, self)
         first_set_window.show()
 
     def calcular_conjunto_siguiente(self):
         self.log_window.add_information(self.traductions["mensajeConjuntoSIG"])
-        follow_set = conj.calculate_follow_set(self.grammar)
-        follow_set_window = conj_tab.FollowSet(self.traductions, follow_set, self)
+        #follow_set = conj.calculate_follow_set(self.grammar)
+        follow_set = self.grammar.calculate_follow_set()
+        follow_set_window = sets.FollowSet(self.traductions, follow_set, self)
         follow_set_window.show()
 
     def calcular_conjunto_primero_frase(self):
-        first_set_sentence_window = conj_tab.FirstSetSentenceWindow(self.traductions, self.grammar, self)
+        first_set_sentence_window = sets.FirstSetSentenceWindow(self.traductions, self.grammar, self)
         first_set_sentence_window.show()
 
     def left_factoring(self):
@@ -909,7 +915,7 @@ class MainWindow(QMainWindow):
             self.thread_LL1.start()
 
         else:
-            analysis_table_window = conj_tab.AnalysisTableLL1(self.traductions, self.table_LL1, self)
+            analysis_table_window = tables.AnalysisTableLL1(self.traductions, self.table_LL1, self)
             analysis_table_window.show()
 
     def cancelProgressLL1(self):
@@ -933,7 +939,7 @@ class MainWindow(QMainWindow):
 
         self.parse_LL1_input_action.setEnabled(is_ll1)
         self.save_LL1_table_action.setEnabled(is_ll1)
-        analysis_table_window = conj_tab.AnalysisTableLL1(self.traductions, self.table_LL1, self)
+        analysis_table_window = tables.AnalysisTableLL1(self.traductions, self.table_LL1, self)
         analysis_table_window.show()
 
     def parse_SLR_grammar(self):
@@ -953,7 +959,7 @@ class MainWindow(QMainWindow):
             self.thread_SLR.start()
 
         else:
-            conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+            tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
                                             self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
 
@@ -971,7 +977,7 @@ class MainWindow(QMainWindow):
         self.go_to_table_SLR = result_tuple[2]
         self.edges_SLR = result_tuple[3]
 
-        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
+        tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_SLR, self.go_to_table_SLR,
                                         self.conj_LR0, self.edges_SLR, self.grammar.terminals, self.grammar.non_terminals,
                                         self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "SLR(1)", self)
 
@@ -1004,7 +1010,7 @@ class MainWindow(QMainWindow):
             self.thread_LALR.finished.connect(self.thread_LALR.deleteLater)
             self.thread_LALR.start()
         else:
-            conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
+            tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
                                             self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
@@ -1022,7 +1028,7 @@ class MainWindow(QMainWindow):
         self.go_to_table_LALR = result_tuple[2]
         self.edges_LALR = result_tuple[3]
 
-        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
+        tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LALR, self.go_to_table_LALR,
                                         self.conj_LALR, self.edges_LALR, self.grammar.terminals, self.grammar.non_terminals,
                                         self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 
@@ -1055,7 +1061,7 @@ class MainWindow(QMainWindow):
             self.thread_LR.start()
 
         else:
-            conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
+            tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
                                             self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
                                             self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LR", self)
 
@@ -1074,7 +1080,7 @@ class MainWindow(QMainWindow):
         self.go_to_table_LR = result_tuple[2]
         self.edges_LR = result_tuple[3]
 
-        conj_tab.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
+        tables.AnalysisWindowBottomUp(self.traductions, self.data["states"], self.action_table_LR, self.go_to_table_LR,
                                         self.conj_LR1, self.edges_LR, self.grammar.terminals, self.grammar.non_terminals,
                                         self.ext_grammar.initial_token, self.ext_grammar.productions, main_window, "LALR", self)
 

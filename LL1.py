@@ -1,11 +1,12 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description:
 """
 import itertools
 import re
-import conjuntos as conj
 
 def is_ll1(table, gr):
     """
@@ -49,7 +50,7 @@ def calculate_table(gr):
     dict
         A dictionary containing the LL(1) analysis table of the given grammar.
     """
-    follow_set = conj.calculate_follow_set(gr)
+    follow_set = gr.calculate_follow_set()
     table = dict()
 
     for non_terminal_token in gr.non_terminals:
@@ -59,7 +60,7 @@ def calculate_table(gr):
     for token in gr.non_terminals:
         for production in gr.productions[token]:
             if production is not None:
-                first_set_token = conj.calculate_first_set_sentence(production, gr)
+                first_set_token = gr.calculate_first_set_sentence(production)
             else:
                 first_set_token = {None}
 

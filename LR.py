@@ -3,8 +3,6 @@ Filename:
 Author: Laura González Pizarro
 Description:
 """
-import conjuntos as conj
-import grammar
 
 
 def is_lr(action_table):
@@ -47,7 +45,7 @@ def clausura(I, first_set, gr):
                 for prod_B in gr.productions[prod[pos_dot + 1]]:
                     first_set_token = set()
                     if pos_dot < len(prod) - 2:  # PRI(þ)
-                        first_set_token = conj.calculate_first_set_sentence_fs(prod[pos_dot + 2:], first_set)
+                        first_set_token = gr.calculate_first_set_sentence_fs(prod[pos_dot + 2:], first_set)
                     else:  # if þ does not exist => PRI(þa) = Pri(a)
                         first_set_token = terminal
                     # for each b ∈ T PRI(þa)

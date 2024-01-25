@@ -37,11 +37,9 @@ def extend_grammar(gr):
     return grammar.Grammar(initial_token_extended, gr.terminals, {initial_token_extended} | gr.non_terminals, gr.productions)
 
 
-
 def sig_tok(it, accion):
     n = next(it)
     return n, not any(n == key[1] for key in accion.keys())
-
 
 
 def simulate(action_table, go_to_table, input):
@@ -71,10 +69,7 @@ def simulate(action_table, go_to_table, input):
     error = False
     stack = [(0,)]  # P = stack
     elements = input.strip().split()
-    print(elements)
     it = iter(elements)
-
-
 
     n, error_tok = sig_tok(it, action_table)
 
@@ -99,6 +94,8 @@ def simulate(action_table, go_to_table, input):
             n, error_tok = sig_tok(it, action_table)
         # action[s, n] = "accept"
         elif action_table[s, n][0] == "accept":
+            print(stack)
+            simulation_table.append(([], "$", (), ()))
             accept = True
         # action[s, n] = "ERROR"
         elif action_table[s, n][0] == "ERROR":

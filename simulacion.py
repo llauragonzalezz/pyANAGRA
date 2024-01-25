@@ -1,11 +1,13 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description:
 """
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
-    QHBoxLayout, QDesktopWidget, QMessageBox, QSizePolicy
+    QHBoxLayout, QDesktopWidget, QMessageBox
 
 import tree
 

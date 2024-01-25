@@ -5,7 +5,6 @@ Description:
 """
 import LR
 
-
 def conj_LR1(first_set, gr):
     """
     Calculates the 'follow' set of all tokens in the context of a grammar.

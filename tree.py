@@ -1,6 +1,8 @@
 """
 Filename:
-Author: Laura González Pizarro
+Developed by Laura González Pizarro
+Directed by Joaquín Ezpeleta Mateo
+Universidad de Zaragoza
 Description: Adapted from
 """
 # Copyright (C) 2022 The Qt Company Ltd.
