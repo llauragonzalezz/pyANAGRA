@@ -71,7 +71,10 @@ def simulate(action_table, go_to_table, input):
     error = False
     stack = [(0,)]  # P = stack
     elements = input.strip().split()
+    print(elements)
     it = iter(elements)
+
+
 
     n, error_tok = sig_tok(it, action_table)
 
@@ -90,7 +93,7 @@ def simulate(action_table, go_to_table, input):
             stack.append((action_table[s, n][0][6:],))
 
             it_copia, it = itertools.tee(it)
-            simulation_table.append((stack.copy(), "".join(it_copia), (), (n, index)))
+            simulation_table.append((stack.copy(), " ".join(it_copia), (), (n, index)))
             index += 1
 
             n, error_tok = sig_tok(it, action_table)
@@ -120,7 +123,7 @@ def simulate(action_table, go_to_table, input):
             left_part = (partes[0].strip(), index)
 
             it_copia, it = itertools.tee(it)
-            simulation_table.append((stack.copy(), n + "".join(it_copia), (left_part, right_part), ()))
+            simulation_table.append((stack.copy(), n + " ".join(it_copia), (left_part, right_part), ()))
             index += 1
 
     if error_tok or error or len(simulation_table) == 1:

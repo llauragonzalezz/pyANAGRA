@@ -5,7 +5,7 @@ Description:
 """
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QPlainTextEdit, QLabel, QPushButton, \
-    QHBoxLayout, QDesktopWidget, QMessageBox
+    QHBoxLayout, QDesktopWidget, QMessageBox, QSizePolicy
 
 import tree
 
@@ -24,11 +24,11 @@ class VentanaSimulacion(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(0, 0, 450, 150)
+        self.setGeometry(0, 0, 500, 450)
         screen = QDesktopWidget().availableGeometry()
         window_size = self.frameGeometry()
         x = screen.width() // 2 - window_size.width()
-        y = screen.height() // 2 - window_size.height()
+        y = (screen.height() - window_size.height()) // 2
         self.move(x, y)
 
         self.setWindowTitle(self.traductions["tituloVentanaSimulacion"])
@@ -89,6 +89,9 @@ class VentanaSimulacion(QMainWindow):
         # Agregar el layout de los botones al diseño de cuadrícula
         grid_layout.addLayout(button_layout, 6, 0, 1, 3)
 
+        self.text_edit3.setFixedHeight(4 * self.text_production.fontMetrics().lineSpacing())
+        self.text_input.setFixedHeight(4 * self.text_stack.fontMetrics().lineSpacing())
+
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
 
@@ -106,7 +109,7 @@ class VentanaSimulacion(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
 
     def avanzar(self): # '(''x'';''(''x'')'')'
@@ -116,7 +119,7 @@ class VentanaSimulacion(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
         # Update tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
@@ -152,7 +155,7 @@ class VentanaSimulacionSLR(QMainWindow):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(0, 0, 500, 400)
+        self.setGeometry(0, 0, 500, 450)
         screen = QDesktopWidget().availableGeometry()
         window_size = self.frameGeometry()
         x = screen.width() // 2 - window_size.width()
@@ -216,8 +219,10 @@ class VentanaSimulacionSLR(QMainWindow):
 
         # Agregar el layout de los botones al diseño de cuadrícula
         grid_layout.addLayout(button_layout, 6, 0, 1, 3)
-        self.text_production.setFixedHeight(7 * self.text_production.fontMetrics().lineSpacing())
-        self.text_stack.setFixedHeight(7 * self.text_stack.fontMetrics().lineSpacing())
+        #self.text_production.setFixedHeight(7 * self.text_production.fontMetrics().lineSpacing())
+        #self.text_stack.setFixedHeight(7 * self.text_stack.fontMetrics().lineSpacing())
+        self.text_edit3.setFixedHeight(4 * self.text_production.fontMetrics().lineSpacing())
+        self.text_input.setFixedHeight(4 * self.text_stack.fontMetrics().lineSpacing())
 
         # Establecer el widget principal y el
         self.setCentralWidget(central_widget)
@@ -239,7 +244,8 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
+
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
 
     def avanzar(self):  # '(''x'';''(''x'')'')'
@@ -249,7 +255,7 @@ class VentanaSimulacionSLR(QMainWindow):
         self.text_production.setPlainText(write_production(self.table[self.iter][2]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
-        self.text_input.setPlainText(" ".join(self.table[self.iter][1][:-1]))
+        self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
         # Update tree window
         if self.table[self.iter][2] and self.table[self.iter][2][1] is not None:
