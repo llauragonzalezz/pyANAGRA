@@ -52,17 +52,17 @@ class Grammar:
         for symbol in self.non_terminals:
             for production in self.productions[symbol]:
                 if production is None or set(production) <= self.terminals:
-                    new |= set(symbol)
+                    new |= {symbol}
 
         while old != new:
-            old = new
+            old = new.copy()
             # Add all non-terminals that have at least one production made of all terminals or an epsilon production
             for symbol in self.non_terminals:
                 for production in self.productions[symbol]:
                     if production is None or set(production) <= self.terminals | old:
-                        new |= set(symbol)
+                        new |= {symbol}
 
-        return new != self.non_terminals, self.non_terminals - new
+        return (new & self.non_terminals) != self.non_terminals
 
 
 
@@ -127,15 +127,16 @@ def removal_underivable_non_terminals(grammar):
     for symbol in gr.non_terminals:
         for production in gr.productions[symbol]:
             if production is None or set(production) <= gr.terminals:
-                new |= set(symbol)
+                new |= {symbol}
 
     while old != new:
-        old = new
+        old = new.copy()
         # Add all non-terminals that have at least one production made of all terminals or an epsilon production
         for symbol in gr.non_terminals:
             for production in gr.productions[symbol]:
                 if production is None or set(production) <= gr.terminals | old:
-                    new |= set(symbol)
+                    new |= {symbol}
+
 
     # Keep all productions made of elements in new or terminal symbols
     new_productions = dict()
@@ -152,7 +153,7 @@ def removal_underivable_non_terminals(grammar):
         new.add(gr.initial_token)
         new_productions[gr.initial_token] = [[]]
 
-    return Grammar(gr.initial_token, gr.terminals, new, new_productions)
+    return Grammar(gr.initial_token, gr.terminals, new & gr.non_terminals, new_productions)
 
 
 def removal_left_recursion(grammar):

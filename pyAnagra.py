@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
 
         if self.grammar != "":
             self.menu_gramaticas()
-            self.show_compact_grammar()
+            self.show_grammar()
         else:
             self.menu_inicial()
 
@@ -918,8 +918,9 @@ class MainWindow(QMainWindow):
 
     def threadResultLL1(self, result):
         self.progres_bar_LL1.stopProgress()
-
         self.table_LL1 = result
+        self.thread_LL1.quit()
+        self.worker_LL1.deleteLater()
 
         # Enable options if possible
         conclicts_ll1 = LL1.is_ll1(self.table_LL1, self.grammar)
@@ -962,6 +963,9 @@ class MainWindow(QMainWindow):
 
     def threadResultSLR(self, result_tuple):
         self.progres_bar_SLR.stopProgress()
+        self.thread_SLR.quit()
+        self.worker_SLR.deleteLater()
+
         self.conj_LR0 = result_tuple[0]
         self.action_table_SLR = result_tuple[1]
         self.go_to_table_SLR = result_tuple[2]
@@ -1010,6 +1014,9 @@ class MainWindow(QMainWindow):
 
     def threadResultLALR(self, result_tuple):
         self.progres_bar_LALR.stopProgress()
+        self.thread_LALR.quit()
+        self.worker_LALR.deleteLater()
+
         self.conj_LALR = result_tuple[0]
         self.action_table_LALR = result_tuple[1]
         self.go_to_table_LALR = result_tuple[2]
@@ -1059,6 +1066,9 @@ class MainWindow(QMainWindow):
 
     def threadResultLR(self, result_tuple):
         self.progres_bar_LR.stopProgress()
+        self.thread_LR.quit()
+        self.worker_LR.deleteLater()
+
         self.conj_LR1 = result_tuple[0]
         self.action_table_LR = result_tuple[1]
         self.go_to_table_LR = result_tuple[2]
