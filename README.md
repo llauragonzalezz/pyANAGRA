@@ -23,11 +23,6 @@ a graphical representation of syntax tree.
 - SLR, LR, LALR analysis expanded grammar, automaton, action and go to table
 - Simulate inputs interactive
 
-![tablasSLR.png](..%2F..%2F..%2Fmemoria%2FtablasSLR.png)
-
-![automataSLR.png](..%2F..%2F..%2Fmemoria%2FautomataSLR.png)
-
-![arbol.png](..%2F..%2F..%2Fmemoria%2Farbol.png)
 ## Requirements
 - PyQt5
 - Networkx
