@@ -23,6 +23,7 @@ class VentanaSimulacion(QMainWindow):
         self.iter = 0
         self.tree_window = tree.TreeWindow(traductions, grammar.initial_token, self)
         self.tree_window.show()
+        self.stack = []
         self.initUI()
 
     def initUI(self):
@@ -108,7 +109,7 @@ class VentanaSimulacion(QMainWindow):
             self.btn_retrocede.setEnabled(False)
         self.btn_avanza.setEnabled(True)
 
-        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
@@ -118,7 +119,7 @@ class VentanaSimulacion(QMainWindow):
         self.iter += 1
         self.btn_retrocede.setEnabled(True)
 
-        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
@@ -243,7 +244,7 @@ class VentanaSimulacionSLR(QMainWindow):
             self.btn_retrocede.setEnabled(False)
         self.btn_avanza.setEnabled(True)
 
-        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
 
@@ -253,8 +254,7 @@ class VentanaSimulacionSLR(QMainWindow):
     def avanzar(self):  # '(''x'';''(''x'')'')'
         self.iter += 1
         self.btn_retrocede.setEnabled(True)
-
-        self.text_production.setPlainText(write_production(self.table[self.iter][2]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
@@ -291,14 +291,15 @@ def write_stack(stack):
 # id '+' id
 
 
-def write_production(tuple):
-    if tuple == ():
-        return ""
-    elif tuple[1] is None:
-        return str(tuple[0][0]) + "  → ε"
-    else:
-        string = tuple[0][0] + "→ "
-        for elem in tuple[1]:
-            string += elem[0] + " "
-
-        return string
+def write_production(tuple_list):
+    string = ""
+    for tuple in tuple_list:
+        if tuple != ():
+            if tuple[1] is None:
+                string += str(tuple[0][0]) + "  → ε \n"
+            else:
+                string += tuple[0][0] + "→ "
+                for elem in tuple[1]:
+                    string += elem[0] + " "
+                string += "\n"
+    return string

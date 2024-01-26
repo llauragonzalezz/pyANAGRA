@@ -189,7 +189,7 @@
   "etiqRetroceder": "Go back",
   "mensajeCadenaAceptada": "The grammar accepts the input",
   "mensajeCadenaNoAceptada": "The grammar DOES NOT accept the input",
-  "tituloVentanaSimulacion": "Simulation window",
+  "tituloVentanaSimulacion": "Parser ",
   "tituloAutomataGramatica": "Grammar Automaton ",
   "mensaje": "mensaje"
 }

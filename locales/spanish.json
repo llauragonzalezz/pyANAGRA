@@ -185,12 +185,12 @@
   "etiqSeq": "Secuencia de producciones",
   "etiqPila": "Pila",
   "etiqEntrada": "Entrada",
-  "etiqTextoAnalizar": "Tokens a analizar",
+  "etiqTextoAnalizar": "Tokens por analizar",
   "etiqAvanzar": "Avanzar",
   "etiqRetroceder": "Retroceder",
   "mensajeCadenaAceptada": "La entrada es aceptada por la gramática",
   "mensajeCadenaNoAceptada": "La entrada NO es aceptada por la gramática",
-  "tituloVentanaSimulacion": "Ventana de simulación",
+  "tituloVentanaSimulacion": "Analizador ",
   "tituloAutomataGramatica": "Automata gramática ",
   "mensaje": "Mensaje"
 }

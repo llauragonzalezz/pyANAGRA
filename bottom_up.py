@@ -94,7 +94,6 @@ def simulate(action_table, go_to_table, input):
             n, error_tok = sig_tok(it, action_table)
         # action[s, n] = "accept"
         elif action_table[s, n][0] == "accept":
-            print(stack)
             simulation_table.append(([], "$", (), ()))
             accept = True
         # action[s, n] = "ERROR"
