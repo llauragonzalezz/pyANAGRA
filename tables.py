@@ -63,8 +63,8 @@ class AnalysisTableLL1(QMainWindow):
                 table.setItem(non_terminals.index(row), terminals.index(col), item)
 
         self.setCentralWidget(table)
-        self.resize(table.horizontalHeader().length() + 20,
-                    table.verticalHeader().length() + 30)
+        self.resize(table.horizontalHeader().length() + 32,
+                    table.verticalHeader().length() + 42)
 
         # Center window to the middle of the screen
         utils.center_window(self)

@@ -229,17 +229,19 @@ class Grammar:
 
     def has_cycles(self):
         for non_terminal in self.non_terminals:
-            symbols = set(symbol for production in self.productions[non_terminal] if production is not None for symbol in production)
+            print(non_terminal)
+            symbols = set(symbol for prod in self.productions[non_terminal] if prod is not None and len(prod) == 1 and prod[0] in self.non_terminals for symbol in prod)
+            print(symbols)
             if non_terminal in symbols:
                 return True
-            else:
-                new_symbols = []
-                while symbols != new_symbols:
-                    for symbol in symbols & self.non_terminals:
-                        new_symbols = symbols
-                        new_symbols |= set(symbol for production in self.productions[symbol] if production is not None for symbol in production)
-                        if non_terminal in symbols:
-                            return True
+
+            new_symbols = set()
+            while symbols != new_symbols:
+                new_symbols = symbols.copy()
+                for symbol in symbols & self.non_terminals:
+                    symbols |= set(symbol for prod in self.productions[symbol] if prod is not None and len(prod) == 1 and prod[0] in self.non_terminals for symbol in prod)
+                    if non_terminal in symbols:
+                        return True
         return False
 
 
@@ -474,7 +476,7 @@ def is_nullable(gr, symbol):
 
     # symbol =>* epsilon (indirect)
     for production in gr.productions[symbol]:
-        if None in gr.calculate_first_set_sentence(production, gr):
+        if None in gr.calculate_first_set_sentence(production):
             return True
 
     return False
