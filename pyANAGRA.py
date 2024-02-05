@@ -515,22 +515,18 @@ class MainWindow(QMainWindow):
 
         try:
             self.grammar = yacc.parse(text)
-            print("despues")
             self.menu_gramaticas()
             self.log_window.add_information(self.traductions["mensajeGramaticaExito"])
 
         except SyntaxError as e:
-            print("s hola", e)
             self.log_window.add_information(self.traductions["mensajeGramaticaFracaso"])
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
             if str(e)[0] == "l":
-                print("hola")
                 pos = 0
                 cursor = QTextCursor(self.main_window.text_grammar.document())
                 cursor = self.main_window.text_grammar.document().find(str(e), cursor, QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively)
-                print(cursor)
                 error_message.setText(self.message_error("Illegal character ", 0))
             else:
                 error_message.setText(self.message_error("Illegal character", int(str(e))))
