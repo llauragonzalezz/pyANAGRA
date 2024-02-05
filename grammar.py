@@ -229,9 +229,7 @@ class Grammar:
 
     def has_cycles(self):
         for non_terminal in self.non_terminals:
-            print(non_terminal)
             symbols = set(symbol for prod in self.productions[non_terminal] if prod is not None and len(prod) == 1 and prod[0] in self.non_terminals for symbol in prod)
-            print(symbols)
             if non_terminal in symbols:
                 return True
 

@@ -11,7 +11,7 @@ import re
 import sys
 
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QThread
-from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor,  QFont, QPixmap
+from PyQt5.QtGui import QKeySequence, QClipboard, QTextCursor, QTextCharFormat, QColor, QFont, QPixmap, QTextDocument
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMenuBar, QMenu, qApp, QAction, QCheckBox, QPlainTextEdit, \
     QWidgetAction, QMessageBox, QFileDialog, QStatusBar, QLabel, QInputDialog, QTextEdit, QFontDialog, QColorDialog
 
@@ -515,16 +515,25 @@ class MainWindow(QMainWindow):
 
         try:
             self.grammar = yacc.parse(text)
-
+            print("despues")
             self.menu_gramaticas()
             self.log_window.add_information(self.traductions["mensajeGramaticaExito"])
 
         except SyntaxError as e:
+            print("s hola", e)
             self.log_window.add_information(self.traductions["mensajeGramaticaFracaso"])
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
-            error_message.setText(self.message_error("Illegal character", int(str(e))))
+            if str(e)[0] == "l":
+                print("hola")
+                pos = 0
+                cursor = QTextCursor(self.main_window.text_grammar.document())
+                cursor = self.main_window.text_grammar.document().find(str(e), cursor, QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively)
+                print(cursor)
+                error_message.setText(self.message_error("Illegal character ", 0))
+            else:
+                error_message.setText(self.message_error("Illegal character", int(str(e))))
             error_message.setStandardButtons(QMessageBox.Ok)
             error_message.exec_()
 
@@ -533,7 +542,21 @@ class MainWindow(QMainWindow):
             error_message = QMessageBox()
             error_message.setIcon(QMessageBox.Critical)
             error_message.setWindowTitle("Error")
-            error_message.setText(self.message_error("Syntax error ", int(str(e))))
+            if str(e)[0] == "l":
+                cursor = QTextCursor(self.text_grammar.document())
+                cursor = self.text_grammar.document().find(str(e)[1:], cursor, QTextDocument.FindWholeWords | QTextDocument.FindCaseSensitively)
+                line = cursor.blockNumber() + 1
+                col = cursor.positionInBlock() + 1
+
+                seleccion = QTextEdit.ExtraSelection()
+                seleccion.format.setBackground(QColor("red"))
+                cursor.movePosition(QTextCursor.StartOfBlock)
+                cursor.movePosition(QTextCursor.EndOfBlock, QTextCursor.KeepAnchor)
+                seleccion.cursor = cursor
+                self.text_grammar.setExtraSelections([seleccion])
+                error_message.setText(f'Illegal character {str(e)[1:]} at line {line} and column {col}')
+            else:
+                error_message.setText(self.message_error("Syntax error ", int(str(e))))
             error_message.setStandardButtons(QMessageBox.Ok)
             error_message.exec_()
 
@@ -623,10 +646,10 @@ class MainWindow(QMainWindow):
             confirm_dialog = QMessageBox(self)
             confirm_dialog.setWindowTitle(self.traductions["mensajeSalida1"])
             confirm_dialog.setText(self.traductions["mensajeSalida1"] + self.traductions["mensajeSalida2"] )
-            confirm_dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+            confirm_dialog.setStandardButtons(QMessageBox.Yes)
 
             result = confirm_dialog.exec_()
-            if result == QMessageBox.Yes:
+            if result != 16384:
                 QApplication.quit()
 
 
