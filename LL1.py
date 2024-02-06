@@ -131,7 +131,7 @@ def simulate(table, gr, input):
             if x[0] == sig_tok:
                 # Copiamos el iterador original
                 it_copia, it = itertools.tee(it)
-                simulation_table.append((stack.copy(), sig_tok + " " +" ".join(it_copia), ()))
+                simulation_table.append((stack.copy(), sig_tok + " " + " ".join(it_copia), ()))
                 # pop(P)
                 stack.pop()
                 # sig_tok = yylex()
