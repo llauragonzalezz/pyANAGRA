@@ -291,7 +291,8 @@ def write_stack(stack):
     #stack = reverse(stack)
     string = ""
     for elem in stack:
-        string += str(elem[0]) + " \n"
+        string = str(elem[0]) + " \n" + string
+    
     return string
 # id '+' id
 
