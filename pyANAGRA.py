@@ -645,7 +645,6 @@ class MainWindow(QMainWindow):
         confirm_dialog.setStandardButtons(QMessageBox.Yes)
 
         result = confirm_dialog.exec_()
-        print(result)
         if confirm_dialog.clickedButton() == QMessageBox.Yes:
             QApplication.quit()
 
