@@ -21,7 +21,7 @@ class VentanaSimulacion(QMainWindow):
         self.terminals = grammar.terminals
         self.non_terminals = grammar.non_terminals
         self.iter = 0
-        self.tree_window = tree.TreeWindow(traductions, grammar.initial_token, self)
+        self.tree_window = tree.TreeWindow(traductions=traductions, parent=self)
         self.tree_window.show()
         self.stack = []
         self.initUI()
@@ -100,7 +100,9 @@ class VentanaSimulacion(QMainWindow):
 
     def retroceder(self):
         # Tree window
-        if self.iter > 0 and self.table[self.iter-1][2] and self.table[self.iter-1][2][1] is not None:
+        if self.iter == 1:
+            self.tree_window.delete_node(self.table[0][2][0][1])
+        elif self.iter > 0 and self.table[self.iter-1][2] and self.table[self.iter-1][2][1] is not None:
             for nodo in self.table[self.iter-1][2][1]:
                 self.tree_window.delete_node(nodo[1])
 
@@ -109,7 +111,7 @@ class VentanaSimulacion(QMainWindow):
             self.btn_retrocede.setEnabled(False)
         self.btn_avanza.setEnabled(True)
 
-        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
@@ -119,13 +121,15 @@ class VentanaSimulacion(QMainWindow):
         self.iter += 1
         self.btn_retrocede.setEnabled(True)
 
-        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter+1]]))
+        self.text_production.setPlainText(write_production([sublist[2] for sublist in self.table[:self.iter]]))
         self.text_stack.setPlainText(write_stack(self.table[self.iter][0]))
         #self.text_edit3.setPlainText(self.table[self.iter][1])
         self.text_input.setPlainText(self.table[self.iter][1][:-1])
 
         # Update tree window
-        if self.iter > 0 and self.table[self.iter-1][2] and self.table[self.iter-1][2][1] is not None:
+        if self.iter == 1:
+            self.tree_window.create_node(self.table[0][2][0][1], self.table[0][2][0][0], self.table[0][2][0][0] in self.terminals)
+        elif self.iter > 0 and self.table[self.iter-1][2] and self.table[self.iter-1][2][1] is not None:
             for nodo in self.table[self.iter-1][2][1]:
                 self.tree_window.add_node_to_parent(nodo[1], nodo[0], nodo[0] in self.terminals,
                                                     self.table[self.iter-1][2][0][1])
@@ -284,6 +288,7 @@ class VentanaSimulacionSLR(QMainWindow):
 
 
 def write_stack(stack):
+    #stack = reverse(stack)
     string = ""
     for elem in stack:
         string += str(elem[0]) + " \n"
@@ -294,12 +299,12 @@ def write_stack(stack):
 def write_production(tuple_list):
     string = ""
     for tuple in tuple_list:
-        if tuple != ():
+        if tuple != () and len(tuple) > 1:
             if tuple[1] is None:
                 string += str(tuple[0][0]) + "  → ε \n"
             else:
                 string += tuple[0][0] + "→ "
-                for elem in tuple[1]:
+                for elem in reversed(tuple[1]):
                     string += elem[0] + " "
                 string += "\n"
     return string

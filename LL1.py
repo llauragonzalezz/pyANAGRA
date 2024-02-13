@@ -119,7 +119,7 @@ def simulate(table, gr, input):
     it = iter(elementos)
     sig_tok = next(it)
     # simulation table: (stack, entry text, output)
-    simulation_table = [("", input, ())]
+    simulation_table = [("", input, ((gr.initial_token, 1),) )]
 
     sig_tok = next_token(sig_tok, it)
 
@@ -167,5 +167,7 @@ def simulate(table, gr, input):
         x = stack[len(stack)-1]
 
     simulation_table.append((stack.copy(), "$", ()))
+    for entrada in simulation_table:
+        print(entrada)
     # '(' 'x' ';' '(' 'x' ')' ')'
     return simulation_table, False

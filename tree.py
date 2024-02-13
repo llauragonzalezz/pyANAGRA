@@ -321,7 +321,6 @@ class TreeWindow(QMainWindow):
         item = Node(name, terminal=terminal)
         self.view.scene().addItem(item)
         self.view._nodes_map[index] = item                      # Add node to the view
-
         # Update layout
         self.view.set_nx_layout()
 
@@ -366,7 +365,6 @@ class TreeWindow(QMainWindow):
         for edge in self.graph.edges:
             if edge[1] == iter:
                 self.view.scene().removeItem(self.edges[edge[0], iter])
-                #del self.edges[edge[0], iter]
 
         # Delete the node from the graph and from the view
         self.graph.remove_node(iter)

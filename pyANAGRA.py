@@ -638,15 +638,16 @@ class MainWindow(QMainWindow):
             self.log_window.add_information(self.traductions["mensajeGuardado"] + file)
 
     def exit(self):
-        if self.changes or not self.text_grammar.isReadOnly():
-            confirm_dialog = QMessageBox(self)
-            confirm_dialog.setWindowTitle(self.traductions["mensajeSalida1"])
-            confirm_dialog.setText(self.traductions["mensajeSalida1"] + self.traductions["mensajeSalida2"] )
-            confirm_dialog.setStandardButtons(QMessageBox.Yes)
+        #if self.changes or not self.text_grammar.isReadOnly():
+        confirm_dialog = QMessageBox(self)
+        confirm_dialog.setWindowTitle(self.traductions["mensajeSalida1"])
+        confirm_dialog.setText(self.traductions["mensajeSalida1"] + self.traductions["mensajeSalida2"] )
+        confirm_dialog.setStandardButtons(QMessageBox.Yes)
 
-            result = confirm_dialog.exec_()
-            if result != 16384:
-                QApplication.quit()
+        result = confirm_dialog.exec_()
+        print(result)
+        if confirm_dialog.clickedButton() == QMessageBox.Yes:
+            QApplication.quit()
 
 
     def accept_grammar(self):
@@ -812,7 +813,7 @@ class MainWindow(QMainWindow):
 
     def removal_underivable_non_terminals(self):
         pre = True
-        message = "El algoritmo de eliminación de símbolos no terminables exige en la PRE" \
+        message = "El algoritmo de eliminación de símbolos no terminables exige en la PRE " \
                   "que el lenguaje generado sea no vacío."
         if self.grammar.empty_languaje():
             pre = False
@@ -831,7 +832,7 @@ class MainWindow(QMainWindow):
 
     def removal_left_recursion(self):
         pre = True
-        message = "El algoritmo de eliminación de recursividad a izquierda exige en la PRE" \
+        message = "El algoritmo de eliminación de recursividad a izquierda exige en la PRE " \
                   "que no haya ciclos, ni producciones epsilón. "
         if self.grammar.has_cycles() and self.grammar.has_epsilon_productions():
             pre = False
