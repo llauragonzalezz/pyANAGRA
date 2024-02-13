@@ -288,7 +288,7 @@ class VentanaSimulacionSLR(QMainWindow):
 
 
 def write_stack(stack):
-    #stack = reverse(stack)
+    stack = reversed(stack)
     string = ""
     for elem in stack:
         string += str(elem[0]) + " \n"

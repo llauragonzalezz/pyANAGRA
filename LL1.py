@@ -167,7 +167,6 @@ def simulate(table, gr, input):
         x = stack[len(stack)-1]
 
     simulation_table.append((stack.copy(), "$", ()))
-    for entrada in simulation_table:
-        print(entrada)
+
     # '(' 'x' ';' '(' 'x' ')' ')'
     return simulation_table, False
